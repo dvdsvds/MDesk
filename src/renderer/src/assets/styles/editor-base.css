@@ -220,13 +220,11 @@
 }
 .cm-cursorLayer .cm-fat-cursor,
 .cm-vimCursorLayer .cm-fat-cursor {
-  box-sizing: content-box !important;
-  height: var(--cm-cur-h, 16px) !important;
-  padding-top: var(--cm-cur-top, 0px) !important;
-  padding-bottom: max(
-    0px,
-    calc(var(--cm-line-h, 22.4px) - var(--cm-cur-top, 0px) - var(--cm-cur-h, 16px))
-  ) !important;
+  /* 줄이 접혀 글자 상자나 위 오프셋이 달라져도 항상 한 줄 높이로 고정 */
+  box-sizing: border-box !important;
+  height: var(--cm-line-h, 22.4px) !important;
+  max-height: var(--cm-line-h, 22.4px) !important;
+  padding: 0 !important;
   margin-top: calc(-1 * var(--cm-cur-top, 0px)) !important;
 }
 .cm-focused .cm-fat-cursor {
