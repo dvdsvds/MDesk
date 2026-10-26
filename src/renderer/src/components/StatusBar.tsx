@@ -1,79 +1,39 @@
-import { useMemo } from 'react'
 import { useSettingsStore } from '../stores/settingsStore'
 import type { Tab } from '../stores/tabsStore'
-import { fileNameOf } from '@renderer/utils/path'
 import { CsvStatus } from './CsvStatus'
-import { useCursorStore } from '../stores/cursorStore'
 
 interface StatusBarProps {
   tab: Tab | null
   isViewer: boolean
-  vimModeLabel: string
+  /** 맨 오른쪽에 붙일 것 (노트 속성) */
+  right?: React.ReactNode
 }
 
-// 커서 위치만 따로 구독해서, 커서가 움직일 때 이 숫자만 다시 그린다
-function CursorPosition(): React.JSX.Element {
-  const line = useCursorStore((s) => s.line)
-  const col = useCursorStore((s) => s.col)
-  return (
-    <span>
-      {line}:{col}
-    </span>
-  )
-}
-
+/** 오른쪽에 그때그때 필요한 것(csv 정보, 100%가 아닌 확대 비율)만. vim 모드는 에디터 칸, 노트 상태는 에디터 머리 줄에 보인다 */
 export function StatusBar({
   tab,
   isViewer,
-  vimModeLabel
+  right
 }: StatusBarProps): React.JSX.Element {
-  const vimMode = useSettingsStore((s) => s.vimMode)
   const uiZoom = useSettingsStore((s) => s.uiZoom)
   const setUiZoom = useSettingsStore((s) => s.setUiZoom)
-  const showLineCol = useSettingsStore((s) => s.showLineCol)
-  const showWordCount = useSettingsStore((s) => s.showWordCount)
-  const showCharCount = useSettingsStore((s) => s.showCharCount)
-  const charCountIncludeSpaces = useSettingsStore((s) => s.charCountIncludeSpaces)
-  const charCountExcludeSpaces = useSettingsStore((s) => s.charCountExcludeSpaces)
-
-  const content = tab?.content ?? ''
-  const wordCount = useMemo(() => content.split(/\s+/).filter((w) => w.length > 0).length, [content])
-  const charCountWithSpaces = content.length
-  const charCountWithoutSpaces = useMemo(() => content.replace(/\s/g, '').length, [content])
-  const filePathLabel = tab?.filePath ? fileNameOf(tab.filePath) : ''
 
   return (
-    <footer className="flex h-7 shrink-0 items-center justify-between border-t border-border px-3 text-[11px] tabular-nums text-text-tertiary">
-      <div className="flex items-center gap-2">
-        {vimMode && !isViewer ? (
-          <span className="font-semibold text-accent">-- {vimModeLabel} --</span>
-        ) : (
-          <span className="truncate">{filePathLabel}</span>
-        )}
-      </div>
+    <footer className="flex h-7 shrink-0 items-center justify-between px-3 text-[11px] tabular-nums text-text-tertiary">
+      <div />
       <div className="flex items-center gap-3">
-        {vimMode && !isViewer && <span className="truncate">{filePathLabel}</span>}
         {tab && !isViewer && <CsvStatus />}
-        {tab && !isViewer && showLineCol && <CursorPosition />}
-        {tab && !isViewer && showWordCount && <span>{wordCount}단어</span>}
-        {tab && !isViewer && showCharCount && (charCountIncludeSpaces || charCountExcludeSpaces) && (
-          <span>
-            {[
-              charCountIncludeSpaces ? `${charCountWithSpaces}자` : null,
-              charCountExcludeSpaces ? `공백 제외 ${charCountWithoutSpaces}자` : null
-            ]
-              .filter(Boolean)
-              .join(' / ')}
-          </span>
+        {uiZoom !== 100 && (
+          <button
+            type="button"
+            onClick={() => setUiZoom(100)}
+            title="100%로 초기화"
+            className="hover:text-text"
+          >
+            {uiZoom}%
+          </button>
         )}
-        <button
-          type="button"
-          onClick={() => setUiZoom(100)}
-          title="100%로 초기화"
-          className="hover:text-text"
-        >
-          {uiZoom}%
-        </button>
+        {right}
       </div>
     </footer>
   )

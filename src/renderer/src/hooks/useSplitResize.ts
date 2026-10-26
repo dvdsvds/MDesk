@@ -3,6 +3,8 @@ import { useSettingsStore } from '../stores/settingsStore'
 import { trackMouseDrag } from '../utils/trackMouseDrag'
 
 export const EDITOR_MIN_WIDTH = 396
+/** 에디터 카드와 미리보기 카드 사이 틈 */
+export const SPLIT_GAP = 4
 
 export function useSplitResize(
   splitRef: RefObject<HTMLDivElement | null>,
@@ -32,7 +34,7 @@ export function useSplitResize(
           const minRatio = Math.min(0.8, Math.max(0.2, EDITOR_MIN_WIDTH / rect.width))
           const maxRatio = Math.max(
             minRatio,
-            Math.min(0.8, (rect.width - previewMinWidthRef.current - 1) / rect.width)
+            Math.min(0.8, (rect.width - previewMinWidthRef.current - SPLIT_GAP) / rect.width)
           )
           latest = Math.min(maxRatio, Math.max(minRatio, (ev.clientX - rect.left) / rect.width))
           setDraft(latest)

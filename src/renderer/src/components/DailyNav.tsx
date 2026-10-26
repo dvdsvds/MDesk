@@ -5,7 +5,7 @@ import { formatDate } from '../utils/dateFormat'
 import { listDailyNotes } from '../utils/dailyNote'
 
 const BTN =
-  'flex h-6 items-center rounded-md px-1.5 text-[12px] text-text-secondary outline-none transition-colors hover:bg-bg-mute hover:text-text disabled:opacity-30 disabled:hover:bg-transparent'
+  'flex h-5 items-center rounded-md px-1.5 text-[12px] text-text-secondary outline-none transition-colors hover:bg-bg-mute hover:text-text disabled:opacity-30 disabled:hover:bg-transparent'
 
 /** 데일리 노트를 열었을 때 이전·다음 데일리 노트와 오늘로 옮겨 가는 버튼 */
 export function DailyNav({
@@ -33,7 +33,7 @@ export function DailyNav({
   const isToday = formatDate(date, 'YYYY-MM-DD') === formatDate(new Date(), 'YYYY-MM-DD')
 
   return (
-    <div className="ml-auto flex shrink-0 items-center gap-0.5">
+    <div className="flex shrink-0 items-center gap-0.5">
       <button
         type="button"
         disabled={!prev}

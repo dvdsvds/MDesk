@@ -268,7 +268,7 @@ export const Sidebar = forwardRef<SidebarHandle, SidebarProps>(function Sidebar(
   return (
     <div
       tabIndex={-1}
-      className={`group/sb flex flex-col outline-none ${className ?? ''}`}
+      className={`group/sb thin-scroll flex flex-col outline-none ${className ?? ''}`}
       style={style}
       onDragOver={(e) => e.preventDefault()}
       onDrop={(e) => rootDir && handleDrop(e, rootDir)}

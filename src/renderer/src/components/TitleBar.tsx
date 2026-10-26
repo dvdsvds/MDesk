@@ -5,7 +5,12 @@ import WindowMinimizeIcon from '../icons/window-minimize.svg?react'
 import WindowRestoreIcon from '../icons/window-restore.svg?react'
 
 interface TitleBarProps {
+  /** 왼쪽 칸(아이콘 줄·사이드바 위). 폭과 내용은 부르는 쪽이 정한다 */
+  left?: React.ReactNode
+  /** 가운데(탭). 남는 폭을 다 쓰고, 빈 곳은 창 끌기 영역이다 */
   children?: React.ReactNode
+  /** 창 버튼 바로 앞에 붙일 버튼 */
+  right?: React.ReactNode
 }
 
 function WindowControls(): React.JSX.Element {
@@ -46,7 +51,7 @@ function WindowControls(): React.JSX.Element {
   )
 }
 
-export function TitleBar({ children }: TitleBarProps): React.JSX.Element {
+export function TitleBar({ left, children, right }: TitleBarProps): React.JSX.Element {
   const [platform, setPlatform] = useState<NodeJS.Platform | null>(null)
 
   useEffect(() => {
@@ -60,15 +65,24 @@ export function TitleBar({ children }: TitleBarProps): React.JSX.Element {
       className={`titlebar-drag flex h-9 shrink-0 items-center ${isMac ? 'flex-row-reverse' : ''}`}
       onDoubleClick={() => void window.api.window.toggleMaximize()}
     >
+      {left}
+      {/* 탭은 no-drag라 두 번 누르기가 여기까지 올라온다. 창 최대화로 번지지 않게 막는다.
+          오른쪽 40px는 탭이 많아도 늘 비워 둔다. 마지막 탭의 ×와 창 버튼이 붙어 잘못 누르지 않게(창 끌기 영역도 남는다) */}
       <div
-        className="titlebar-no-drag flex items-center gap-0.5 px-2"
+        className="flex min-w-0 flex-1 items-center pr-10"
         onDoubleClick={(e) => e.stopPropagation()}
       >
         {children}
       </div>
-      <div className="flex flex-1 items-center justify-center">
-        <span className="text-[11px] font-medium tracking-wide text-text-tertiary">MarkRoom</span>
-      </div>
+      {right && (
+        <div
+          className={`titlebar-no-drag flex items-center gap-0.5 ${isMac ? 'flex-row-reverse px-2' : ''}`}
+          onDoubleClick={(e) => e.stopPropagation()}
+        >
+          {right}
+          <span className="mx-2 h-4 w-px bg-border" />
+        </div>
+      )}
       {platform && (
         <div onDoubleClick={(e) => e.stopPropagation()}>
           <WindowControls />

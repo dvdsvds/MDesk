@@ -36,6 +36,7 @@ import { changeGutter } from './changeGutter'
 import { foldChevronGutter } from './foldGutter'
 import { listRenumber } from './listRenumber'
 import { cursorMetrics } from './cursorMetrics'
+import { gutterAlign } from './gutterAlign'
 import { koreanPhrases } from './findPhrases'
 import { vimImeGuard } from './vimIme'
 import { vimPointer } from './vimPointer'
@@ -112,6 +113,7 @@ function buildExtensions(
   const markdownLang = markdown({ base: markdownLanguage, codeLanguages: languages })
   return [
     cursorMetrics(),
+    gutterAlign(),
     koreanPhrases,
     vimCompartment.of(vimModeInitial ? [vim()] : []),
     changeGutter(baseContent, onChangeClick),
@@ -162,6 +164,7 @@ function buildCodeExtensions(
 ): Extension[] {
   return [
     cursorMetrics(),
+    gutterAlign(),
     koreanPhrases,
     vimCompartment.of(vimModeInitial ? [vim()] : []),
     changeGutter(baseContent, onChangeClick),
@@ -322,7 +325,16 @@ export const MarkdownEditor = forwardRef<MarkdownEditorHandle, MarkdownEditorPro
     const editorLineHeight = useSettingsStore((s) => s.editorLineHeight)
     const editorFontFamily = useSettingsStore((s) => s.editorFontFamily)
     useEffect(() => {
-      const id = requestAnimationFrame(() => viewRef.current?.requestMeasure())
+      // CodeMirror는 줄 높이(defaultLineHeight)를 재 두고 쓴다. requestMeasure만으로는 다시 재지 않아
+      // 줄 간격을 바꿔도 커서가 옛 높이로 남았다. 내용 크기를 다시 재라는 표시를 켜고 잰다
+      // (내부 값이지만 글꼴이 바뀔 때 CodeMirror 자신도 같은 방식으로 다시 잰다)
+      const id = requestAnimationFrame(() => {
+        const view = viewRef.current
+        if (!view) return
+        const state = (view as unknown as { viewState?: { mustMeasureContent?: boolean } }).viewState
+        if (state) state.mustMeasureContent = true
+        view.requestMeasure()
+      })
       return () => cancelAnimationFrame(id)
     }, [editorFontSize, editorLineHeight, editorFontFamily])
 

@@ -1,23 +1,21 @@
 import { useEffect, useRef, useState } from 'react'
-import ChevronIcon from '../icons/chevron.svg?react'
 import ChevronDownIcon from '../icons/tb-chevron-down.svg?react'
-import CloseIcon from '../icons/tb-close.svg?react'
-import { useSettingsStore } from '../stores/settingsStore'
 import { useNotePropsStore } from '../stores/notePropsStore'
 import {
   PROPERTY_COLORS,
-  PROPERTY_LABELS,
-  findOption,
-  type PropertyColor,
-  type PropertyKey,
-  type PropertyOption
+  STATUS_OPTIONS,
+  statusOf,
+  type PropertyColor
 } from '../utils/noteProperties'
+
+/** 값 목록을 여는 방향. 상태 표시줄은 화면 맨 아래라 위로, 탭에서 열 때는 아래로 */
+export type MenuDirection = 'up' | 'down'
 
 function Chip({ label, color }: { label: string; color: PropertyColor }): React.JSX.Element {
   const c = PROPERTY_COLORS[color]
   return (
     <span
-      className="flex h-[22px] w-full items-center justify-center rounded-md px-1 text-[12px] font-medium"
+      className="flex h-5 w-full items-center justify-center rounded-md px-1 text-[12px] font-medium"
       style={{ background: `${c}26`, color: c }}
     >
       {label}
@@ -25,23 +23,23 @@ function Chip({ label, color }: { label: string; color: PropertyColor }): React.
   )
 }
 
-function TagSelect({
-  propKey,
-  value,
-  options,
-  onChange,
-  clearable = true
+/** 노트 상태(대기·진행·보류·완료)를 고르는 칸. 정하지 않은 노트는 진행으로 보인다 */
+export function TagBar({
+  filePath,
+  menuDirection = 'up',
+  children
 }: {
-  propKey: PropertyKey
-  value: string | undefined
-  options: PropertyOption[]
-  onChange: (value: string | null) => void
-  clearable?: boolean
+  filePath: string
+  menuDirection?: MenuDirection
+  /** 상태 앞에 붙일 것 (데일리 노트 이동 버튼 등) */
+  children?: React.ReactNode
 }): React.JSX.Element {
+  const value = useNotePropsStore((s) => s.byPath[filePath]?.status)
+  const setProps = useNotePropsStore((s) => s.setProps)
   const [open, setOpen] = useState(false)
   const boxRef = useRef<HTMLDivElement>(null)
-  const current = value ? (options.find((o) => o.label === value) ?? null) : null
-  const chipColor = PROPERTY_COLORS[current?.color ?? 'gray']
+  const current = statusOf(value)
+  const chipColor = PROPERTY_COLORS[current.color]
 
   useEffect(() => {
     if (!open) return
@@ -62,115 +60,42 @@ function TagSelect({
     }
   }, [open])
 
-  const pick = (next: string | null): void => {
-    onChange(next)
+  const change = (next: string): void => {
+    setProps(filePath, { status: next })
     setOpen(false)
   }
 
   return (
-    <div ref={boxRef} className="relative flex items-center">
-      {value ? (
-        <span
-          className="flex h-[22px] items-center rounded-md text-[12px] font-medium"
-          style={{ background: `${chipColor}26`, color: chipColor }}
-        >
-          <button
-            type="button"
-            onClick={() => setOpen((v) => !v)}
-            title={PROPERTY_LABELS[propKey]}
-            className={`flex h-full items-center pl-2.5 outline-none ${clearable ? 'pr-0.5' : 'pr-2.5'}`}
-          >
-            {value}
-          </button>
-          {clearable && (
-            <button
-              type="button"
-              onClick={() => onChange(null)}
-              title={`${PROPERTY_LABELS[propKey]} 지우기`}
-              className="mr-1 flex h-4 w-4 items-center justify-center rounded opacity-60 outline-none transition-opacity hover:bg-black/10 hover:opacity-100"
-            >
-              <CloseIcon width={12} height={12} />
-            </button>
-          )}
-        </span>
-      ) : (
+    <div className="flex shrink-0 items-center gap-2">
+      {children}
+      <div ref={boxRef} className="relative flex items-center">
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
-          className="flex h-[22px] items-center gap-0.5 rounded-md border border-dashed border-border-strong pl-2 pr-1 text-[12px] text-text-tertiary outline-none transition-colors hover:bg-bg-mute hover:text-text-secondary"
+          title={`상태: ${current.label}`}
+          className="flex h-5 items-center gap-0.5 rounded-md pl-2.5 pr-1.5 text-[12px] font-medium outline-none"
+          style={{ background: `${chipColor}26`, color: chipColor }}
         >
-          {PROPERTY_LABELS[propKey]}
-          <ChevronDownIcon width={12} height={12} />
+          {current.label}
+          <ChevronDownIcon width={12} height={12} className="opacity-70" />
         </button>
-      )}
-      {open && (
-        <div className="absolute left-0 top-full z-50 mt-1 w-max min-w-full overflow-hidden rounded-lg border border-border bg-bg-elevated py-1 shadow-[0_8px_24px_rgba(0,0,0,0.25)]">
-          {options.map((o) => (
-            <button
-              key={o.label}
-              type="button"
-              onClick={() => pick(o.label)}
-              className="flex h-7 w-full items-center px-1 transition-opacity hover:opacity-80"
-            >
-              <Chip label={o.label} color={o.color} />
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  )
-}
-
-export function TagBar({
-  filePath,
-  children
-}: {
-  filePath: string
-  /** 오른쪽 끝에 붙일 것 (데일리 노트 이동 버튼 등) */
-  children?: React.ReactNode
-}): React.JSX.Element {
-  const options = useSettingsStore((s) => s.propertyOptions)
-  const noteProps = useNotePropsStore((s) => s.byPath[filePath])
-  const setProps = useNotePropsStore((s) => s.setProps)
-  const status = findOption(options, 'status', noteProps?.status)
-
-  return (
-    <div className="flex h-9 shrink-0 items-center gap-2 border-b border-border px-3">
-      <div className="flex items-center gap-1">
-        <TagSelect
-          propKey="status"
-          value={noteProps?.status}
-          options={options.status}
-          onChange={(value) => {
-            const next = findOption(options, 'status', value ?? undefined)
-            setProps(filePath, {
-              status: value,
-              substatus: next?.hasSubstatus
-                ? (noteProps?.substatus ?? options.substatus[0]?.label ?? null)
-                : null
-            })
-          }}
-        />
-        {status?.hasSubstatus && (
-          <ChevronIcon width={14} height={14} className="shrink-0 text-text-tertiary" />
-        )}
-        {status?.hasSubstatus && (
-          <TagSelect
-            propKey="substatus"
-            value={noteProps?.substatus}
-            options={options.substatus}
-            onChange={(value) => setProps(filePath, { substatus: value })}
-            clearable={false}
-          />
+        {open && (
+          <div
+            className={`absolute z-50 w-max min-w-full overflow-hidden rounded-lg border border-border bg-bg-elevated py-1 shadow-[0_8px_24px_rgba(0,0,0,0.25)] ${menuDirection === 'up' ? 'bottom-full right-0 mb-1' : 'left-0 top-full mt-1'}`}
+          >
+            {STATUS_OPTIONS.map((o) => (
+              <button
+                key={o.label}
+                type="button"
+                onClick={() => change(o.label)}
+                className="flex h-7 w-full items-center px-1 transition-opacity hover:opacity-80"
+              >
+                <Chip label={o.label} color={o.color} />
+              </button>
+            ))}
+          </div>
         )}
       </div>
-      <TagSelect
-        propKey="priority"
-        value={noteProps?.priority}
-        options={options.priority}
-        onChange={(value) => setProps(filePath, { priority: value })}
-      />
-      {children}
     </div>
   )
 }
