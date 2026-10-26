@@ -7,12 +7,15 @@
 }
 
 /* ───────── 프리뷰 본문 ───────── */
-.prose-preview :first-child {
+/* 표 편집 도구 막대(.tq-toolbar)가 숨겨진 채 맨 앞에 끼어 있을 때가 있다(처음 그릴 때).
+   그때도 실제 첫 요소의 위 여백이 0이 되게 막대 다음 요소도 같이 맞춘다 */
+.prose-preview :first-child,
+.prose-preview > .tq-toolbar:first-child + * {
   margin-top: 0;
 }
 .prose-preview {
   /* 글, 표, 코드, 이미지 모두 칸 너비를 따라간다. 스크롤바도 칸 맨 오른쪽에 붙는다 */
-  --preview-pad: calc(var(--spacing) * 6);
+  --preview-pad: calc(var(--spacing) * 10);
   font-family: var(--font-preview);
 }
 .prose-preview h1,

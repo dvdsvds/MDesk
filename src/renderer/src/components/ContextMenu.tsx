@@ -55,7 +55,7 @@ export function ContextMenu({ x, y, items, onClose }: ContextMenuProps): React.J
   return createPortal(
     <div
       ref={ref}
-      className="ctx-menu fixed z-[1100] w-52 rounded-xl border border-border bg-bg-elevated p-1.5 shadow-xl"
+      className="ctx-menu titlebar-no-drag fixed z-[1100] w-52 rounded-xl border border-border bg-bg-elevated p-1.5 shadow-xl"
       style={{ left: pos.left, top: pos.top }}
     >
       {items.map((item) => (

@@ -26,7 +26,10 @@ export const editorTheme = EditorView.theme({
   '.cm-lineNumbers .cm-gutterElement': {
     display: 'flex',
     alignItems: 'flex-start',
-    justifyContent: 'flex-end'
+    justifyContent: 'flex-end',
+    // 본문 글자와 높이를 맞추는 보정값(gutterAlign.ts가 계산)
+    position: 'relative',
+    top: 'var(--cm-gutter-shift, 0px)'
   },
   '&.cm-focused': { outline: 'none' }
 })

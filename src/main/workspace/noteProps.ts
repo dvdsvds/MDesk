@@ -12,8 +12,6 @@ interface PropsFile {
 
 const FRONT_MATTER_KEYS: Record<string, string> = {
   status: '상태',
-  substatus: '세부',
-  priority: '중요도',
   created: '만든 날짜'
 }
 

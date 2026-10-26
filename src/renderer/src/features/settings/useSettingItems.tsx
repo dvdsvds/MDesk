@@ -5,12 +5,10 @@ import { ShortcutRow } from './ShortcutRow'
 import { FileTypeIcon } from '../../components/FileTypeIcon'
 import { SHORTCUT_LABELS, type ShortcutAction } from '../../utils/shortcuts'
 import { ThemeToggle } from '../../components/ThemeToggle'
-import { Checkbox, INPUT, NumberField, Row, SubRow, Toggle } from './SettingsParts'
-import { PropertyOptionsEditor } from './PropertyOptionsEditor'
+import { INPUT, NumberField, Row, Toggle } from './SettingsParts'
 import { TrashSetting } from './TrashSetting'
 import { DailyNoteSetting } from './DailyNoteSetting'
 import { SnippetSetting } from './SnippetSetting'
-import { PROPERTY_LABELS } from '../../utils/noteProperties'
 
 const SHORTCUT_ACTIONS: ShortcutAction[] = [
   'newNote',
@@ -32,7 +30,7 @@ const SHORTCUT_ACTIONS: ShortcutAction[] = [
   'dailyNote'
 ]
 
-export const CATEGORIES = ['일반', '화면', '상태 표시줄', '태그', '단축키'] as const
+export const CATEGORIES = ['일반', '화면', '단축키'] as const
 export type Category = (typeof CATEGORIES)[number]
 
 export interface SettingItem {
@@ -58,16 +56,6 @@ export function useSettingItems(): SettingItem[] {
   const previewFontSize = useSettingsStore((s) => s.previewFontSize)
   const previewLineHeight = useSettingsStore((s) => s.previewLineHeight)
   const setPreviewFont = useSettingsStore((s) => s.setPreviewFont)
-  const showLineCol = useSettingsStore((s) => s.showLineCol)
-  const toggleShowLineCol = useSettingsStore((s) => s.toggleShowLineCol)
-  const showWordCount = useSettingsStore((s) => s.showWordCount)
-  const toggleShowWordCount = useSettingsStore((s) => s.toggleShowWordCount)
-  const showCharCount = useSettingsStore((s) => s.showCharCount)
-  const toggleShowCharCount = useSettingsStore((s) => s.toggleShowCharCount)
-  const charCountIncludeSpaces = useSettingsStore((s) => s.charCountIncludeSpaces)
-  const toggleCharCountIncludeSpaces = useSettingsStore((s) => s.toggleCharCountIncludeSpaces)
-  const charCountExcludeSpaces = useSettingsStore((s) => s.charCountExcludeSpaces)
-  const toggleCharCountExcludeSpaces = useSettingsStore((s) => s.toggleCharCountExcludeSpaces)
 
   const pushToast = useToastStore((s) => s.push)
   const [historyDir, setHistoryDir] = useState('')
@@ -297,65 +285,6 @@ export function useSettingItems(): SettingItem[] {
           </Row>
         )
       },
-      {
-        id: 'show-line-col',
-        category: '상태 표시줄',
-        label: '줄·열 위치',
-        render: () => (
-          <Row label="줄·열 위치">
-            <Toggle checked={showLineCol} onChange={toggleShowLineCol} />
-          </Row>
-        )
-      },
-      {
-        id: 'show-word-count',
-        category: '상태 표시줄',
-        label: '단어 수',
-        render: () => (
-          <Row label="단어 수">
-            <Toggle checked={showWordCount} onChange={toggleShowWordCount} />
-          </Row>
-        )
-      },
-      {
-        id: 'show-char-count',
-        category: '상태 표시줄',
-        label: '글자 수',
-        render: () => (
-          <div>
-            <Row label="글자 수">
-              <Toggle checked={showCharCount} onChange={toggleShowCharCount} />
-            </Row>
-            {showCharCount && (
-              <>
-                <SubRow>
-                  <Checkbox
-                    checked={charCountIncludeSpaces}
-                    onChange={toggleCharCountIncludeSpaces}
-                    label="공백 포함"
-                  />
-                </SubRow>
-                <SubRow>
-                  <Checkbox
-                    checked={charCountExcludeSpaces}
-                    onChange={toggleCharCountExcludeSpaces}
-                    label="공백 제외"
-                  />
-                </SubRow>
-              </>
-            )}
-          </div>
-        )
-      },
-      ...(['status', 'substatus', 'priority'] as const).map(
-        (key): SettingItem => ({
-          id: `property-${key}`,
-          category: '태그',
-          group: PROPERTY_LABELS[key],
-          label: `${PROPERTY_LABELS[key]} 값`,
-          render: () => <PropertyOptionsEditor propKey={key} />
-        })
-      ),
       ...SHORTCUT_ACTIONS.map(
         (action): SettingItem => ({
           id: `shortcut-${action}`,
@@ -380,16 +309,6 @@ export function useSettingItems(): SettingItem[] {
       previewFontSize,
       previewLineHeight,
       setPreviewFont,
-      showLineCol,
-      toggleShowLineCol,
-      showWordCount,
-      toggleShowWordCount,
-      showCharCount,
-      toggleShowCharCount,
-      charCountIncludeSpaces,
-      toggleCharCountIncludeSpaces,
-      charCountExcludeSpaces,
-      toggleCharCountExcludeSpaces,
       historyDir,
       handleChangeHistoryDir,
       handleResetHistoryDir

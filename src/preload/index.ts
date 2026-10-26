@@ -1,7 +1,7 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
 import type { TreeNode } from '../main/workspace/tree'
-import { openInDefaultApp } from '../main/workspace/fileOps'
+// import { openInDefaultApp } from '../main/workspace/fileOps'
 
 interface SaveNoteArgs {
   filePath: string | null

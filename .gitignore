@@ -21,3 +21,4 @@ src/renderer/public/pyodide/
 # OS
 .DS_Store
 Thumbs.db
+.claude

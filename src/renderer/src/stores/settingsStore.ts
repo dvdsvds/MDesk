@@ -1,53 +1,18 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { DEFAULT_SHORTCUTS, type ShortcutAction, type ShortcutMap } from '../utils/shortcuts'
-import {
-  DEFAULT_PROPERTY_OPTIONS,
-  type PropertyKey,
-  type PropertyOption,
-  type PropertyOptions
-} from '../utils/noteProperties'
 import { DAILY_TEMPLATE_ID, DEFAULT_TEMPLATES, type NoteTemplate } from '../utils/noteTemplate'
 import { DEFAULT_SNIPPETS, type CssSnippet } from '../utils/cssSnippets'
 
 const OLD_DAILY_CONTENT =
   '# {{date:YYYY년 M월 D일 dddd}}\n\n← [[{{yesterday}}]] · [[{{tomorrow}}]] →\n\n## 오늘 할 일\n\n- [ ] \n\n## 메모\n\n'
 
-interface SavedPropertyDef {
-  id: string
-  options?: { label: string; color: PropertyOption['color'] }[]
-  showWhen?: { prop: string; values: string[] }
-}
-
-/**
- * 되돌린 속성 확장 작업(설정 버전 5·6)이 저장한 propertyDefs를 예전 태그 값 목록으로 다시 옮긴다.
- * 설정에서 고친 상태·세부·중요도 값 이름과 색을 잃지 않으려는 것이다.
- */
-function restoreTagOptions(s: Record<string, unknown>): void {
-  const defs = s.propertyDefs as SavedPropertyDef[] | undefined
-  delete s.propertyDefs
-  if (!Array.isArray(defs)) return
-  const find = (id: string): SavedPropertyDef | undefined => defs.find((d) => d.id === id)
-  const sub = find('substatus')
-  const withSub = new Set(sub?.showWhen?.prop === 'status' ? sub.showWhen.values : ['진행'])
-  const options: Partial<PropertyOptions> = {}
-  const status = find('status')?.options
-  if (status) options.status = status.map((o) => ({ ...o, hasSubstatus: withSub.has(o.label) }))
-  if (sub?.options) options.substatus = sub.options.map((o) => ({ ...o }))
-  const priority = find('priority')?.options
-  if (priority) options.priority = priority.map((o) => ({ ...o }))
-  s.propertyOptions = options
-  // 태그 섹션 묶어 보기 기준이 새 속성이었으면 상태로 돌린다
-  if (s.tagGroupBy !== 'status' && s.tagGroupBy !== 'priority') s.tagGroupBy = 'status'
-}
-
 export type ThemePreference = 'system' | 'light' | 'dark'
-export type TagGroupBy = 'status' | 'priority'
 
 const OLD_EDITOR_FONT_FAMILY = "'IBM Plex Mono', 'D2Coding', Pretendard, monospace"
 const DEFAULT_EDITOR_FONT_FAMILY = "'Roboto Mono', Pretendard, monospace"
 const DEFAULT_EDITOR_FONT_SIZE = 13.5
-const DEFAULT_EDITOR_LINE_HEIGHT = 1.8
+const DEFAULT_EDITOR_LINE_HEIGHT = 1.4
 const DEFAULT_PREVIEW_FONT_FAMILY = 'Pretendard, sans-serif'
 
 interface SettingsState {
@@ -78,16 +43,6 @@ interface SettingsState {
   setUiZoom: (value: number) => void
   sidebarCollapsed: boolean
   setSidebarCollapsed: (value: boolean) => void
-  showLineCol: boolean
-  toggleShowLineCol: () => void
-  showWordCount: boolean
-  toggleShowWordCount: () => void
-  showCharCount: boolean
-  toggleShowCharCount: () => void
-  charCountIncludeSpaces: boolean
-  charCountExcludeSpaces: boolean
-  toggleCharCountIncludeSpaces: () => void
-  toggleCharCountExcludeSpaces: () => void
   filesSectionOpen: boolean
   setFilesSectionOpen: (value: boolean) => void
   tagsSectionOpen: boolean
@@ -108,12 +63,9 @@ interface SettingsState {
   saveSnippet: (snippet: CssSnippet) => void
   deleteSnippet: (id: string) => void
   toggleSnippet: (id: string) => void
-  tagGroupBy: TagGroupBy
-  setTagGroupBy: (value: TagGroupBy) => void
-  tagCollapsedGroups: Record<TagGroupBy, string[]>
-  toggleTagGroup: (groupBy: TagGroupBy, label: string) => void
-  propertyOptions: PropertyOptions
-  setPropertyOptions: (key: PropertyKey, options: PropertyOption[]) => void
+  /** 사이드바 태그 섹션에서 접어 둔 상태 값 */
+  tagCollapsedGroups: string[]
+  toggleTagGroup: (label: string) => void
   shortcuts: ShortcutMap
   setShortcut: (action: ShortcutAction, combo: string) => void
   resetShortcut: (action: ShortcutAction) => void
@@ -179,18 +131,6 @@ export const useSettingsStore = create<SettingsState>()(
         set({ uiZoom: Math.min(200, Math.max(50, Math.round(value / 10) * 10)) }),
       sidebarCollapsed: false,
       setSidebarCollapsed: (value) => set({ sidebarCollapsed: value}),
-      showLineCol: true,
-      toggleShowLineCol: () => set((state) => ({ showLineCol: !state.showLineCol })),
-      showWordCount: false,
-      toggleShowWordCount: () => set((state) => ({ showWordCount: !state.showWordCount })),
-      showCharCount: false,
-      toggleShowCharCount: () => set((state) => ({ showCharCount: !state.showCharCount })),
-      charCountIncludeSpaces: true,
-      charCountExcludeSpaces: true,
-      toggleCharCountIncludeSpaces: () =>
-        set((state) => ({ charCountIncludeSpaces: !state.charCountIncludeSpaces })),
-      toggleCharCountExcludeSpaces: () =>
-        set((state) => ({ charCountExcludeSpaces: !state.charCountExcludeSpaces })),
       filesSectionOpen: true,
       setFilesSectionOpen: (value) => set({ filesSectionOpen: value }),
       tagsSectionOpen: true,
@@ -238,20 +178,13 @@ export const useSettingsStore = create<SettingsState>()(
               : state.collapsedFolders.filter((p) => p !== path)
           }
         }),
-      tagGroupBy: 'status',
-      setTagGroupBy: (value) => set({ tagGroupBy: value }),
-      tagCollapsedGroups: { status: [], priority: [] },
-      toggleTagGroup: (groupBy, label) =>
-        set((state) => {
-          const current = state.tagCollapsedGroups[groupBy]
-          const next = current.includes(label)
-            ? current.filter((l) => l !== label)
-            : [...current, label]
-          return { tagCollapsedGroups: { ...state.tagCollapsedGroups, [groupBy]: next } }
-        }),
-      propertyOptions: DEFAULT_PROPERTY_OPTIONS,
-      setPropertyOptions: (key, options) =>
-        set((state) => ({ propertyOptions: { ...state.propertyOptions, [key]: options } })),
+      tagCollapsedGroups: [],
+      toggleTagGroup: (label) =>
+        set((state) => ({
+          tagCollapsedGroups: state.tagCollapsedGroups.includes(label)
+            ? state.tagCollapsedGroups.filter((l) => l !== label)
+            : [...state.tagCollapsedGroups, label]
+        })),
       shortcuts: DEFAULT_SHORTCUTS,
       setShortcut: (action, combo) =>
         set((state) => ({ shortcuts: { ...state.shortcuts, [action]: combo } })),
@@ -263,16 +196,14 @@ export const useSettingsStore = create<SettingsState>()(
     }),
     {
       name: 'markroom-settings',
-      // 5·6은 되돌린 속성 확장 작업이 쓰던 버전이라, 그 위인 7로 올려서 아래 migrate가 돌게 한다
-      version: 7,
+      // 5·6은 되돌린 속성 확장 작업이 쓰던 버전. 8부터 속성은 상태 하나(값 고정)뿐이다
+      version: 9,
       merge: (persisted, current) => {
         const p = (persisted ?? {}) as Partial<SettingsState>
         return {
           ...current,
           ...p,
           shortcuts: { ...DEFAULT_SHORTCUTS, ...(p.shortcuts ?? {}) },
-          tagCollapsedGroups: { ...current.tagCollapsedGroups, ...(p.tagCollapsedGroups ?? {}) },
-          propertyOptions: { ...DEFAULT_PROPERTY_OPTIONS, ...(p.propertyOptions ?? {})},
           // 사용자가 고치지 않은 예전 데일리 기본값(어제·내일 링크 줄 포함)은 새 기본값으로 바꾼다
           templates: (p.templates ?? current.templates).map((t) =>
             t.id === DAILY_TEMPLATE_ID && t.content === OLD_DAILY_CONTENT
@@ -300,11 +231,18 @@ export const useSettingsStore = create<SettingsState>()(
         if (version < 3) {
           s.showToolbar = false
         }
-        if (version < 4) {
-          delete s.propertyOptions
+        if (version < 8) {
+          // 세부·중요도와 값 목록 편집을 없앴다. 예전에 저장한 설정 값은 버린다
+          const old = s as Record<string, unknown>
+          delete old.propertyDefs
+          delete old.propertyOptions
+          delete old.tagGroupBy
+          const groups = old.tagCollapsedGroups as { status?: string[] } | undefined
+          s.tagCollapsedGroups = Array.isArray(groups?.status) ? groups.status : []
         }
-        if (version < 7) {
-          restoreTagOptions(s as Record<string, unknown>)
+        if (version < 9) {
+          // 에디터 줄 간격 기본값을 1.8에서 1.4로 낮췄다. 예전 기본값 그대로 쓰던 경우만 옮긴다
+          if (s.editorLineHeight === 1.8) s.editorLineHeight = DEFAULT_EDITOR_LINE_HEIGHT
         }
         return s as SettingsState
       }

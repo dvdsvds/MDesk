@@ -4,22 +4,19 @@ import type { TreeNode } from '../../types/workspace'
 import { FileTypeIcon } from '../../components/FileTypeIcon'
 import { splitName, fileNameOf } from '@renderer/utils/path'
 import ChevronIcon from '../../icons/chevron.svg?react'
-import { useSettingsStore, type TagGroupBy } from '../../stores/settingsStore'
+import { useSettingsStore } from '../../stores/settingsStore'
 import { useNotePropsStore } from '../../stores/notePropsStore'
-import {
-  PROPERTY_COLORS,
-  PROPERTY_LABELS,
-  findOption,
-  type NoteProps
-} from '../../utils/noteProperties'
+import { PROPERTY_COLORS, STATUS_OPTIONS, statusOf } from '../../utils/noteProperties'
+import { isMarkdownPath } from '../../utils/fileKind'
 
 const ROW_BASE =
   'flex h-7 w-full items-center gap-2 rounded-md pr-2 text-left text-[13px] text-text transition-colors hover:bg-bg-mute/60 focus:outline-none'
 
-function collectFiles(nodes: TreeNode[], out: Set<string>): Set<string> {
+function collectNotes(nodes: TreeNode[], out: string[]): string[] {
   for (const node of nodes) {
-    if (node.type === 'file') out.add(node.path)
-    else if (node.children) collectFiles(node.children, out)
+    if (node.type === 'file') {
+      if (isMarkdownPath(node.path)) out.push(node.path)
+    } else if (node.children) collectNotes(node.children, out)
   }
   return out
 }
@@ -33,36 +30,20 @@ export function TagSection({
   activeFilePath: string | null
   onOpenFile: (filePath: string) => void
 }): React.JSX.Element {
-  const options = useSettingsStore((s) => s.propertyOptions)
   const byPath = useNotePropsStore((s) => s.byPath)
-  const groupBy: TagGroupBy = useSettingsStore((s) => s.tagGroupBy)
-  const setGroupBy = useSettingsStore((s) => s.setTagGroupBy)
-  const collapsed = useSettingsStore((s) => s.tagCollapsedGroups[s.tagGroupBy])
+  const collapsed = useSettingsStore((s) => s.tagCollapsedGroups)
   const toggleTagGroup = useSettingsStore((s) => s.toggleTagGroup)
 
   const groups = useMemo(() => {
-    const existing = collectFiles(tree, new Set())
-    const notes = Object.entries(byPath)
-      .filter(([path, props]) => existing.has(path) && props[groupBy])
+    // 상태를 정하지 않은 노트는 진행으로 묶는다
+    const notes = collectNotes(tree, [])
+      .map((path) => [path, statusOf(byPath[path]?.status).label] as const)
       .sort(([a], [b]) => fileNameOf(a).localeCompare(fileNameOf(b)))
-    return options[groupBy]
-      .map((option) => ({
-        option,
-        notes: notes.filter(([, props]) => props[groupBy] === option.label)
-      }))
-      .filter((g) => g.notes.length > 0)
-  }, [tree, byPath, options, groupBy])
-
-  const metaOf = (props: NoteProps): { label: string; color: string }[] => {
-    const keys =
-      groupBy === 'status'
-        ? (['substatus', 'priority'] as const)
-        : (['status', 'substatus'] as const)
-    return keys.flatMap((key) => {
-      const option = findOption(options, key, props[key])
-      return option ? [{ label: option.label, color: PROPERTY_COLORS[option.color] }] : []
-    })
-  }
+    return STATUS_OPTIONS.map((option) => ({
+      option,
+      notes: notes.filter(([, status]) => status === option.label)
+    })).filter((g) => g.notes.length > 0)
+  }, [tree, byPath])
 
   return (
     <div
@@ -70,25 +51,9 @@ export function TagSection({
       onKeyDown={(e) => e.stopPropagation()}
       onDragOver={(e) => e.stopPropagation()}
     >
-      <div className="flex items-center gap-1 px-4 pb-1">
-        {(['status', 'priority'] as const).map((key) => (
-          <button
-            key={key}
-            type="button"
-            onClick={() => setGroupBy(key)}
-            className={`rounded px-1.5 py-0.5 text-[11px] transition-colors ${
-              groupBy === key
-                ? 'bg-bg-mute text-text'
-                : 'text-text-tertiary hover:text-text-secondary'
-            }`}
-          >
-            {PROPERTY_LABELS[key]}
-          </button>
-        ))}
-      </div>
       {groups.length === 0 && (
         <p className="px-4 py-2 text-[12px] text-text-tertiary">
-          태그바에서 {PROPERTY_LABELS[groupBy]}를 지정한 노트가 여기 모여요
+          탭의 점을 눌러 상태를 정한 노트가 여기 모여요
         </p>
       )}
       <div className="px-2">
@@ -98,7 +63,7 @@ export function TagSection({
             <div key={option.label}>
               <button
                 type="button"
-                onClick={() => toggleTagGroup(groupBy, option.label)}
+                onClick={() => toggleTagGroup(option.label)}
                 className={ROW_BASE}
                 style={{ paddingLeft: 8 }}
               >
@@ -122,7 +87,7 @@ export function TagSection({
                     transition={{ duration: 0.18, ease: [0.4, 0, 0.2, 1] }}
                     style={{ overflow: 'hidden' }}
                   >
-                    {notes.map(([path, props]) => (
+                    {notes.map(([path]) => (
                       <button
                         key={path}
                         type="button"
@@ -133,13 +98,6 @@ export function TagSection({
                       >
                         <FileTypeIcon name={fileNameOf(path)} kind="file" />
                         <span className="truncate">{splitName(fileNameOf(path)).base}</span>
-                        <span className="ml-auto flex shrink-0 items-center gap-1.5 text-[11px]">
-                          {metaOf(props).map((m) => (
-                            <span key={m.label} style={{ color: m.color }}>
-                              {m.label}
-                            </span>
-                          ))}
-                        </span>
                       </button>
                     ))}
                   </motion.div>

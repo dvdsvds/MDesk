@@ -7,7 +7,7 @@ import { TabBar } from './components/TabBar'
 import { SaveChangesDialog } from './components/SaveChangesDialog'
 import { useTabClose } from './hooks/useTabClose'
 import { useSidebarResize } from './hooks/useSidebarResize'
-import { useSplitResize, EDITOR_MIN_WIDTH } from './hooks/useSplitResize'
+import { useSplitResize, EDITOR_MIN_WIDTH, SPLIT_GAP } from './hooks/useSplitResize'
 import { restoreOpenTabs, usePersistOpenTabs } from './hooks/useOpenTabsPersistence'
 import { SearchPanel } from './components/SearchPanel'
 import { SettingsPanel } from './features/settings/SettingsPanel'
@@ -36,24 +36,27 @@ import { buildDailyContent, dailyNoteDate, dailyNotePath } from './utils/dailyNo
 import { DailyNav } from './components/DailyNav'
 import { applyTemplate, type NoteTemplate } from './utils/noteTemplate'
 import { getCurrentView } from './editor/currentView'
-import CalendarIcon from './icons/calendar.svg?react'
 import { extractToc } from './utils/toc'
-import SearchIcon from './icons/search.svg?react'
-import SettingsIcon from './icons/settings.svg?react'
-import TodoIcon from './icons/todo.svg?react'
-import BacklinksIcon from './icons/backlinks.svg?react'
 import SidebarIcon  from './icons/sidebar.svg?react'
-import GrpahIcon from './icons/graph.svg?react'
 import { readTextFile, fileKindOf, isMarkdownPath } from './utils/fileKind'
 import { FileViewer } from './components/FileViewer'
 import { EmptyState } from './components/EmptyState'
 import { StatusBar } from './components/StatusBar'
+import { ActivityBar, ACTIVITY_BAR_WIDTH } from './components/ActivityBar'
+import SearchIcon from './icons/search.svg?react'
 import { useWorkspaceEvents } from './hooks/useWorkspaceEvents'
 import { useGlobalShortcuts } from './hooks/useGlobalShortcuts'
 import { dirOf, fileNameOf, splitName, sepOf } from './utils/path'
 import { GraphDialog } from './components/GraphDialog'
 import { useNotePropsStore } from './stores/notePropsStore'
 import { TagBar } from './components/TagBar'
+import { EditorHeader } from './components/EditorHeader'
+import { tabLabel } from './utils/tabLabel'
+
+/** 본문 카드(에디터·미리보기·뷰어). 네 모서리가 둥글고 창 오른쪽 끝과도 4px 띄운다.
+ *  카드 상자는 overflow-clip을 쓴다. hidden이면 에디터의 scrollIntoView가 카드 상자까지 밀어 올려
+ *  미리보기 첫 줄 위 여백이 사라졌다(base.css의 #root와 같은 이유) */
+const CARD = 'rounded-xl border border-border bg-bg'
 
 const TITLE_BTN =
   'flex h-7 w-7 items-center justify-center rounded-md text-text-secondary transition-colors hover:bg-bg-mute hover:text-text'
@@ -660,74 +663,73 @@ function App(): React.JSX.Element {
 
   return (
     <div className="flex h-full flex-col bg-bg-soft text-text">
-      <TitleBar>
-        <button
-          type="button"
-          onClick={() => { 
-            setSidebarCollapsed(!sidebarCollapsed)
-          }}
-          title={`사이드바 ${sidebarCollapsed ? '펼치기' : '접기'} (Ctrl+Shift+E)`}
-          className={TITLE_BTN}
-        >
-          <SidebarIcon />
-        </button>
-        <button
-          type="button"
-          onClick={() => setSearchOpen(true)}
-          title="검색 (Ctrl+P)"
-          className={TITLE_BTN}
-        >
-          <SearchIcon />
-        </button>
-        <button
-          type="button"
-          onClick={() => setSettingsOpen((v) => !v)}
-          title="설정 (Ctrl+,)"
-          className={TITLE_BTN}
-        >
-          <SettingsIcon />
-        </button>
-        <button
-          type="button"
-          onClick={() => setTodoOpen((v) => !v)}
-          title="할 일 (Ctrl+Shift+T)"
-          className={TITLE_BTN}
-        >
-          <TodoIcon />
-        </button>
-        <button
-          type="button"
-          onClick={() => setBacklinksOpen((v) => !v)}
-          title="백링크 (Ctrl+Shift+B)"
-          className={TITLE_BTN}
-        >
-          <BacklinksIcon />
-        </button>
-        <button
-          type="button"
-          onClick={() => setGraphOpen((v) => !v)}
-          title="그래프 (Ctrl+Shift+G)"
-          className={TITLE_BTN}
-        >
-          <GrpahIcon />
-        </button>
-        <button
-          type="button"
-          onClick={() => void openDailyNote(new Date())}
-          title="오늘 데일리 노트 (Ctrl+Shift+D)"
-          className={TITLE_BTN}
-        >
-          <CalendarIcon />
-        </button>
+      <TitleBar
+        left={
+          // 아래 묶음(아이콘 줄 + 사이드바 + 오른쪽 테두리 1) + 본문 앞 틈 4와 같은 폭이라,
+          // 탭이 에디터 카드 왼쪽 끝에서 시작한다. 접기 버튼은 아이콘 줄 위 가운데, 검색창은 사이드바 바로 위에 같은 폭으로
+          <motion.div
+            className="flex shrink-0 items-center overflow-hidden"
+            initial={false}
+            animate={{ width: ACTIVITY_BAR_WIDTH + (sidebarCollapsed ? 0 : sidebar.width) + 1 + 4 }}
+            transition={{ duration: sidebar.resizing ? 0 : 0.2, ease: [0.4, 0, 0.2, 1] }}
+          >
+            <div className="flex shrink-0 justify-center" style={{ width: ACTIVITY_BAR_WIDTH }}>
+            <button
+              type="button"
+              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+              onDoubleClick={(e) => e.stopPropagation()}
+              title={`사이드바 ${sidebarCollapsed ? '펼치기' : '접기'} (Ctrl+Shift+E)`}
+              className={`titlebar-no-drag shrink-0 ${TITLE_BTN}`}
+            >
+              <SidebarIcon />
+            </button>
+            </div>
+            {!sidebarCollapsed && (
+              <button
+                type="button"
+                onClick={() => setSearchOpen(true)}
+                onDoubleClick={(e) => e.stopPropagation()}
+                title="검색 (Ctrl+P)"
+                style={{ width: sidebar.width }}
+                className="titlebar-no-drag flex h-6 shrink-0 items-center gap-1.5 rounded-md bg-bg-mute px-2 text-[12px] text-text-tertiary outline-none transition-colors hover:text-text-secondary"
+              >
+                <SearchIcon width={14} height={14} className="shrink-0" />
+                검색
+              </button>
+            )}
+          </motion.div>
+        }
+      >
+        <TabBar
+          tabs={tabs}
+          activeTabId={activeTabId}
+          onSelect={setActiveTab}
+          onClose={tabClose.requestClose}
+          onCloseAll={tabClose.closeAll}
+          onMissingClick={handleMissingTabClick}
+        />
       </TitleBar>
-      <main className="flex min-h-0 flex-1 pb-2 pr-2">
+      <main className="flex min-h-0 flex-1">
+        {/* 아이콘 줄과 사이드바를 한 테두리로 묶는다. 사이드바를 접으면 아이콘 줄만 남는다 */}
+        <div className="flex shrink-0 rounded-r-xl border-y border-r border-border">
+        <ActivityBar
+          onOpenSearch={() => setSearchOpen(true)}
+          onOpenDaily={() => void openDailyNote(new Date())}
+          onOpenTodo={() => setTodoOpen((v) => !v)}
+          onOpenBacklinks={() => setBacklinksOpen((v) => !v)}
+          onOpenGraph={() => setGraphOpen((v) => !v)}
+          onOpenSettings={() => setSettingsOpen((v) => !v)}
+        />
         <motion.div
           className="relative shrink-0"
           initial={false}
-          animate={{ width: sidebarCollapsed ? 8 : sidebar.width }}
+          animate={{ width: sidebarCollapsed ? 0 : sidebar.width }}
           transition={{ duration: sidebar.resizing ? 0 : 0.2, ease: [0.4, 0, 0.2, 1] }}
         >
-          <div className="h-full overflow-hidden" inert={sidebarCollapsed}>
+          <div
+            className={`h-full overflow-hidden ${sidebarCollapsed ? '' : 'border-l border-border'}`}
+            inert={sidebarCollapsed}
+          >
             <div className="h-full" style={{ width: sidebar.width }}>
               <Sidebar
                 ref={sidebarRef}
@@ -762,42 +764,37 @@ function App(): React.JSX.Element {
           </div>
         )}
       </motion.div>
-        <div className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-xl border border-border bg-bg">
-          <TabBar
-            tabs={tabs}
-            activeTabId={activeTabId}
-            onSelect={setActiveTab}
-            onClose={tabClose.requestClose}
-            onCloseAll={tabClose.closeAll}
-            onMissingClick={handleMissingTabClick}
-          />
-          {tagBarPath && (
-            <TagBar filePath={tagBarPath}>
-              {activeDailyDate && (
-                <DailyNav
-                  date={activeDailyDate}
-                  onOpenFile={handleOpenFile}
-                  onOpenToday={() => void openDailyNote(new Date())}
-                />
-              )}
-            </TagBar>
-          )}
+        </div>
+        {/* 본문은 카드로 그린다. 에디터와 미리보기는 각각 카드이고, 양옆에 4px 틈을 둔다 */}
+        <div className="mx-1 flex min-w-0 flex-1 flex-col">
           {activeTab && activeTab.kind !== 'text' && activeTab.filePath ? (
-            <FileViewer  key={activeTab.id} filePath={activeTab.filePath} kind={activeTab.kind}/>
+            <div className={`flex min-h-0 flex-1 flex-col overflow-clip ${CARD}`}>
+              <FileViewer key={activeTab.id} filePath={activeTab.filePath} kind={activeTab.kind} />
+            </div>
           ) : activeTab ? (
             <div className="flex min-h-0 flex-1 flex-col">
               <div ref={splitRef} className="flex min-h-0 flex-1">
                 <div
-                  className="flex min-w-0 shrink-0"
+                  className={`relative flex min-w-0 shrink-0 flex-col overflow-clip ${CARD}`}
                   style={
                     showPreview
                       ? {
-                          width: `min(${split.ratio * 100}%, calc(100% - ${previewMinWidth + 1}px))`,
+                          width: `min(${split.ratio * 100}%, calc(100% - ${previewMinWidth + SPLIT_GAP}px))`,
                           minWidth: EDITOR_MIN_WIDTH
                         }
                       : { width: '100%' }
                   }
                 >
+                  <EditorHeader
+                    filePath={activeTab.filePath}
+                    rootDir={rootDir}
+                    fallbackName={tabLabel(activeTab)}
+                    right={
+                      tagBarPath && (
+                        <TagBar filePath={tagBarPath} menuDirection="down" />
+                      )
+                    }
+                  />
                   <MarkdownEditor
                     ref={editorRef}
                     tabId={activeTab.id}
@@ -814,19 +811,38 @@ function App(): React.JSX.Element {
                     onVimModeChange={setVimModeLabel}
                     onCursorChange={handleCursorChange}
                     onScrollRatio={handleEditorScrollRatio}
-                    className="min-w-0 flex-1 overflow-auto"
+                    className="min-h-0 min-w-0 flex-1 overflow-auto"
                   />
+                  {vimMode && (
+                    <span className="pointer-events-none absolute bottom-2 right-3 rounded bg-bg-mute px-1.5 py-0.5 text-[10.5px] font-semibold tracking-wide text-accent">
+                      {vimModeLabel}
+                    </span>
+                  )}
                 </div>
                 {showPreview && (
-                  <div className="relative w-px shrink-0 bg-border">
-                    <div
-                      onMouseDown={split.onResizeStart}
-                      onDoubleClick={split.resetRatio}
-                      className={`absolute inset-y-0 -left-1 z-10 w-2 ${hasTemplate ? '' : 'cursor-col-resize'}`}
-                    />
-                  </div>
+                  <div
+                    onMouseDown={split.onResizeStart}
+                    onDoubleClick={split.resetRatio}
+                    style={{ width: SPLIT_GAP }}
+                    className={`shrink-0 ${hasTemplate ? '' : 'cursor-col-resize'}`}
+                  />
                 )}
                 {showPreview && (
+                  <div className={`flex min-w-0 flex-1 flex-col overflow-clip ${CARD}`}>
+                  {/* 에디터 머리 줄과 같은 높이·선 */}
+                  <div className="flex h-8 shrink-0 items-center border-b border-border pl-3 pr-2 text-[12px] text-text-tertiary">
+                    미리보기
+                    {/* 데일리 노트를 열었을 때만 이전·오늘·다음 이동 */}
+                    {activeDailyDate && (
+                      <div className="ml-auto">
+                        <DailyNav
+                          date={activeDailyDate}
+                          onOpenFile={handleOpenFile}
+                          onOpenToday={() => void openDailyNote(new Date())}
+                        />
+                      </div>
+                    )}
+                  </div>
                   <MarkdownPreview
                     ref={previewRef}
                     source={activeTab.content}
@@ -838,22 +854,21 @@ function App(): React.JSX.Element {
                     onReplaceSource={handleReplaceSource}
                     onMinWidthChange={setPreviewMinWidth}
                     onHasTemplateChange={setHasTemplate}
-                    className="min-w-0 flex-1 overflow-auto px-[var(--preview-pad)] pb-6 pt-3"
+                    className="min-h-0 flex-1 overflow-auto px-[var(--preview-pad)] pb-6 pt-7"
                     docKey={activeTab.id}
                   />
+                  </div>
                 )}
               </div>
             </div>
           ) : (
-            <EmptyState />
+            <div className={`flex min-h-0 flex-1 flex-col overflow-clip ${CARD}`}>
+              <EmptyState />
+            </div>
           )}
-          <StatusBar
-            tab={activeTab}
-            isViewer={isViewer}
-            vimModeLabel={vimModeLabel}
-          />
         </div>
       </main>
+      <StatusBar tab={activeTab} isViewer={isViewer} />
       <AnimatePresence>
         {searchOpen && (
           <SearchPanel
