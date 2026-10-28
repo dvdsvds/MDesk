@@ -54,7 +54,7 @@ export function CsvStatus(): React.JSX.Element | null {
   return (
     <>
       {status.delimiter && status.column !== null && (
-        <span className="truncate">
+        <span className="max-w-[260px] truncate" title={status.columnName ?? undefined}>
           {status.column}번째 컬럼
           {status.columnName && (
             <span className="ml-1" style={{ color: `var(--csv-c${colorIndex})` }}>
