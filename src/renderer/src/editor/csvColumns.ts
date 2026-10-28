@@ -44,6 +44,18 @@ export function delimiterLabel(delimiter: string | null): string {
       return '쉼표+공백'
     case ' ':
       return '공백'
+    case ',':
+      return '쉼표'
+    case ';':
+      return '세미콜론'
+    case '|':
+      return '파이프'
+    case '^':
+      return '캐럿'
+    case '~':
+      return '물결'
+    case ':':
+      return '콜론'
     default:
       return delimiter
   }
@@ -215,6 +227,11 @@ function buildDecorations(view: EditorView): DecorationSet {
       if (line.length > 0) {
         const marks = header && line.number === 1 ? headMarks : cellMarks
         const { cells, delimiters } = splitLine(line.text, delimiter)
+        // 구분자가 없는 줄은 칸이 하나뿐이라 색칠도 굵게도 하지 않는다
+        if (delimiters.length === 0) {
+          pos = line.to + 1
+          continue
+        }
         for (let i = 0; i < cells.length; i++) {
           const cell = cells[i]
           if (cell.to > cell.from) {
@@ -242,7 +259,8 @@ function statusOf(state: EditorState): CsvStatus {
   if (!delimiter) return { ...EMPTY_STATUS, active: true, delimiter, header }
   const head = state.selection.main.head
   const line = state.doc.lineAt(head)
-  const { cells } = splitLine(line.text, delimiter)
+  const { cells, delimiters } = splitLine(line.text, delimiter)
+  if (delimiters.length === 0) return { ...EMPTY_STATUS, active: true, delimiter, header }
   const offset = head - line.from
   let index = cells.findIndex((c) => offset <= c.to)
   if (index === -1) index = cells.length - 1
