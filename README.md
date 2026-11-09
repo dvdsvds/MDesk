@@ -1,4 +1,4 @@
-# MarkRoom
+# Mdesk
 
 마크다운(.md) 파일 기반의 데스크톱 편집기입니다.
 
@@ -26,22 +26,22 @@
 
 ## 설치
 
-[Releases](https://github.com/dvdsvds/markroom/releases)의 최신 버전에서 **운영체제에 맞는 파일 하나만** 받으면 됩니다.
+[Releases](https://github.com/dvdsvds/MDesk/releases)의 최신 버전에서 **운영체제에 맞는 파일 하나만** 받으면 됩니다.
 
 ### Windows
 
-1. `markroom-x.y.z-setup.exe`를 받습니다
+1. `mdesk-x.y.z-setup.exe`를 받습니다
 2. 실행해서 설치합니다
 3. "Windows의 PC 보호" 창이 뜨면 **추가 정보 → 실행**을 누릅니다
 
 ### macOS (Apple Silicon)
 
-1. `markroom-x.y.z.dmg`를 받습니다
-2. 열어서 MarkRoom을 **응용 프로그램** 폴더로 끌어 놓습니다
+1. `mdesk-x.y.z.dmg`를 받습니다
+2. 열어서 Mdesk을 **응용 프로그램** 폴더로 끌어 놓습니다
 3. 처음 실행할 때 "확인되지 않은 개발자" 경고가 뜨면, 터미널에서 아래를 실행한 뒤 다시 엽니다
 
 ```bash
-xattr -cr /Applications/MarkRoom.app
+xattr -cr /Applications/Mdesk.app
 ```
 
 ### Linux (x86_64)
@@ -49,14 +49,14 @@ xattr -cr /Applications/MarkRoom.app
 **AppImage**
 
 ```bash
-chmod u+x markroom-x.y.z.AppImage
-./markroom-x.y.z.AppImage
+chmod u+x mdesk-x.y.z.AppImage
+./mdesk-x.y.z.AppImage
 ```
 
 **deb (Ubuntu, Debian)**
 
 ```bash
-sudo apt install ./markroom_x.y.z_amd64.deb
+sudo apt install ./mdesk_x.y.z_amd64.deb
 ```
 
 ### 그 외 파일
@@ -76,12 +76,12 @@ sudo apt install ./markroom_x.y.z_amd64.deb
 
 ## 시작하기
 
-1. 처음 실행하면 문서 폴더 아래에 MarkRoom 전용 폴더가 만들어지고, 그 폴더가 작업 폴더가 됩니다. 위치는 설정에서 바꿀 수 있습니다
+1. 처음 실행하면 문서 폴더 아래에 Mdesk 전용 폴더가 만들어지고, 그 폴더가 작업 폴더가 됩니다. 위치는 설정에서 바꿀 수 있습니다
 2. 왼쪽 사이드바에서 **새 파일**(또는 `Ctrl+N`)을 누르고 이름을 입력하면 파일이 생깁니다
 3. 왼쪽에 쓰면 오른쪽에 바로 미리보기가 나옵니다
 4. 입력을 멈추면 자동으로 저장됩니다. `Ctrl+S`로 바로 저장할 수도 있습니다
 
-작업 폴더는 평범한 폴더라서, 탐색기나 다른 편집기로 파일을 고쳐도 MarkRoom에 바로 반영됩니다.
+작업 폴더는 평범한 폴더라서, 탐색기나 다른 편집기로 파일을 고쳐도 Mdesk에 바로 반영됩니다.
 
 ---
 
@@ -107,7 +107,7 @@ sudo apt install ./markroom_x.y.z_amd64.deb
 - 실제 폴더 구조 그대로, 하위 폴더 제한 없음
 - 여러 파일을 탭으로 열기, 앱을 다시 켜면 탭 복원
 - 비정상 종료 후 저장 못 한 내용 복구
-- 삭제하면 작업 폴더의 `.markroom/trash`로 이동하고 30일 뒤 지워집니다. 사이드바에서 `Ctrl+Z`로 되돌릴 수 있습니다
+- 삭제하면 작업 폴더의 `.mdesk/trash`로 이동하고 30일 뒤 지워집니다. 사이드바에서 `Ctrl+Z`로 되돌릴 수 있습니다
 - 빠른 검색(`Ctrl+P`)과 본문 전체 검색
 
 ### 링크
@@ -239,11 +239,11 @@ print(sum(range(10)))
 
 **내 파일은 어디에 있나요?**
 
-작업 폴더(처음에는 문서 폴더 아래 MarkRoom 폴더)에 평범한 `.md` 파일로 있습니다. 앱을 지워도 파일은 그대로 남습니다.
+작업 폴더(처음에는 문서 폴더 아래 Mdesk 폴더)에 평범한 `.md` 파일로 있습니다. 앱을 지워도 파일은 그대로 남습니다.
 
 **다른 편집기와 같이 써도 되나요?**
 
-됩니다. 밖에서 고친 내용은 자동으로 반영되고, MarkRoom에서 저장 안 한 내용이 있을 때는 차이를 보여 주고 고르게 합니다.
+됩니다. 밖에서 고친 내용은 자동으로 반영되고, Mdesk에서 저장 안 한 내용이 있을 때는 차이를 보여 주고 고르게 합니다.
 
 **macOS에서 업데이트 알림이 안 와요**
 
@@ -256,8 +256,8 @@ print(sum(range(10)))
 필요한 것: Node.js 20 이상, npm
 
 ```bash
-git clone https://github.com/dvdsvds/markroom.git
-cd markroom
+git clone https://github.com/dvdsvds/MDesk.git
+cd MDesk
 npm install          # 의존성 설치, 패치 적용, Pyodide 복사
 npm run dev          # 개발 모드 실행
 ```
@@ -278,7 +278,7 @@ npm run build:linux  # Linux
 
 ## 피드백
 
-혼자 쓰려고 만들다가 공개한 프로그램이라, 디자인이나 사용성에 대한 의견이 큰 도움이 됩니다. 버그나 의견은 [Issues](https://github.com/dvdsvds/markroom/issues)에 남겨 주세요.
+혼자 쓰려고 만들다가 공개한 프로그램이라, 디자인이나 사용성에 대한 의견이 큰 도움이 됩니다. 버그나 의견은 [Issues](https://github.com/dvdsvds/MDesk/issues)에 남겨 주세요.
 
 ---
 

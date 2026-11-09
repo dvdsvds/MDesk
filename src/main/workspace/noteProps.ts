@@ -18,7 +18,7 @@ const FRONT_MATTER_KEYS: Record<string, string> = {
 let cache: { root: string; data: PropsFile } | null = null
 
 function storePath(root: string): string {
-  return join(root, '.markroom', 'properties.json')
+  return join(root, '.mdesk', 'properties.json')
 }
 
 function load(): PropsFile {
@@ -76,7 +76,7 @@ function dayOf(date: Date): string {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
 }
 
-/** MarkRoom에서 노트를 만들 때 그날을 생성 날짜로 기록한다 */
+/** Mdesk에서 노트를 만들 때 그날을 생성 날짜로 기록한다 */
 export function recordCreated(filePath: string, date = new Date()): void {
   const data = load()
   const key = keyOf(filePath)

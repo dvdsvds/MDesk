@@ -250,7 +250,7 @@ const api = {
   }
 }
 
-export type MarkRoomApi = typeof api
+export type MdeskApi = typeof api
 
 if (process.contextIsolated) {
   try {

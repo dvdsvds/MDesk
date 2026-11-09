@@ -119,7 +119,7 @@ function createWindow(): void {
 
 app.whenReady().then(() => {
   if (!gotInstanceLock) return
-  electronApp.setAppUserModelId('com.markroom.app')
+  electronApp.setAppUserModelId('com.mdesk.app')
 
   app.on('browser-window-created', (_, window) => {
     optimizer.watchWindowShortcuts(window)

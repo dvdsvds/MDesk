@@ -67,7 +67,7 @@ interface HistoryEntry {
   size: number
 }
 
-export interface MarkRoomApi {
+export interface MdeskApi {
   app: {
     getChangelog: () => Promise<string | null>
   }
@@ -174,6 +174,6 @@ export interface MarkRoomApi {
 declare global {
   interface Window {
     electron: ElectronAPI
-    api: MarkRoomApi
+    api: MdeskApi
   }
 }

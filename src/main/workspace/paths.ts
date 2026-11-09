@@ -13,7 +13,7 @@ function configPath(): string {
 }
 
 function defaultRootDir(): string {
-  return join(app.getPath('userData'), 'MarkRoom')
+  return join(app.getPath('userData'), 'Mdesk')
 }
 
 function readConfig(): Partial<Config> | null {

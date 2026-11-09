@@ -18,7 +18,7 @@ export function EmptyState(): React.JSX.Element {
       transition={{ duration: 0.25, ease: 'easeOut' }}
     >
       <div className="text-center">
-        <div className="text-[15px] font-medium tracking-tight text-text-secondary">MarkRoom</div>
+        <div className="text-[15px] font-medium tracking-tight text-text-secondary">Mdesk</div>
       </div>
       <dl className="grid grid-cols-[auto_auto] items-center gap-x-8 gap-y-2.5 text-xs">
         {EMPTY_HINTS.map((h) => (

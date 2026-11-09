@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 import { useSettingsStore } from './settingsStore'
 import { useSnippetPreview } from '../utils/cssSnippets'
 
-const STYLE_ID = 'markroom-css-snippets'
+const STYLE_ID = 'mdesk-css-snippets'
 
 /**
  * 켜진 CSS 스니펫을 <head> 맨 끝의 <style> 하나에 넣는다. 기본 CSS보다 뒤라 덮어쓸 수 있다.

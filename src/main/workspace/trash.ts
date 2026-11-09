@@ -23,7 +23,7 @@ interface TrashEntry {
   props: Record<string, NoteProps>
 }
 
-const trashDir = (): string => join(getRootDir(), '.markroom', 'trash')
+const trashDir = (): string => join(getRootDir(), '.mdesk', 'trash')
 const indexPath = (): string => join(trashDir(), 'index.json')
 
 function loadIndex(): TrashEntry[] {
