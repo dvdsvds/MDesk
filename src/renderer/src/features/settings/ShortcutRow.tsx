@@ -45,8 +45,8 @@ export function ShortcutRow({ action }: ShortcutRowProps): React.JSX.Element {
   }, [capturing, shortcuts, action, setShortcut])
 
   return (
-    <div className="flex items-center justify-between gap-2 py-2">
-      <span className="text-[13px] text-text">{SHORTCUT_LABELS[action]}</span>
+    <div className="flex min-h-11 items-center justify-between gap-4 px-3.5">
+      <span className="text-[13.5px] text-text">{SHORTCUT_LABELS[action]}</span>
       <div className="flex items-center gap-1">
         {conflictMessage && <span className="text-xs text-danger">{conflictMessage}</span>}
         <button
