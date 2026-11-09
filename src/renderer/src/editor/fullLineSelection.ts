@@ -1,11 +1,18 @@
+import { EditorSelection } from '@codemirror/state'
 import { layer, RectangleMarker, type EditorView } from '@codemirror/view'
+import { visualChar } from './selectionPerLine'
 
 const CLS = 'cm-fullSel'
 
 function markers(view: EditorView): RectangleMarker[] {
   const out: RectangleMarker[] = []
   const lh = view.defaultLineHeight
-  for (const r of view.state.selection.ranges) {
+  // vim visual(글자) 모드는 vim이 가진 선택 구간으로 칠한다(문서 선택과 한 칸 어긋나기 때문)
+  const vis = visualChar(view)
+  const ranges = vis
+    ? vis.segs.map((g) => EditorSelection.range(g.from, g.to))
+    : view.state.selection.ranges
+  for (const r of ranges) {
     if (r.empty) continue
     const probe = view.coordsAtPos(r.from, 1) ?? view.coordsAtPos(r.from, -1)
     const glyph = probe ? probe.bottom - probe.top : lh

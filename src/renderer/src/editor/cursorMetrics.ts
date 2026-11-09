@@ -26,7 +26,11 @@ export function cursorMetrics(): Extension {
             let chS = lineHs
             if (c && el) {
               const lr = el.getBoundingClientRect()
-              topS = Math.max(0, (((c.top - lr.top) % lineHs) + lineHs) % lineHs)
+              // 글자 상자는 줄 칸보다 크거나 작을 수 있어 줄 윗면과의 차이가 음수일 수 있다.
+              // 나머지(%)로 구하면 음수가 줄 높이에 가깝게 바뀌어 커서가 한 줄 위로 올라가므로
+              // 가장 가까운 줄 윗면을 기준으로 부호 있는 차이를 쓴다
+              const row = Math.round((c.top - lr.top) / lineHs)
+              topS = c.top - (lr.top + row * lineHs)
               chS = c.bottom - c.top
             }
             return { lineHs, lineH, topS, chS, sy }
