@@ -10,7 +10,6 @@ import {
 import { getCM } from '@replit/codemirror-vim'
 
 const lineDeco = Decoration.line({ class: 'cm-sel-line' })
-const charDeco = Decoration.mark({ class: 'cm-vsel' })
 
 class NewlineCell extends WidgetType {
   toDOM(): HTMLElement {
@@ -42,15 +41,21 @@ function toIndex(doc: Text, p: VPos): number {
   return l.from + Math.min(Math.max(p.ch, 0), l.length)
 }
 
-function buildChar(view: EditorView, sel: NonNullable<VimState['sel']>): DecorationSet {
+export type VisualChar = { segs: { from: number; to: number }[]; cells: number[] }
+
+/** vim visual(글자) 모드에서 칠할 줄별 구간과, 줄바꿈 칸을 그릴 위치. visual 글자 모드가 아니면 null */
+export function visualChar(view: EditorView): VisualChar | null {
+  const vim = getCM(view)?.state.vim as unknown as VimState | undefined
+  if (!vim?.visualMode || vim.visualLine || vim.visualBlock || !vim.sel) return null
   const doc = view.state.doc
-  const a = toIndex(doc, sel.anchor)
-  const h = toIndex(doc, sel.head)
+  const a = toIndex(doc, vim.sel.anchor)
+  const h = toIndex(doc, vim.sel.head)
   const from = Math.min(a, h)
   const last = Math.max(a, h)
   const firstLine = doc.lineAt(from).number
   const lastLine = doc.lineAt(last).number
-  const b = new RangeSetBuilder<Decoration>()
+  const segs: VisualChar['segs'] = []
+  const cells: number[] = []
   for (let n = firstLine; n <= lastLine; n++) {
     const l = doc.line(n)
     const start = Math.max(from, l.from)
@@ -67,9 +72,15 @@ function buildChar(view: EditorView, sel: NonNullable<VimState['sel']>): Decorat
       end = last + (cp > 0xffff ? 2 : 1)
       cell = false
     }
-    if (end > start) b.add(start, end, charDeco)
-    if (cell || (l.length === 0 && n < lastLine)) b.add(l.to, l.to, newlineDeco)
+    if (end > start) segs.push({ from: start, to: end })
+    if (cell || (l.length === 0 && n < lastLine)) cells.push(l.to)
   }
+  return { segs, cells }
+}
+
+function buildChar(view: EditorView): DecorationSet {
+  const b = new RangeSetBuilder<Decoration>()
+  for (const pos of visualChar(view)?.cells ?? []) b.add(pos, pos, newlineDeco)
   return b.finish()
 }
 
@@ -110,7 +121,7 @@ export const selectionPerLine = ViewPlugin.fromClass(
       const inVisual = !!vim?.visualMode
       const charMode = inVisual && !vim?.visualLine && !vim?.visualBlock && !!vim?.sel
       this.dom.classList.toggle('cm-vim-v', charMode)
-      if (charMode) return buildChar(view, vim!.sel!)
+      if (charMode) return buildChar(view)
       if (inVisual && !vim?.visualLine) return Decoration.none
       return inVisual ? buildLines(view, true) : Decoration.none
     }

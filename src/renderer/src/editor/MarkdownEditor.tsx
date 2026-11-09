@@ -170,6 +170,7 @@ function buildCodeExtensions(
     changeGutter(baseContent, onChangeClick),
     search({ top: true, createPanel: createFindPanel }),
     basicSetup,
+    foldChevronGutter(),
     drawSelection({ cursorBlinkRate: 0 }),
     fullLineSelection,
     history(),

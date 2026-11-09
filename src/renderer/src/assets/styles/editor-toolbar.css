@@ -159,7 +159,6 @@
 .cm-fullSel {
   background: color-mix(in srgb, var(--color-accent) 28%, transparent);
 }
-.cm-editor.cm-vim-v .cm-fullSel,
 .cm-editor:has(.cm-sel-line) .cm-fullSel {
   background: transparent;
 }
@@ -175,6 +174,10 @@
   background: transparent !important;
 }
 .cm-vsel {
+  /* visual 모드 줄바꿈 칸: 한 줄 높이로 고정 */
+  display: inline-block;
+  vertical-align: top;
+  width: 1ch;
+  height: calc(1em * var(--editor-line-height));
   background: color-mix(in srgb, var(--color-accent) 28%, transparent);
-  padding: 0.2286em 0;
 }
