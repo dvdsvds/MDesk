@@ -10,6 +10,12 @@ interface ChangelogDialogProps {
  * 버튼, Esc, 바깥 클릭 아무걸로나 닫힌다.
  */
 export function ChangelogDialog({ content, onClose }: ChangelogDialogProps): React.JSX.Element {
+  // 변경 내역은 줄마다 "- 항목" 형식이다. 앞의 기호를 떼고 목록으로 그린다
+  const items = content
+    .split(/\r?\n/)
+    .map((line) => line.replace(/^\s*[-*]\s+/, '').trim())
+    .filter(Boolean)
+
   useEffect(() => {
     const handler = (e: KeyboardEvent): void => {
       if (e.key === 'Escape') onClose()
@@ -37,9 +43,11 @@ export function ChangelogDialog({ content, onClose }: ChangelogDialogProps): Rea
             ✕
           </button>
         </div>
-        <p className="mt-3 whitespace-pre-wrap text-[13px] leading-relaxed text-text-secondary">
-          {content}
-        </p>
+        <ul className="mt-3 list-disc space-y-1 pl-4 text-[13px] leading-relaxed text-text-secondary marker:text-text-tertiary">
+          {items.map((item, i) => (
+            <li key={i}>{item}</li>
+          ))}
+        </ul>
         <div className="mt-5 flex justify-end">
           <button
             type="button"
