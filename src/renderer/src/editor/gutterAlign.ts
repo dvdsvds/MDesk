@@ -33,7 +33,7 @@ export function gutterAlign(): Extension {
       sync(view: EditorView): void {
         view.requestMeasure({
           read: () => {
-            const line = view.contentDOM.querySelector('.cm-line:not(.cm-heading)')
+            const line = view.contentDOM.querySelector('.cm-line')
             const num = view.dom.querySelector('.cm-lineNumbers .cm-gutterElement')
             if (!line || !num) return null
             const lineHeight = view.defaultLineHeight

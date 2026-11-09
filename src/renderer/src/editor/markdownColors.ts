@@ -36,6 +36,7 @@ const symbolDecos: Record<string, Decoration> = {
   StrongMark: markDeco('var(--color-syntax-strong)'),
   EmMark: markDeco('var(--color-syntax-em)'),
   CodeMark: markDeco('var(--color-syntax-fence)'),
+  InlineCodeMark: markDeco('var(--color-text)'),
   TaskMarker: markDeco('var(--color-syntax-task)'),
   StrikethroughMark: markDeco('var(--color-text-tertiary)'),
   Link: markDeco('var(--color-accent)'),
@@ -56,6 +57,8 @@ function buildSymbolDecos(view: EditorView): DecorationSet {
         } else if (key === 'EmphasisMark') {
           key = node.node.parent?.name === 'StrongEmphasis' ? 'StrongMark' : 'EmMark'
         }
+        // 인라인 코드의 백틱은 일반 글자와 같은 색(안의 글자만 코드 색). 코드 블록 울타리는 그대로
+        if (key === 'CodeMark' && node.node.parent?.name === 'InlineCode') key = 'InlineCodeMark'
         const deco = symbolDecos[key]
         if (deco) builder.add(node.from, node.to, deco)
       }

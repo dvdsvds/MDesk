@@ -2,39 +2,24 @@ import { foldable, foldedRanges, foldEffect, unfoldEffect } from '@codemirror/la
 import { EditorSelection, type EditorState, type Extension } from '@codemirror/state'
 import { EditorView, GutterMarker, gutter } from '@codemirror/view'
 import chevronSvg from '../icons/chevron.svg?raw'
-import { headingScaleOfText } from './markdownStyle'
 
 class FoldChevron extends GutterMarker {
-  constructor(
-    readonly folded: boolean,
-    readonly scale = 1
-  ) {
+  constructor(readonly folded: boolean) {
     super()
   }
   eq(other: GutterMarker): boolean {
-    return (
-      other instanceof FoldChevron && other.folded === this.folded && other.scale === this.scale
-    )
+    return other instanceof FoldChevron && other.folded === this.folded
   }
   toDOM(): HTMLElement {
     const el = document.createElement('span')
     el.className = `cm-snote-chevron${this.folded ? ' folded' : ''}`
-    // 제목 줄은 줄 높이가 커지므로 화살표 칸도 그만큼 키워 첫 줄 가운데에 맞춘다
-    if (this.scale !== 1)
-      el.style.height = `calc(var(--editor-font-size) * var(--editor-line-height) * ${this.scale})`
     el.innerHTML = chevronSvg
     return el
   }
 }
 
-const chevrons = new Map<string, FoldChevron>()
-function chevron(folded: boolean, scale: number): FoldChevron {
-  const key = `${folded}:${scale}`
-  let c = chevrons.get(key)
-  if (!c) chevrons.set(key, (c = new FoldChevron(folded, scale)))
-  return c
-}
-const chevronOpen = chevron(false, 1)
+const chevronOpen = new FoldChevron(false)
+const chevronFolded = new FoldChevron(true)
 
 function foldedAt(
   state: EditorState,
@@ -53,12 +38,8 @@ function foldedAt(
 }
 
 /** 줄 높이가 한 줄의 1.5배 이상이면 줄바꿈으로 여러 줄이 된 줄이다 (레이아웃을 읽지 않고 줄 정보의 높이만 본다) */
-function isWrapped(
-  view: EditorView,
-  line: { from: number; to: number; height: number },
-  scale: number
-): boolean {
-  return line.to > line.from && line.height >= view.defaultLineHeight * scale * 1.5
+function isWrapped(view: EditorView, line: { from: number; to: number; height: number }): boolean {
+  return line.to > line.from && line.height >= view.defaultLineHeight * 1.5
 }
 
 /** 줄바꿈된 줄에서 첫 줄 끝부터 줄 끝까지를 접을 구간으로 돌려준다 (클릭할 때만 호출) */
@@ -103,13 +84,10 @@ export function foldChevronGutter(): Extension {
     gutter({
       class: 'cm-snote-fold',
       lineMarker(view, line) {
-        const scale = headingScaleOfText(
-          view.state.doc.sliceString(line.from, Math.min(line.to, line.from + 8))
-        )
-        if (foldedAt(view.state, line.from, line.to)) return chevron(true, scale)
-        if (foldable(view.state, line.from, line.to)) return chevron(false, scale)
-        return isWrapped(view, { from: line.from, to: line.to, height: line.height }, scale)
-          ? chevron(false, scale)
+        if (foldedAt(view.state, line.from, line.to)) return chevronFolded
+        if (foldable(view.state, line.from, line.to)) return chevronOpen
+        return isWrapped(view, { from: line.from, to: line.to, height: line.height })
+          ? chevronOpen
           : null
       },
       lineMarkerChange: (u) =>

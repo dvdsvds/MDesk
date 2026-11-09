@@ -1,3 +1,4 @@
+import { syntaxTree } from '@codemirror/language'
 import { EditorView } from '@codemirror/view'
 import type { Extension } from '@codemirror/state'
 
@@ -13,10 +14,35 @@ const WRAP_ONLY: Record<string, string> = {
 }
 const DOUBLING = new Set(['*', '~'])
 
+/** 백틱을 칠 때 짝을 자동으로 닫을지: 이미 닫는 백틱 앞이면 건너뛰고, 코드 블록 안이나 ``` 입력 중이면 그냥 입력 */
+function backtickAction(view: EditorView, pos: number): 'skip' | 'pair' | 'plain' {
+  const state = view.state
+  const next = state.sliceDoc(pos, pos + 1)
+  const prev = state.sliceDoc(pos - 1, pos)
+  if (next === '`') return 'skip'
+  if (prev === '`') return 'plain'
+  for (let n = syntaxTree(state).resolveInner(pos, -1); n.parent; n = n.parent) {
+    if (n.name === 'FencedCode' || n.name === 'CodeBlock') return 'plain'
+  }
+  return next === '' || /[\s)\]}.,;:!?]/.test(next) ? 'pair' : 'plain'
+}
+
 export function editingAssist(): Extension {
   return EditorView.inputHandler.of((view, from, to, insertedText) => {
     const hasSelection = from !== to
     const state = view.state
+
+    if (insertedText === '`' && !hasSelection) {
+      const action = backtickAction(view, from)
+      if (action === 'skip') {
+        view.dispatch({ selection: { anchor: from + 1 } })
+        return true
+      }
+      if (action === 'pair') {
+        view.dispatch({ changes: { from, insert: '``' }, selection: { anchor: from + 1 } })
+        return true
+      }
+    }
 
     if (Object.prototype.hasOwnProperty.call(AUTO_PAIRS, insertedText)) {
       const close = AUTO_PAIRS[insertedText]
