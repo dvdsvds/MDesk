@@ -1,6 +1,6 @@
 import { syntaxTree } from '@codemirror/language'
 import { EditorView } from '@codemirror/view'
-import type { Extension } from '@codemirror/state'
+import type { EditorState, Extension } from '@codemirror/state'
 
 const AUTO_PAIRS: Record<string, string> = { '(': ')', '[': ']', '{': '}' }
 const CLOSERS = new Set(Object.values(AUTO_PAIRS))
@@ -14,6 +14,24 @@ const WRAP_ONLY: Record<string, string> = {
 }
 const DOUBLING = new Set(['*', '~'])
 
+const CODE_NODES = new Set(['FencedCode', 'CodeBlock', 'InlineCode', 'CommentBlock', 'Comment'])
+
+/** 코드 블록, 인라인 코드, 주석 안인지 (이 안에서는 글자를 바꾸지 않는다) */
+function inCode(state: EditorState, pos: number): boolean {
+  for (let n = syntaxTree(state).resolveInner(pos, -1); n.parent; n = n.parent) {
+    if (CODE_NODES.has(n.name)) return true
+  }
+  return false
+}
+
+/** `-` 뒤에 `>`를 쳐서 `->`가 되는 자리인지. `-->`, `<->`나 코드 안이면 아니다 */
+function isArrowSpot(state: EditorState, pos: number): boolean {
+  if (state.sliceDoc(pos - 1, pos) !== '-') return false
+  const before = state.sliceDoc(pos - 2, pos - 1)
+  if (before === '-' || before === '<') return false
+  return !inCode(state, pos)
+}
+
 /** 백틱을 칠 때 짝을 자동으로 닫을지: 이미 닫는 백틱 앞이면 건너뛰고, 코드 블록 안이나 ``` 입력 중이면 그냥 입력 */
 function backtickAction(view: EditorView, pos: number): 'skip' | 'pair' | 'plain' {
   const state = view.state
@@ -21,9 +39,7 @@ function backtickAction(view: EditorView, pos: number): 'skip' | 'pair' | 'plain
   const prev = state.sliceDoc(pos - 1, pos)
   if (next === '`') return 'skip'
   if (prev === '`') return 'plain'
-  for (let n = syntaxTree(state).resolveInner(pos, -1); n.parent; n = n.parent) {
-    if (n.name === 'FencedCode' || n.name === 'CodeBlock') return 'plain'
-  }
+  if (inCode(state, pos)) return 'plain'
   return next === '' || /[\s)\]}.,;:!?]/.test(next) ? 'pair' : 'plain'
 }
 
@@ -31,6 +47,16 @@ export function editingAssist(): Extension {
   return EditorView.inputHandler.of((view, from, to, insertedText) => {
     const hasSelection = from !== to
     const state = view.state
+
+    // `->`를 치면 `→`로 바꾼다. 되돌리기(Ctrl+Z)를 하면 `-`로 돌아간다
+    if (insertedText === '>' && !hasSelection && isArrowSpot(state, from)) {
+      view.dispatch({
+        changes: { from: from - 1, to: from, insert: '→' },
+        selection: { anchor: from },
+        userEvent: 'input.type'
+      })
+      return true
+    }
 
     if (insertedText === '`' && !hasSelection) {
       const action = backtickAction(view, from)
