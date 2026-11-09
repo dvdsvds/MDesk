@@ -14,14 +14,16 @@ export function cursorMetrics(): Extension {
         view.requestMeasure({
           read: () => {
             const sy = parseFloat(getComputedStyle(document.body).zoom) || 1
-            const lineHs = view.defaultLineHeight
-            const lineH = lineHs / sy
             const head = view.state.selection.main.head
             const c = view.coordsAtPos(head)
             const node = view.domAtPos(head).node
             const el = (node.nodeType === 1 ? (node as Element) : node.parentElement)?.closest(
               '.cm-line'
             )
+            // 제목 줄은 글자가 커서 줄 높이가 다르다. 커서가 있는 줄의 실제 줄 높이를 쓴다
+            const elH = el ? parseFloat(getComputedStyle(el).lineHeight) : NaN
+            const lineHs = Number.isFinite(elH) ? elH * sy : view.defaultLineHeight
+            const lineH = lineHs / sy
             let topS = 0
             let chS = lineHs
             if (c && el) {
