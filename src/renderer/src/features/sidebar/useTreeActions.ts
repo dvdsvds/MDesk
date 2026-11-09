@@ -35,23 +35,6 @@ export function useTreeActions({
   const [draggingPath, setDraggingPath] = useState<string | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null)
 
-  const commitRename = (node: TreeNode, rawValue: string): void => {
-    const newName = node.type === 'file' ? `${rawValue}${splitName(node.name).ext}` : rawValue
-    setEditingPath(null)
-    if (newName === node.name) return
-    window.api.workspace
-      .renameEntry(node.path, newName)
-      .then((newPath) => {
-        pushUndo({ kind: 'rename', oldPath: node.path, newPath })
-        onEntryRenamed(node.path, newPath)
-      })
-      .catch(() => {
-        useToastStore
-          .getState()
-          .push({ kind: 'info', message: `'${newName}' 이름이 이미 있거나 바꿀 수 없어요.` })
-      })
-  }
-
   // 파일 감시기가 트리를 알려 주기까지 약 0.15초가 걸린다. 그 사이 입력 줄이 먼저 사라지면
   // 목록에서 줄이 잠깐 없어졌다 나타나 새로고침처럼 보이므로, 만든 직후 트리를 바로 받아 반영한 뒤에 입력 줄을 닫는다
   const creatingRef = useRef(false)
@@ -62,6 +45,37 @@ export function useTreeActions({
       useWorkspaceStore.getState().setTree(tree)
       close()
     })
+  }
+
+  // 트리만 바로 다시 받아 반영한다(삭제·이동·되돌리기처럼 닫을 입력 줄이 없는 경우)
+  const syncTree = (): Promise<void> => applyTreeAndClose(() => {})
+
+  const renamingRef = useRef(false)
+  const commitRename = (node: TreeNode, rawValue: string): void => {
+    const newName = node.type === 'file' ? `${rawValue}${splitName(node.name).ext}` : rawValue
+    if (newName === node.name) {
+      setEditingPath(null)
+      return
+    }
+    if (renamingRef.current) return
+    renamingRef.current = true
+    window.api.workspace
+      .renameEntry(node.path, newName)
+      .then(async (newPath) => {
+        pushUndo({ kind: 'rename', oldPath: node.path, newPath })
+        onEntryRenamed(node.path, newPath)
+        // 새 이름의 트리가 반영되기 전에 입력 줄을 닫으면 옛 이름이 잠깐 보인다
+        await applyTreeAndClose(() => setEditingPath(null))
+      })
+      .catch(() => {
+        setEditingPath(null)
+        useToastStore
+          .getState()
+          .push({ kind: 'info', message: `'${newName}' 이름이 이미 있거나 바꿀 수 없어요.` })
+      })
+      .finally(() => {
+        renamingRef.current = false
+      })
   }
 
   const commitNewFolder = (dirPath: string, name: string): void => {
@@ -113,9 +127,10 @@ export function useTreeActions({
     const idx = visibleNodes.findIndex((n) => n.path === node.path)
     const after = visibleNodes.slice(idx + 1).find((n) => !n.path.startsWith(node.path + sep))
     const neighbor = after ?? visibleNodes[idx - 1] ?? null
-    void window.api.workspace.trash(node.path).then((trashId) => {
+    void window.api.workspace.trash(node.path).then(async (trashId) => {
       pushUndo({ kind: 'delete', trashId })
       onEntryDeleted(node.path)
+      await syncTree()
       const next = neighbor ? neighbor.path : null
       setFocusedPath(next)
       setTimeout(() => {
@@ -132,9 +147,10 @@ export function useTreeActions({
     setDraggingPath(null)
     if (!sourcePath) return
     if (dirOf(sourcePath) === targetDirPath) return
-    void window.api.workspace.moveEntry(sourcePath, targetDirPath).then((newPath) => {
+    void window.api.workspace.moveEntry(sourcePath, targetDirPath).then(async (newPath) => {
       pushUndo({ kind: 'move', oldPath: sourcePath, newPath })
       onEntryMoved(sourcePath, newPath)
+      await syncTree()
     })
   }
 
@@ -145,20 +161,24 @@ export function useTreeActions({
     try {
       if (op.kind === 'delete') {
         const restored = await window.api.workspace.restoreTrash(op.trashId)
+        await syncTree()
         setFocusedPath(restored)
         toast({ kind: 'info', message: `${fileNameOf(restored)}을(를) 되돌렸어요.` })
       } else if (op.kind === 'rename') {
         const back = await window.api.workspace.renameEntry(op.newPath, fileNameOf(op.oldPath))
         onEntryRenamed(op.newPath, back)
+        await syncTree()
         setFocusedPath(back)
       } else {
         const back = await window.api.workspace.moveEntry(op.newPath, dirOf(op.oldPath))
         onEntryMoved(op.newPath, back)
         if (fileNameOf(back) === fileNameOf(op.oldPath)) {
+          await syncTree()
           setFocusedPath(back)
         } else {
           const renamed = await window.api.workspace.renameEntry(back, fileNameOf(op.oldPath))
           onEntryRenamed(back, renamed)
+          await syncTree()
           setFocusedPath(renamed)
         }
       }
