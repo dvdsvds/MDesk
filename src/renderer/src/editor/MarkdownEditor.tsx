@@ -34,6 +34,7 @@ import { selectionPerLine } from './selectionPerLine'
 import { getCurrentView, setCurrentView } from './currentView'
 import { changeGutter } from './changeGutter'
 import { foldChevronGutter } from './foldGutter'
+import { markdownStyle } from './markdownStyle'
 import { listRenumber } from './listRenumber'
 import { cursorMetrics } from './cursorMetrics'
 import { gutterAlign } from './gutterAlign'
@@ -133,6 +134,7 @@ function buildExtensions(
     keymap.of([...defaultKeymap, ...historyKeymap, ...searchKeymap, indentWithTab]),
     markdownLang,
     markdownColors,
+    markdownStyle,
     calloutMarkerColors,
     mdToolbarKeys,
     toolbarCompartment.of(useSettingsStore.getState().showToolbar ? mdToolbarPanel : []),
