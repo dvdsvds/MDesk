@@ -1,27 +1,27 @@
 :root {
   /* 배경 */
-  --color-bg: #ffffff;
-  --color-bg-soft: #f7f7f5; /* 사이드바, 상태 표시줄, 패널 */
-  --color-bg-mute: rgba(55, 53, 47, 0.08); /* hover, 선택된 행 */
-  --color-bg-elevated: #ffffff; /* 팝업, 설정 패널 */
+  --color-bg: #fbf1c7;
+  --color-bg-soft: #f2e5bc; /* 사이드바, 상태 표시줄, 패널 */
+  --color-bg-mute: rgba(60, 56, 54, 0.08); /* hover, 선택된 행 */
+  --color-bg-elevated: #f9f5d7; /* 팝업, 설정 패널 */
 
   /* 테두리 */
-  --color-border: rgba(55, 53, 47, 0.1);
-  --color-border-strong: rgba(55, 53, 47, 0.18);
+  --color-border: rgba(60, 56, 54, 0.12);
+  --color-border-strong: rgba(60, 56, 54, 0.22);
 
   /* 글자 */
-  --color-text: #37352f;
-  --color-text-secondary: #6b6b66;
-  --color-text-tertiary: #8a8a85;
-  --color-text-inverted: #ffffff;
+  --color-text: #3c3836;
+  --color-text-secondary: #665c54;
+  --color-text-tertiary: #928374;
+  --color-text-inverted: #fbf1c7;
 
   /* 강조 */
-  --color-accent: #2383e2;
-  --color-accent-soft: rgba(35, 131, 226, 0.1);
-  --color-danger: #e5484d;
-  --color-danger-soft: #fdecec;
-  --icon-folder: #7c8598;
-  --icon-sys: #8b93a5;
+  --color-accent: #076678;
+  --color-accent-soft: rgba(7, 102, 120, 0.12);
+  --color-danger: #cc241d;
+  --color-danger-soft: #f2d5bf;
+  --icon-folder: #7c6f64;
+  --icon-sys: #928374;
   --icon-md: #3b78e7;
   /* 파일 종류별 색은 서로 겹치지 않게 색상환을 따라 나눈다 */
   --icon-pdf: #d8433c;
@@ -39,17 +39,17 @@
   --icon-video: #c03aaa;
   --icon-audio: #d63b8a;
   --icon-html: #d6365f;
-  --icon-doc: #868a91;
-  --color-warning: #b98900;
+  --icon-doc: #7c6f64;
+  --color-warning: #b57614;
 
   /* 차이(diff) 비교 */
-  --color-diff-add-bg: #e6f0ff;
-  --color-diff-add-text: #1c4fd8;
-  --color-diff-remove-bg: #fdecec;
-  --color-diff-remove-text: #c0272b;
+  --color-diff-add-bg: #d8e3d0;
+  --color-diff-add-text: #076678;
+  --color-diff-remove-bg: #f2d5bf;
+  --color-diff-remove-text: #9d0006;
 
   /* 탭 밖에서 바뀌었거나 삭제된 메모 */
-  --color-stale: #e5484d;
+  --color-stale: #cc241d;
 
   /* UI / 에디터 / 프리뷰 글꼴 (에디터·프리뷰는 설정에서 따로 조절) */
   --font-ui:
@@ -66,39 +66,46 @@
   --preview-font-size: 15px;
   --preview-line-height: 1.7;
 
-  --color-syntax-code: #2f855a;
-  --color-syntax-mark: #0f8b8d;
-  --color-syntax-heading: #2f5bd8;
-  --color-syntax-bullet: #d6336c;
-  --color-syntax-strong: #b7791f;
-  --color-syntax-em: #c2410c;
-  --color-syntax-fence: #8a94a8;
-  --color-syntax-task: #7c3aed;
+  --color-syntax-code: #427b58;
+  --color-syntax-mark: #076678;
+  --color-syntax-heading: #79740e;
+  --color-syntax-bullet: #9d0006;
+  --color-syntax-strong: #b57614;
+  --color-syntax-em: #af3a03;
+  --color-syntax-fence: #928374;
+  --color-syntax-task: #8f3f71;
+
+  --code-keyword: #9d0006;
+  --code-string: #79740e;
+  --code-number: #8f3f71;
+  --code-function: #427b58;
+  --code-type: #b57614;
+  --code-property: #076678;
 
   color-scheme: light;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
-    --color-bg: #191919;
-    --color-bg-soft: #121212;
-    --color-bg-mute: rgba(255, 255, 255, 0.05);
-    --color-bg-elevated: #202020;
+    --color-bg: #282828;
+    --color-bg-soft: #1d2021;
+    --color-bg-mute: rgba(235, 219, 178, 0.07);
+    --color-bg-elevated: #32302f;
 
-    --color-border: rgba(255, 255, 255, 0.06);
-    --color-border-strong: rgba(255, 255, 255, 0.11);
+    --color-border: rgba(235, 219, 178, 0.08);
+    --color-border-strong: rgba(235, 219, 178, 0.15);
 
-    --color-text: #e3e3e3;
-    --color-text-secondary: #9b9b9b;
-    --color-text-tertiary: #686868;
-    --color-text-inverted: #191919;
+    --color-text: #ebdbb2;
+    --color-text-secondary: #bdae93;
+    --color-text-tertiary: #928374;
+    --color-text-inverted: #282828;
 
-    --color-accent: #86a0d4;
-    --color-accent-soft: rgba(134, 160, 212, 0.14);
-    --color-danger: #e08581;
-    --color-danger-soft: #2e2121;
-    --icon-folder: #8d96a8;
-    --icon-sys: #7f8696;
+    --color-accent: #83a598;
+    --color-accent-soft: rgba(131, 165, 152, 0.16);
+    --color-danger: #fb4934;
+    --color-danger-soft: #3c1f1e;
+    --icon-folder: #a89984;
+    --icon-sys: #928374;
     --icon-md: #6b9bff;
     --icon-pdf: #ff6b64;
     --icon-pptx: #ff935c;
@@ -115,49 +122,56 @@
     --icon-video: #f27ddc;
     --icon-audio: #ff79b9;
     --icon-html: #ff6f8f;
-    --icon-doc: #a4a7ad;
-    --color-warning: #d4a95a;
+    --icon-doc: #a89984;
+    --color-warning: #fabd2f;
 
-    --color-diff-add-bg: #1c2433;
-    --color-diff-add-text: #8fabdc;
-    --color-diff-remove-bg: #2e2121;
-    --color-diff-remove-text: #e08581;
+    --color-diff-add-bg: #2a3a38;
+    --color-diff-add-text: #83a598;
+    --color-diff-remove-bg: #3c1f1e;
+    --color-diff-remove-text: #fb4934;
 
-    --color-stale: #e08581;
+    --color-stale: #fb4934;
 
-    --color-syntax-code: #9ece6a;
-    --color-syntax-mark: #73daca;
-    --color-syntax-heading: #7aa2f7;
-    --color-syntax-bullet: #f7768e;
-    --color-syntax-strong: #e0af68;
-    --color-syntax-em: #ff9e64;
-    --color-syntax-fence: #6a7894;
-    --color-syntax-task: #bb9af7;
+    --color-syntax-code: #8ec07c;
+    --color-syntax-mark: #83a598;
+    --color-syntax-heading: #b8bb26;
+    --color-syntax-bullet: #fb4934;
+    --color-syntax-strong: #fabd2f;
+    --color-syntax-em: #fe8019;
+    --color-syntax-fence: #928374;
+    --color-syntax-task: #d3869b;
+
+    --code-keyword: #fb4934;
+    --code-string: #b8bb26;
+    --code-number: #d3869b;
+    --code-function: #8ec07c;
+    --code-type: #fabd2f;
+    --code-property: #83a598;
 
     color-scheme: dark;
   }
 }
 
 :root[data-theme='dark'] {
-  --color-bg: #191919;
-  --color-bg-soft: #121212;
-  --color-bg-mute: rgba(255, 255, 255, 0.05);
-  --color-bg-elevated: #202020;
+  --color-bg: #282828;
+  --color-bg-soft: #1d2021;
+  --color-bg-mute: rgba(235, 219, 178, 0.07);
+  --color-bg-elevated: #32302f;
 
-  --color-border: rgba(255, 255, 255, 0.06);
-  --color-border-strong: rgba(255, 255, 255, 0.11);
+  --color-border: rgba(235, 219, 178, 0.08);
+  --color-border-strong: rgba(235, 219, 178, 0.15);
 
-  --color-text: #e3e3e3;
-  --color-text-secondary: #9b9b9b;
-  --color-text-tertiary: #686868;
-  --color-text-inverted: #191919;
+  --color-text: #ebdbb2;
+  --color-text-secondary: #bdae93;
+  --color-text-tertiary: #928374;
+  --color-text-inverted: #282828;
 
-  --color-accent: #86a0d4;
-  --color-accent-soft: rgba(134, 160, 212, 0.14);
-  --color-danger: #e08581;
-  --color-danger-soft: #2e2121;
-  --icon-folder: #8d96a8;
-  --icon-sys: #7f8696;
+  --color-accent: #83a598;
+  --color-accent-soft: rgba(131, 165, 152, 0.16);
+  --color-danger: #fb4934;
+  --color-danger-soft: #3c1f1e;
+  --icon-folder: #a89984;
+  --icon-sys: #928374;
   --icon-md: #6b9bff;
   --icon-pdf: #ff6b64;
   --icon-pptx: #ff935c;
@@ -174,24 +188,31 @@
   --icon-video: #f27ddc;
   --icon-audio: #ff79b9;
   --icon-html: #ff6f8f;
-  --icon-doc: #a4a7ad;
-  --color-warning: #d4a95a;
+  --icon-doc: #a89984;
+  --color-warning: #fabd2f;
 
-  --color-diff-add-bg: #1c2433;
-  --color-diff-add-text: #8fabdc;
-  --color-diff-remove-bg: #2e2121;
-  --color-diff-remove-text: #e08581;
+  --color-diff-add-bg: #2a3a38;
+  --color-diff-add-text: #83a598;
+  --color-diff-remove-bg: #3c1f1e;
+  --color-diff-remove-text: #fb4934;
 
-  --color-stale: #e08581;
+  --color-stale: #fb4934;
 
-  --color-syntax-code: #9ece6a;
-  --color-syntax-mark: #73daca;
-  --color-syntax-heading: #7aa2f7;
-  --color-syntax-bullet: #f7768e;
-  --color-syntax-strong: #e0af68;
-  --color-syntax-em: #ff9e64;
-  --color-syntax-fence: #6a7894;
-  --color-syntax-task: #bb9af7;
+  --color-syntax-code: #8ec07c;
+  --color-syntax-mark: #83a598;
+  --color-syntax-heading: #b8bb26;
+  --color-syntax-bullet: #fb4934;
+  --color-syntax-strong: #fabd2f;
+  --color-syntax-em: #fe8019;
+  --color-syntax-fence: #928374;
+  --color-syntax-task: #d3869b;
+
+  --code-keyword: #fb4934;
+  --code-string: #b8bb26;
+  --code-number: #d3869b;
+  --code-function: #8ec07c;
+  --code-type: #fabd2f;
+  --code-property: #83a598;
 
   color-scheme: dark;
 }
