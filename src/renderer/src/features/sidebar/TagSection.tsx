@@ -38,7 +38,7 @@ export function TagSection({
     // 상태를 정하지 않은 노트는 진행으로 묶는다
     const notes = collectNotes(tree, [])
       .map((path) => [path, statusOf(byPath[path]?.status).label] as const)
-      .sort(([a], [b]) => fileNameOf(a).localeCompare(fileNameOf(b)))
+      .sort(([a], [b]) => fileNameOf(a).localeCompare(fileNameOf(b), 'ko', { numeric: true }))
     return STATUS_OPTIONS.map((option) => ({
       option,
       notes: notes.filter(([, status]) => status === option.label)

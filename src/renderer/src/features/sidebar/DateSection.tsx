@@ -54,7 +54,7 @@ export function DateSection({
       byDay.set(created, list)
     }
     const sorted = (byDay.get(day) ?? []).sort((a, b) =>
-      fileNameOf(a).localeCompare(fileNameOf(b), 'ko')
+      fileNameOf(a).localeCompare(fileNameOf(b), 'ko', { numeric: true })
     )
     return { notesOfDay: sorted, days: [...byDay.keys()].sort() }
   }, [tree, byPath, day])
