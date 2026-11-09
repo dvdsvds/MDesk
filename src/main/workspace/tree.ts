@@ -11,7 +11,7 @@ export interface TreeNode {
 function sortEntries(nodes: TreeNode[]): TreeNode[] {
   return [...nodes].sort((a, b) => {
     if (a.type !== b.type) return a.type === 'folder' ? -1 : 1
-    return a.name.localeCompare(b.name, 'ko')
+    return a.name.localeCompare(b.name, 'ko', { numeric: true })
   })
 }
 
