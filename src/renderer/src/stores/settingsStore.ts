@@ -195,7 +195,7 @@ export const useSettingsStore = create<SettingsState>()(
       resetAllShortcuts: () => set({ shortcuts: DEFAULT_SHORTCUTS })
     }),
     {
-      name: 'markroom-settings',
+      name: 'mdesk-settings',
       // 5·6은 되돌린 속성 확장 작업이 쓰던 버전. 8부터 속성은 상태 하나(값 고정)뿐이다
       version: 9,
       merge: (persisted, current) => {

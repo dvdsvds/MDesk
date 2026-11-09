@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 import { useTabsStore } from '../stores/tabsStore'
 import { fileKindOf, readFileContent } from '../utils/fileKind'
 
-const STORAGE_KEY = 'markroom-open-tabs'
+const STORAGE_KEY = 'mdesk-open-tabs'
 let restoreDone = false
 
 interface SavedTabs {
