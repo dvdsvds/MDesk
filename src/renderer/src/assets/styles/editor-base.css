@@ -255,35 +255,9 @@
 }
 
 /* ───────── 마크다운 글자 모양 ───────── */
-/* 제목 크기: # 개수에 따라 달라진다. 배율은 미리보기(preview.css)와 같다(markdownStyle.ts의 HEADING_SCALE) */
-.cm-line.cm-h1 {
-  font-size: 1.85em;
-}
-.cm-line.cm-h2 {
-  font-size: 1.45em;
-}
-.cm-line.cm-h3 {
-  font-size: 1.2em;
-}
-.cm-line.cm-h4 {
-  font-size: 1.05em;
-}
-/* 제목 줄의 줄 번호: 큰 글자 첫 줄 가운데에 오도록 (배율 - 1) * 줄 높이의 절반만큼 내린다 */
-.cm-lineNumbers .cm-gutterElement.cm-gutter-h1 {
-  padding-top: calc(0.85 * var(--editor-font-size) * var(--editor-line-height) / 2);
-}
-.cm-lineNumbers .cm-gutterElement.cm-gutter-h2 {
-  padding-top: calc(0.45 * var(--editor-font-size) * var(--editor-line-height) / 2);
-}
-.cm-lineNumbers .cm-gutterElement.cm-gutter-h3 {
-  padding-top: calc(0.2 * var(--editor-font-size) * var(--editor-line-height) / 2);
-}
-.cm-lineNumbers .cm-gutterElement.cm-gutter-h4 {
-  padding-top: calc(0.05 * var(--editor-font-size) * var(--editor-line-height) / 2);
-}
-/* 인라인 코드: 백틱 포함 구간에 테두리와 옅은 배경(미리보기 code와 같은 색) */
+/* 인라인 코드: 백틱 안쪽 글자에만 테두리와 옅은 배경 */
 .cm-inline-code {
-  background: color-mix(in srgb, var(--color-accent) 13%, transparent);
+  background: color-mix(in srgb, var(--color-accent) 7%, transparent);
   border: 1px solid color-mix(in srgb, var(--color-accent) 32%, transparent);
   border-radius: 5px;
   box-decoration-break: clone;
