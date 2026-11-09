@@ -341,6 +341,7 @@ function App(): React.JSX.Element {
           resolveNewNoteDir(),
           `${template.name}.md`
         )
+        setTree(await window.api.workspace.getTree())
         const content = applyTemplate(template.content, {
           date: new Date(),
           title: splitName(fileNameOf(created)).base,
@@ -352,7 +353,7 @@ function App(): React.JSX.Element {
         pushToast({ kind: 'info', message: '템플릿으로 노트를 만들지 못했어요.' })
       }
     },
-    [resolveNewNoteDir, openFile, pushToast]
+    [resolveNewNoteDir, openFile, pushToast, setTree]
   )
 
   // 그날 데일리 노트를 연다. 없으면 템플릿(`템플릿/데일리.md`)으로 새로 만든다
@@ -372,13 +373,14 @@ function App(): React.JSX.Element {
         const content = buildDailyContent(date, title)
         // 형식에 점이 있어도(2026.10.19) 확장자로 오해하지 않게 .md를 붙여서 넘긴다
         const created = await window.api.workspace.createNote(dirOf(path), `${title}.md`)
+        setTree(await window.api.workspace.getTree())
         await window.api.workspace.saveNote({ filePath: created, content })
         openFile(created, content)
       } catch {
         pushToast({ kind: 'info', message: '데일리 노트를 만들지 못했어요. 폴더 설정을 확인해 주세요.' })
       }
     },
-    [handleOpenFile, openFile, pushToast]
+    [handleOpenFile, openFile, pushToast, setTree]
   )
 
   const handleEditorChange = useCallback(
