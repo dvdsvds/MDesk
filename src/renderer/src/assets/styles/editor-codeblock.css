@@ -1,12 +1,6 @@
 :root {
-  --code-keyword: #8b5cf6;
-  --code-string: #16a34a;
-  --code-number: #d97706;
   --code-comment: var(--color-text-tertiary);
-  --code-function: #3b82f6;
-  --code-type: #0d9488;
   --code-variable: var(--color-text);
-  --code-property: #0ea5e9;
   --code-operator: var(--color-text-secondary);
 }
 .cm-line.cm-codeblock {
