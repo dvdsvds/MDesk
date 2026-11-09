@@ -11,6 +11,7 @@ interface WorkspaceState {
 export const useWorkspaceStore = create<WorkspaceState>((set) => ({
   rootDir: null,
   tree: [],
-  setTree: (tree) => set({ tree }),
+  // 감시기가 뒤늦게 같은 트리를 보내면 다시 그리지 않는다
+  setTree: (tree) => set((s) => (JSON.stringify(s.tree) === JSON.stringify(tree) ? s : { tree })),
   setRootDir: (rootDir) => set({ rootDir })
 }))
