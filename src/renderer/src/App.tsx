@@ -1,13 +1,14 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { MarkdownEditor, type MarkdownEditorHandle } from './editor/MarkdownEditor'
 import { MarkdownPreview, type MarkdownPreviewHandle } from './features/preview/MarkdownPreview'
 import { Sidebar, type SidebarHandle } from './features/sidebar/Sidebar'
 import { TabBar } from './components/TabBar'
+import { ViewModeSwitch } from './components/ViewModeSwitch'
 import { SaveChangesDialog } from './components/SaveChangesDialog'
 import { useTabClose } from './hooks/useTabClose'
 import { useSidebarResize } from './hooks/useSidebarResize'
-import { useSplitResize, EDITOR_MIN_WIDTH, SPLIT_GAP } from './hooks/useSplitResize'
+import { EDITOR_MIN_WIDTH, SPLIT_GAP, SPLIT_RATIO } from './utils/splitLayout'
 import { restoreOpenTabs, usePersistOpenTabs } from './hooks/useOpenTabsPersistence'
 import { SearchPanel } from './components/SearchPanel'
 import { SettingsPanel } from './features/settings/SettingsPanel'
@@ -51,12 +52,14 @@ import { GraphDialog } from './components/GraphDialog'
 import { useNotePropsStore } from './stores/notePropsStore'
 import { TagBar } from './components/TagBar'
 import { EditorHeader } from './components/EditorHeader'
-import { tabLabel } from './utils/tabLabel'
 
 /** 본문 카드(에디터·미리보기·뷰어). 네 모서리가 둥글고 창 오른쪽 끝과도 4px 띄운다.
  *  카드 상자는 overflow-clip을 쓴다. hidden이면 에디터의 scrollIntoView가 카드 상자까지 밀어 올려
  *  미리보기 첫 줄 위 여백이 사라졌다(base.css의 #root와 같은 이유) */
 const CARD = 'rounded-xl border border-border bg-bg'
+
+/** 보기 모드를 바꿀 때 에디터·미리보기 폭이 움직이는 시간과 곡선 */
+const VIEW_TRANSITION = { duration: 0.22, ease: [0.4, 0, 0.2, 1] as const }
 
 const TITLE_BTN =
   'flex h-7 w-7 items-center justify-center rounded-md text-text-secondary transition-colors hover:bg-bg-mute hover:text-text'
@@ -118,19 +121,59 @@ function App(): React.JSX.Element {
     [tagBarPath, rootDir, dailyFolderSetting, dailyFormatSetting]
   )
   const showPreview = !activeTab?.filePath || isMarkdownPath(activeTab.filePath)
+  const viewMode = useSettingsStore((s) => s.viewMode)
+  const setViewMode = useSettingsStore((s) => s.setViewMode)
+  // 마크다운이 아닌 파일은 미리보기가 없으니 늘 에디터만 보인다
+  const splitMode = showPreview && viewMode === 'split'
+  const previewOnly = showPreview && viewMode === 'preview'
+  const showPreviewPane = showPreview && viewMode !== 'editor'
   const sidebarRef = useRef<SidebarHandle>(null)
 
   const splitRef = useRef<HTMLDivElement>(null)
   const [previewMinWidth, setPreviewMinWidth] = useState(0)
-  const [hasTemplate, setHasTemplate] = useState(false)
   const sidebar = useSidebarResize()
   const sidebarCollapsed = useSettingsStore((s) => s.sidebarCollapsed)
   const setSidebarCollapsed = useSettingsStore((s) => s.setSidebarCollapsed)
-  const split = useSplitResize(splitRef, hasTemplate, previewMinWidth)
+  // 폭 애니메이션은 px 값끼리만 움직일 수 있어서 본문 영역 폭을 재서 카드 폭을 직접 계산한다
+  const [splitEl, setSplitEl] = useState<HTMLDivElement | null>(null)
+  const [boxW, setBoxW] = useState(0)
+  const setSplitBox = useCallback((el: HTMLDivElement | null) => {
+    splitRef.current = el
+    setSplitEl(el)
+    if (el) setBoxW(el.clientWidth)
+  }, [])
+  useLayoutEffect(() => {
+    if (!splitEl) return
+    const ro = new ResizeObserver(() => setBoxW(splitEl.clientWidth))
+    ro.observe(splitEl)
+    return () => ro.disconnect()
+  }, [splitEl])
+  // 보기 모드 버튼을 눌렀을 때만 움직이고, 창 크기를 줄일 때는 바로 따라간다
+  const [animating, setAnimating] = useState(false)
+  useEffect(() => {
+    if (!animating) return
+    const t = setTimeout(() => setAnimating(false), 320)
+    return () => clearTimeout(t)
+  }, [animating])
+  const gapW = splitMode ? SPLIT_GAP : 0
+  const editorW = previewOnly
+    ? 0
+    : splitMode
+      ? Math.max(
+          EDITOR_MIN_WIDTH,
+          Math.min(SPLIT_RATIO * boxW, boxW - previewMinWidth - SPLIT_GAP)
+        )
+      : boxW
+  const previewW = previewOnly ? boxW : Math.max(0, boxW - editorW - gapW)
+  const widthTransition = animating ? VIEW_TRANSITION : { duration: 0 }
+  // 카드 폭이 변하는 동안 안쪽 내용 폭은 최종 폭으로 고정한다. 매 프레임 줄바꿈을 다시 계산하지 않아 부드럽다
+  // (폭이 0이 되는 에디터는 마지막 폭을 유지한다)
+  const [lastEditorW, setLastEditorW] = useState(0)
+  if (editorW > 0 && editorW !== lastEditorW) setLastEditorW(editorW)
+  const editorContentW = editorW > 0 ? editorW : lastEditorW
 
   const [searchOpen, setSearchOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
-  const [vimModeLabel, setVimModeLabel] = useState('NORMAL')
   const [diffPopup, setDiffPopup] = useState<DiffPopupState | null>(null)
   const [historyTarget, setHistoryTarget] = useState<{ filePath: string; content: string } | null>(
     null
@@ -663,9 +706,32 @@ function App(): React.JSX.Element {
     [tabs]
   )
 
+  // 탭 줄은 타이틀바가 아니라 본문 카드 머리 줄에 둔다
+  const tabBar = (
+    <TabBar
+      tabs={tabs}
+      activeTabId={activeTabId}
+      onSelect={setActiveTab}
+      onClose={tabClose.requestClose}
+      onCloseAll={tabClose.closeAll}
+      onMissingClick={handleMissingTabClick}
+    />
+  )
+
   return (
     <div className="flex h-full flex-col bg-bg-soft text-text">
       <TitleBar
+        center={
+          activeTab && activeTab.kind === 'text' && showPreview ? (
+            <ViewModeSwitch
+              value={viewMode}
+              onChange={(next) => {
+                setAnimating(true)
+                setViewMode(next)
+              }}
+            />
+          ) : null
+        }
         left={
           // 아래 묶음(아이콘 줄 + 사이드바 + 오른쪽 테두리 1) + 본문 앞 틈 4와 같은 폭이라,
           // 탭이 에디터 카드 왼쪽 끝에서 시작한다. 접기 버튼은 아이콘 줄 위 가운데, 검색창은 사이드바 바로 위에 같은 폭으로
@@ -701,16 +767,7 @@ function App(): React.JSX.Element {
             )}
           </motion.div>
         }
-      >
-        <TabBar
-          tabs={tabs}
-          activeTabId={activeTabId}
-          onSelect={setActiveTab}
-          onClose={tabClose.requestClose}
-          onCloseAll={tabClose.closeAll}
-          onMissingClick={handleMissingTabClick}
-        />
-      </TitleBar>
+      />
       <main className="flex min-h-0 flex-1">
         {/* 아이콘 줄과 사이드바를 한 테두리로 묶는다. 사이드바를 접으면 아이콘 줄만 남는다 */}
         <div className="flex shrink-0 rounded-r-xl border-y border-r border-border">
@@ -771,32 +828,38 @@ function App(): React.JSX.Element {
         <div className="mx-1 flex min-w-0 flex-1 flex-col">
           {activeTab && activeTab.kind !== 'text' && activeTab.filePath ? (
             <div className={`flex min-h-0 flex-1 flex-col overflow-clip ${CARD}`}>
+              <EditorHeader>{tabBar}</EditorHeader>
               <FileViewer key={activeTab.id} filePath={activeTab.filePath} kind={activeTab.kind} />
             </div>
           ) : activeTab ? (
             <div className="flex min-h-0 flex-1 flex-col">
-              <div ref={splitRef} className="flex min-h-0 flex-1">
-                <div
+              <div ref={setSplitBox} className="flex min-h-0 flex-1">
+                {/* 미리보기만 볼 때도 에디터는 폭만 0으로 줄인다(편집 상태와 되돌리기 기록을 지키기 위해) */}
+                <motion.div
+                  initial={false}
+                  animate={{
+                    width: editorW,
+                    minWidth: splitMode ? EDITOR_MIN_WIDTH : 0,
+                    opacity: previewOnly ? 0 : 1,
+                    borderWidth: previewOnly ? 0 : 1
+                  }}
+                  transition={widthTransition}
+                  inert={previewOnly}
                   className={`relative flex min-w-0 shrink-0 flex-col overflow-clip ${CARD}`}
-                  style={
-                    showPreview
-                      ? {
-                          width: `min(${split.ratio * 100}%, calc(100% - ${previewMinWidth + SPLIT_GAP}px))`,
-                          minWidth: EDITOR_MIN_WIDTH
-                        }
-                      : { width: '100%' }
-                  }
                 >
+                  <div
+                    className="flex min-h-0 flex-1 flex-col"
+                    style={{ width: editorContentW || undefined, minWidth: editorContentW || undefined }}
+                  >
                   <EditorHeader
-                    filePath={activeTab.filePath}
-                    rootDir={rootDir}
-                    fallbackName={tabLabel(activeTab)}
                     right={
                       tagBarPath && (
                         <TagBar filePath={tagBarPath} menuDirection="down" />
                       )
                     }
-                  />
+                  >
+                    {tabBar}
+                  </EditorHeader>
                   <MarkdownEditor
                     ref={editorRef}
                     tabId={activeTab.id}
@@ -810,27 +873,34 @@ function App(): React.JSX.Element {
                     baseContent={activeTab.baseContent}
                     onOpenBaseDiff={handleOpenBaseDiff}
                     onSave={saveActiveTab}
-                    onVimModeChange={setVimModeLabel}
                     onCursorChange={handleCursorChange}
                     onScrollRatio={handleEditorScrollRatio}
                     className="min-h-0 min-w-0 flex-1 overflow-auto"
                   />
-                  {vimMode && (
-                    <span className="pointer-events-none absolute bottom-2 right-3 rounded bg-bg-mute px-1.5 py-0.5 text-[10.5px] font-semibold tracking-wide text-accent">
-                      {vimModeLabel}
-                    </span>
-                  )}
-                </div>
+                  </div>
+                </motion.div>
                 {showPreview && (
-                  <div
-                    onMouseDown={split.onResizeStart}
-                    onDoubleClick={split.resetRatio}
-                    style={{ width: SPLIT_GAP }}
-                    className={`shrink-0 ${hasTemplate ? '' : 'cursor-col-resize'}`}
+                  <motion.div
+                    initial={false}
+                    animate={{ width: gapW }}
+                    transition={widthTransition}
+                    className="shrink-0"
                   />
                 )}
-                {showPreview && (
-                  <div className={`flex min-w-0 flex-1 flex-col overflow-clip ${CARD}`}>
+                <AnimatePresence initial={false}>
+                {showPreviewPane && (
+                  <motion.div
+                    key="preview-card"
+                    initial={{ width: 0, opacity: 0, borderWidth: 0 }}
+                    animate={{ width: previewW, opacity: 1, borderWidth: 1 }}
+                    exit={{ width: 0, opacity: 0, borderWidth: 0, transition: VIEW_TRANSITION }}
+                    transition={widthTransition}
+                    className={`flex min-w-0 shrink-0 flex-col overflow-clip ${CARD}`}
+                  >
+                  <div
+                    className="flex min-h-0 flex-1 flex-col"
+                    style={{ width: previewW || undefined, minWidth: previewW || undefined }}
+                  >
                   {/* 에디터 머리 줄과 같은 높이·선 */}
                   <div className="flex h-8 shrink-0 items-center border-b border-border pl-3 pr-2 text-[12px] text-text-tertiary">
                     미리보기
@@ -855,12 +925,13 @@ function App(): React.JSX.Element {
                     onLinkClick={handleLinkClick}
                     onReplaceSource={handleReplaceSource}
                     onMinWidthChange={setPreviewMinWidth}
-                    onHasTemplateChange={setHasTemplate}
                     className="min-h-0 flex-1 overflow-auto px-[var(--preview-pad)] pb-6 pt-7"
                     docKey={activeTab.id}
                   />
                   </div>
+                  </motion.div>
                 )}
+                </AnimatePresence>
               </div>
             </div>
           ) : (

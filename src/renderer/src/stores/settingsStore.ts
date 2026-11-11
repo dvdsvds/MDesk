@@ -9,6 +9,9 @@ const OLD_DAILY_CONTENT =
 
 export type ThemePreference = 'system' | 'light' | 'dark'
 
+/** 본문 보기: 에디터만 / 에디터와 미리보기 나란히 / 미리보기만 */
+export type ViewMode = 'editor' | 'split' | 'preview'
+
 const OLD_EDITOR_FONT_FAMILY = "'IBM Plex Mono', 'D2Coding', Pretendard, monospace"
 const DEFAULT_EDITOR_FONT_FAMILY = "'Roboto Mono', Pretendard, monospace"
 const DEFAULT_EDITOR_FONT_SIZE = 13.5
@@ -37,8 +40,8 @@ interface SettingsState {
   resetFonts: () => void
   resetEditorFont: () => void
   resetPreviewFont: () => void
-  splitRatio: number
-  setSplitRatio: (value: number) => void
+  viewMode: ViewMode
+  setViewMode: (mode: ViewMode) => void
   uiZoom: number
   setUiZoom: (value: number) => void
   sidebarCollapsed: boolean
@@ -124,8 +127,8 @@ export const useSettingsStore = create<SettingsState>()(
           previewFontSize: 15,
           previewLineHeight: 1.7
         }),
-      splitRatio: 0.5,
-      setSplitRatio: (value) => set({ splitRatio: Math.min(0.8, Math.max(0.2, value)) }),
+      viewMode: 'split',
+      setViewMode: (mode) => set({ viewMode: mode }),
       uiZoom: 100,
       setUiZoom: (value) =>
         set({ uiZoom: Math.min(200, Math.max(50, Math.round(value / 10) * 10)) }),

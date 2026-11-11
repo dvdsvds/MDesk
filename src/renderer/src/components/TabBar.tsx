@@ -140,7 +140,7 @@ export function TabBar({
         const d = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY
         if (d !== 0) layout(d > 0 ? 1 : -1)
       }}
-      className="titlebar-no-drag relative flex h-6 min-w-0 items-stretch overflow-hidden"
+      className="relative flex h-full min-w-0 items-stretch overflow-hidden"
     >
       {tabs.map((tab, i) => {
         const isActive = tab.id === activeTabId
