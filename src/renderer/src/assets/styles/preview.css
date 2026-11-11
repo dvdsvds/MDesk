@@ -89,6 +89,10 @@
   list-style: none;
   padding-left: 0.2em;
 }
+/* 중첩된 체크박스 목록은 위 항목의 글자(체크박스 폭 1.05em + 간격 0.6em 뒤) 아래에 맞춰 들여쓴다 */
+.prose-preview li ul.contains-task-list {
+  padding-left: 1.65em;
+}
 .prose-preview input[type='checkbox'],
 .ui-checkbox {
   appearance: none;
