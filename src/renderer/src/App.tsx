@@ -4,6 +4,7 @@ import { MarkdownEditor, type MarkdownEditorHandle } from './editor/MarkdownEdit
 import { MarkdownPreview, type MarkdownPreviewHandle } from './features/preview/MarkdownPreview'
 import { Sidebar, type SidebarHandle } from './features/sidebar/Sidebar'
 import { TabBar } from './components/TabBar'
+import { tabLabel } from './utils/tabLabel'
 import { ViewModeSwitch } from './components/ViewModeSwitch'
 import { SaveChangesDialog } from './components/SaveChangesDialog'
 import { useTabClose } from './hooks/useTabClose'
@@ -903,7 +904,9 @@ function App(): React.JSX.Element {
                   >
                   {/* 에디터 머리 줄과 같은 높이·선 */}
                   <div className="flex h-8 shrink-0 items-center border-b border-border pl-3 pr-2 text-[12px] text-text-tertiary">
-                    미리보기
+                    <span className="truncate">
+                      Preview {activeTab.filePath ? tabLabel(activeTab) : `${tabLabel(activeTab)}.md`}
+                    </span>
                     {/* 데일리 노트를 열었을 때만 이전·오늘·다음 이동 */}
                     {activeDailyDate && (
                       <div className="ml-auto">
