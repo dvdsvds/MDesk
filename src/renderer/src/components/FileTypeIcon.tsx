@@ -113,7 +113,15 @@ export function FileTypeIcon({
   const type = typeOf(name, kind)
   const Svg = kind === 'folder' && open ? FolderOpenSvg : SVGS[type]
   return (
-    <span className="flex shrink-0" style={{ color: `var(--icon-${type})` }} aria-hidden="true">
+    <span
+      className="flex shrink-0"
+      // 폴더는 몸통이 아래쪽에 몰려 있어 가운데 정렬해도 글자보다 내려가 보이므로 살짝 올린다
+      style={{
+        color: `var(--icon-${type})`,
+        transform: kind === 'folder' ? 'translateY(-1.8px)' : undefined
+      }}
+      aria-hidden="true"
+    >
       <Svg width={size} height={size} style={{ display: 'block' }} />
     </span>
   )
