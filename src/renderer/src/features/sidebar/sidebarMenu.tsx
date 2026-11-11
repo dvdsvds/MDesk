@@ -85,7 +85,6 @@ export function buildMenuItems(node: TreeNode, a: MenuActions): ContextMenuItem[
     items.push({
       label: '변경 내용 비교',
       icon: <DiffIcon width={16} height={16} />,
-      shortcut: a.shortcuts.compareItem,
       onClick: () => a.onCompareChanges(node.path)
     })
   }
@@ -93,7 +92,6 @@ export function buildMenuItems(node: TreeNode, a: MenuActions): ContextMenuItem[
     items.push({
       label: '버전 기록',
       icon: <HistoryIcon width={16} height={16} />,
-      shortcut: a.shortcuts.historyItem,
       onClick: () => a.onOpenHistory(node.path)
     })
   }

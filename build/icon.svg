@@ -1,6 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
-  <!-- Mdesk 앱 아이콘: gruvbox 바탕 위의 M과 책상 면. 고치면 scripts/make-icons.mjs로 png·ico·icns를 다시 만든다 -->
+  <!-- Mdesk 앱 아이콘: gruvbox 바탕 위의 M과 마크다운 글줄. 고치면 scripts/make-icons.mjs로 png·ico·icns를 다시 만든다 -->
   <rect width="1024" height="1024" rx="230" fill="#282828"/>
-  <path d="M290 690V262L512 512L734 262V690" fill="none" stroke="#ebdbb2" stroke-width="92" stroke-linecap="round" stroke-linejoin="round"/>
-  <rect x="226" y="768" width="572" height="58" rx="29" fill="#fabd2f"/>
+  <g transform="translate(92 -8)">
+    <path d="M240 740V300L420 480L600 300V540" fill="none" stroke="#8ec9ea" stroke-width="48" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="444" y="584" width="210" height="30" rx="15" fill="#b8bb26"/>
+    <rect x="514" y="634" width="140" height="30" rx="15" fill="#fe8019"/>
+    <rect x="479" y="684" width="175" height="30" rx="15" fill="#d3869b"/>
+    <rect x="554" y="734" width="100" height="30" rx="15" fill="#fabd2f"/>
+  </g>
 </svg>

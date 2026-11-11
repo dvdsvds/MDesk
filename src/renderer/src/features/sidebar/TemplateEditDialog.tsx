@@ -8,12 +8,7 @@ import {
   MainButton
 } from '../../components/DialogParts'
 import RenameIcon from '../../icons/ctx-rename.svg?react'
-import {
-  DAILY_TEMPLATE_ID,
-  DEFAULT_TEMPLATES,
-  TEMPLATE_VARIABLES_HINT,
-  type NoteTemplate
-} from '../../utils/noteTemplate'
+import type { NoteTemplate } from '../../utils/noteTemplate'
 
 const FIELD =
   'w-full rounded-lg bg-text/[0.07] px-2.5 text-[13px] text-text outline-none transition-shadow focus:ring-1 focus:ring-accent/60'
@@ -32,15 +27,12 @@ export function TemplateEditDialog({
 }): React.JSX.Element {
   const [name, setName] = useState(template.name)
   const [content, setContent] = useState(template.content)
-  const builtIn = DEFAULT_TEMPLATES.find((t) => t.id === template.id)
-  const isDaily = template.id === DAILY_TEMPLATE_ID
 
   return (
     <Dialog width={560} onClose={onCancel}>
       <DialogHeader
         icon={<RenameIcon width={18} height={18} />}
         title={isNew ? '새 템플릿' : '템플릿 편집'}
-        subtitle={isDaily ? '새 데일리 노트를 만들 때 이 내용이 들어가요' : undefined}
       />
       <DialogBody>
         <input
@@ -58,21 +50,6 @@ export function TemplateEditDialog({
           spellCheck={false}
           className={`${FIELD} mt-2.5 h-72 resize-none py-2 font-[family-name:var(--font-editor)] leading-relaxed`}
         />
-        <div className="mt-2 flex items-start justify-between gap-3 text-[11.5px] text-text-tertiary">
-          <span>{TEMPLATE_VARIABLES_HINT}</span>
-          {builtIn && (
-            <button
-              type="button"
-              onClick={() => {
-                setName(builtIn.name)
-                setContent(builtIn.content)
-              }}
-              className="shrink-0 transition-colors hover:text-accent"
-            >
-              기본값으로
-            </button>
-          )}
-        </div>
       </DialogBody>
       <DialogFooter>
         <CancelButton onClick={onCancel} />

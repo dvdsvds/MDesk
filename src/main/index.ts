@@ -149,6 +149,15 @@ app.whenReady().then(() => {
   const changelogToShow = lastSeenVersion && lastSeenVersion !== currentVersion ? readChangelogFor(currentVersion) : null
   setLastSeenVersion(currentVersion)
   ipcMain.handle('app:getChangelog', () => changelogToShow)
+  ipcMain.handle('app:getInfo', () => ({
+    name: app.getName(),
+    version: currentVersion,
+    electron: process.versions.electron,
+    chrome: process.versions.chrome,
+    node: process.versions.node,
+    platform: process.platform,
+    arch: process.arch
+  }))
 
   if (!is.dev) {
     autoUpdater.autoDownload = true

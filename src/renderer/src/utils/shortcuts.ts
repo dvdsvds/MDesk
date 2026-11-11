@@ -15,7 +15,6 @@ export interface ShortcutMap {
   backlinks: string
   toggleSidebar: string
   graph: string
-  dailyNote: string
   viewEditor: string
   viewSplit: string
   viewPreview: string
@@ -23,8 +22,6 @@ export interface ShortcutMap {
   newFolder: string
   revealItem: string
   exportItem: string
-  compareItem: string
-  historyItem: string
 }
 
 export type ShortcutAction = keyof ShortcutMap
@@ -46,45 +43,39 @@ export const DEFAULT_SHORTCUTS: ShortcutMap = {
   backlinks: 'Ctrl+Shift+B',
   toggleSidebar: 'Ctrl+Shift+E',
   graph: 'Ctrl+Shift+G',
-  dailyNote: 'Ctrl+Shift+D',
   viewEditor: 'Ctrl+Alt+I',
   viewSplit: 'Ctrl+Alt+O',
   viewPreview: 'Ctrl+Alt+P',
   renameItem: 'F2',
   newFolder: 'Ctrl+Shift+N',
   revealItem: 'Ctrl+Alt+R',
-  exportItem: 'Ctrl+Alt+E',
-  compareItem: 'Ctrl+Alt+D',
-  historyItem: 'Ctrl+Alt+H'
+  exportItem: 'Ctrl+Alt+E'
 }
 
 export const SHORTCUT_LABELS: Record<ShortcutAction, string> = {
-  newNote: '새 파일',
-  toggleSettings: '설정 열기/닫기',
+  newNote: '새 노트',
+  toggleSettings: '설정',
   copyPathAbsolute: '절대 경로 복사',
   copyPathRelative: '상대 경로 복사',
-  diffApply: '차이 화면 적용하기',
-  diffRestore: '차이 화면 복구하기',
+  diffApply: '적용',
+  diffRestore: '되돌리기',
   save: '저장',
-  search: '빠른 검색',
-  zoomIn: 'UI 확대',
-  zoomOut: 'UI 축소',
-  zoomReset: 'UI 배율 초기화',
-  toggleToc: '목차 패널 열기/포커스',
-  todoDashboard: '할일 대시보드',
-  backlinks: '백링크 패널',
-  toggleSidebar: '사이드바 접기/펼치기',
-  graph: '그래프 뷰',
-  dailyNote: '오늘 데일리 노트',
-  viewEditor: '보기: 에디터만',
-  viewSplit: '보기: 분할',
-  viewPreview: '보기: 미리보기만',
-  renameItem: '사이드바: 이름 바꾸기',
-  newFolder: '사이드바: 새 폴더',
-  revealItem: '사이드바: 폴더에서 보기',
-  exportItem: '사이드바: 폴더 내보내기',
-  compareItem: '사이드바: 변경 내용 비교',
-  historyItem: '사이드바: 버전 기록'
+  search: '검색',
+  zoomIn: '확대',
+  zoomOut: '축소',
+  zoomReset: '기본 크기',
+  toggleToc: '목차',
+  todoDashboard: '할 일',
+  backlinks: '백링크',
+  toggleSidebar: '열기 닫기',
+  graph: '그래프',
+  viewEditor: '에디터',
+  viewSplit: '분할',
+  viewPreview: '미리보기',
+  renameItem: '이름 바꾸기',
+  newFolder: '새 폴더',
+  revealItem: '탐색기에서 보기',
+  exportItem: '내보내기'
 }
 
 function normalizeKey(key: string): string {

@@ -67,9 +67,20 @@ interface HistoryEntry {
   size: number
 }
 
+export interface AppInfo {
+  name: string
+  version: string
+  electron: string
+  chrome: string
+  node: string
+  platform: string
+  arch: string
+}
+
 export interface MdeskApi {
   app: {
     getChangelog: () => Promise<string | null>
+    getInfo: () => Promise<AppInfo>
   }
   window: {
     minimize: () => Promise<void>

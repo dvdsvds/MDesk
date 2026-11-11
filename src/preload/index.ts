@@ -77,6 +77,16 @@ interface RecoverableItem {
   currentContent: string | null
 }
 
+interface AppInfo {
+  name: string
+  version: string
+  electron: string
+  chrome: string
+  node: string
+  platform: string
+  arch: string
+}
+
 interface HistoryEntry {
   id: number
   size: number
@@ -84,7 +94,8 @@ interface HistoryEntry {
 
 const api = {
   app: {
-    getChangelog: (): Promise<string | null> => ipcRenderer.invoke('app:getChangelog')
+    getChangelog: (): Promise<string | null> => ipcRenderer.invoke('app:getChangelog'),
+    getInfo: (): Promise<AppInfo> => ipcRenderer.invoke('app:getInfo')
   },
   window: {
     minimize: (): Promise<void> => ipcRenderer.invoke('window:minimize'),

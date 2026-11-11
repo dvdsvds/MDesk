@@ -6,31 +6,10 @@ export interface NoteTemplate {
   content: string
 }
 
-/** 데일리 노트에 쓰는 템플릿. 지울 수 없고 이름·내용만 바꾼다 */
-export const DAILY_TEMPLATE_ID = 'daily'
+/** 템플릿의 {{date}}, {{yesterday}}, {{tomorrow}}를 채우는 날짜 형식 */
+export const TEMPLATE_DATE_FORMAT = 'YYYY-MM-DD'
 
-export const DEFAULT_TEMPLATES: NoteTemplate[] = [
-  {
-    id: DAILY_TEMPLATE_ID,
-    name: '데일리',
-    content: '# {{date:YYYY년 M월 D일 dddd}}\n\n## 오늘 할 일\n\n- [ ] \n\n## 메모\n\n'
-  },
-  {
-    id: 'meeting',
-    name: '회의록',
-    content:
-      '# {{title}}\n\n- 날짜: {{date}} {{time}}\n- 참석자: \n\n## 안건\n\n- \n\n## 결정사항\n\n1. \n\n## 할 일\n\n- [ ] \n'
-  },
-  {
-    id: 'weekly',
-    name: '주간 회고',
-    content:
-      '# {{title}}\n\n{{date}} 기준 한 주 회고\n\n## 잘한 점\n\n- \n\n## 아쉬운 점\n\n- \n\n## 다음 주 할 일\n\n- [ ] \n'
-  }
-]
-
-export const TEMPLATE_VARIABLES_HINT =
-  '{{date}} {{time}} {{title}} {{yesterday}} {{tomorrow}} · 형식 지정: {{date:YYYY년 M월 D일 dddd}}'
+export const DEFAULT_TEMPLATES: NoteTemplate[] = []
 
 export interface TemplateContext {
   /** 템플릿을 넣는 날짜. 데일리 노트면 그 노트의 날짜 */

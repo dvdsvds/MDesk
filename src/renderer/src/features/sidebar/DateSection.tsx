@@ -22,26 +22,15 @@ const NAV_BTN =
 export function DateSection({
   tree,
   activeFilePath,
-  focusDate,
   onOpenFile
 }: {
   tree: TreeNode[]
   activeFilePath: string | null
-  /** 데일리 노트를 열면 그 날짜로 맞춘다 */
-  focusDate: Date | null
   onOpenFile: (filePath: string) => void
 }): React.JSX.Element {
   const byPath = useNotePropsStore((s) => s.byPath)
   const today = formatDate(new Date(), DAY)
   const [day, setDay] = useState(today)
-
-  // 데일리 노트를 열 때마다 그 날짜로 맞춘다(렌더 중에 바뀐 값을 보고 한 번만 옮긴다)
-  const focusDay = focusDate ? formatDate(focusDate, DAY) : null
-  const [lastFocus, setLastFocus] = useState(focusDay)
-  if (focusDay !== lastFocus) {
-    setLastFocus(focusDay)
-    if (focusDay) setDay(focusDay)
-  }
 
   const { notesOfDay, days } = useMemo(() => {
     const byDay = new Map<string, string[]>()

@@ -38,7 +38,6 @@ interface SidebarProps {
   selectedFolderPath: string | null
   onSelectFolder: (path: string | null) => void
   /** 열려 있는 데일리 노트의 날짜. 날짜 섹션을 그날로 맞춘다 */
-  dailyFocusDate: Date | null
   onInsertTemplate: (template: NoteTemplate) => void
   onCreateFromTemplate: (template: NoteTemplate) => void
   className?: string
@@ -46,7 +45,7 @@ interface SidebarProps {
 }
 
 /** 단축키로 선택된 항목에 실행하는 사이드바 동작 */
-export type SidebarCommand = 'rename' | 'newFolder' | 'reveal' | 'export' | 'compare' | 'history'
+export type SidebarCommand = 'rename' | 'newFolder' | 'reveal' | 'export'
 
 export interface SidebarHandle {
   startNewFile: (dirPath: string) => void
@@ -133,7 +132,6 @@ export const Sidebar = forwardRef<SidebarHandle, SidebarProps>(function Sidebar(
     onOpenAtLine,
     selectedFolderPath,
     onSelectFolder,
-    dailyFocusDate,
     onInsertTemplate,
     onCreateFromTemplate,
     className,
@@ -225,7 +223,6 @@ export const Sidebar = forwardRef<SidebarHandle, SidebarProps>(function Sidebar(
       return
     }
     if (!node) return
-    const isMd = node.type === 'file' && node.name.toLowerCase().endsWith('.md')
     switch (command) {
       case 'rename':
         if (node.type === 'file') expandPath(dirOf(node.path))
@@ -244,12 +241,6 @@ export const Sidebar = forwardRef<SidebarHandle, SidebarProps>(function Sidebar(
         })
         break
       }
-      case 'compare':
-        if (isMd && dirtyFilePaths.includes(node.path)) onCompareChanges(node.path)
-        break
-      case 'history':
-        if (isMd) onOpenHistory(node.path)
-        break
     }
   }
 
@@ -431,7 +422,6 @@ export const Sidebar = forwardRef<SidebarHandle, SidebarProps>(function Sidebar(
                 <DateSection
                   tree={tree}
                   activeFilePath={activeFilePath}
-                  focusDate={dailyFocusDate}
                   onOpenFile={onOpenFile}
                 />
               </div>

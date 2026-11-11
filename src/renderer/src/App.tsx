@@ -27,7 +27,6 @@ import { toggleTaskAtLine } from './utils/tasks'
 import { TitleBar } from './components/TitleBar'
 import { useAppliedTheme } from './stores/useAppliedTheme'
 import { useAppliedFonts } from './stores/useAppliedFonts'
-import { useAppliedSnippets } from './stores/useAppliedSnippets'
 import { useAppliedZoom } from './stores/useAppliedZoom'
 import { useWorkspaceStore } from './stores/workspaceStore'
 import { useTabsStore, type Tab } from './stores/tabsStore'
@@ -36,9 +35,7 @@ import { useToastStore } from './stores/toastStore'
 import { flattenFilePaths, flattenNotes } from './utils/noteIndex'
 import { findHeadingLine } from './utils/wikilink'
 import { useCursorStore } from './stores/cursorStore'
-import { buildDailyContent, dailyNoteDate, dailyNotePath } from './utils/dailyNote'
-import { DailyNav } from './components/DailyNav'
-import { applyTemplate, type NoteTemplate } from './utils/noteTemplate'
+import { TEMPLATE_DATE_FORMAT, applyTemplate, type NoteTemplate } from './utils/noteTemplate'
 import { getCurrentView } from './editor/currentView'
 import { extractToc } from './utils/toc'
 import SidebarIcon  from './icons/sidebar.svg?react'
@@ -93,7 +90,6 @@ interface DiffPopupState {
 function App(): React.JSX.Element {
   useAppliedTheme()
   useAppliedFonts()
-  useAppliedSnippets()
   useAppliedZoom()
   useWorkspaceEvents()
   usePersistOpenTabs()
@@ -114,14 +110,6 @@ function App(): React.JSX.Element {
   const activeTab = tabs.find((t) => t.id === activeTabId) ?? null
   const tagBarPath = activeTab?.kind === 'text' && !activeTab.missing && activeTab.filePath?.toLowerCase().endsWith('.md') ? activeTab.filePath : null
   const isViewer = activeTab !== null && activeTab.kind !== 'text'
-  const dailyFolderSetting = useSettingsStore((s) => s.dailyFolder)
-  const dailyFormatSetting = useSettingsStore((s) => s.dailyFormat)
-  const activeDailyDate = useMemo(
-    () => (tagBarPath ? dailyNoteDate(tagBarPath) : null),
-    // 설정이 바뀌면 다시 판단한다
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [tagBarPath, rootDir, dailyFolderSetting, dailyFormatSetting]
-  )
   const showPreview = !activeTab?.filePath || isMarkdownPath(activeTab.filePath)
   const viewMode = useSettingsStore((s) => s.viewMode)
   const setViewMode = useSettingsStore((s) => s.setViewMode)
@@ -324,7 +312,6 @@ function App(): React.JSX.Element {
     toggleBacklinks: () => setBacklinksOpen((v) => !v),
     toggleSidebar: () => setSidebarCollapsed(!useSettingsStore.getState().sidebarCollapsed),
     toggleGraph: () => setGraphOpen((v) => !v),
-    openDailyNote: () => void openDailyNote(new Date())
   })
 
   const handleOpenFile = useCallback(
@@ -379,7 +366,7 @@ function App(): React.JSX.Element {
       const text = applyTemplate(template.content, {
         date: new Date(),
         title: splitName(fileNameOf(tab.filePath)).base,
-        dateFormat: useSettingsStore.getState().dailyFormat
+        dateFormat: TEMPLATE_DATE_FORMAT
       })
       const pos = view.state.selection.main.head
       view.dispatch({
@@ -404,7 +391,7 @@ function App(): React.JSX.Element {
         const content = applyTemplate(template.content, {
           date: new Date(),
           title: splitName(fileNameOf(created)).base,
-          dateFormat: useSettingsStore.getState().dailyFormat
+          dateFormat: TEMPLATE_DATE_FORMAT
         })
         await window.api.workspace.saveNote({ filePath: created, content })
         openFile(created, content)
@@ -413,33 +400,6 @@ function App(): React.JSX.Element {
       }
     },
     [resolveNewNoteDir, openFile, pushToast, setTree]
-  )
-
-  // 그날 데일리 노트를 연다. 없으면 템플릿(`템플릿/데일리.md`)으로 새로 만든다
-  const openDailyNote = useCallback(
-    async (date: Date): Promise<void> => {
-      const path = dailyNotePath(date)
-      if (!path) return
-      const exists = flattenFilePaths(useWorkspaceStore.getState().tree).some(
-        (p) => p.toLowerCase() === path.toLowerCase()
-      )
-      if (exists) {
-        handleOpenFile(path)
-        return
-      }
-      const title = splitName(fileNameOf(path)).base
-      try {
-        const content = buildDailyContent(date, title)
-        // 형식에 점이 있어도(2026.10.19) 확장자로 오해하지 않게 .md를 붙여서 넘긴다
-        const created = await window.api.workspace.createNote(dirOf(path), `${title}.md`)
-        setTree(await window.api.workspace.getTree())
-        await window.api.workspace.saveNote({ filePath: created, content })
-        openFile(created, content)
-      } catch {
-        pushToast({ kind: 'info', message: '데일리 노트를 만들지 못했어요. 폴더 설정을 확인해 주세요.' })
-      }
-    },
-    [handleOpenFile, openFile, pushToast, setTree]
   )
 
   const handleEditorChange = useCallback(
@@ -792,7 +752,6 @@ function App(): React.JSX.Element {
         <div className="flex shrink-0 rounded-r-xl border-y border-r border-border">
         <ActivityBar
           onOpenSearch={() => setSearchOpen(true)}
-          onOpenDaily={() => void openDailyNote(new Date())}
           onOpenTodo={() => setTodoOpen((v) => !v)}
           onOpenBacklinks={() => setBacklinksOpen((v) => !v)}
           onOpenGraph={() => setGraphOpen((v) => !v)}
@@ -826,7 +785,6 @@ function App(): React.JSX.Element {
                 onOpenAtLine={handleOpenTodo}
                 selectedFolderPath={selectedFolderPath}
                 onSelectFolder={setSelectedFolderPath}
-                dailyFocusDate={activeDailyDate}
                 onInsertTemplate={handleInsertTemplate}
                 onCreateFromTemplate={(t) => void handleCreateFromTemplate(t)}
                 className="h-full"
@@ -925,16 +883,6 @@ function App(): React.JSX.Element {
                     <span className="truncate">
                       Preview {activeTab.filePath ? tabLabel(activeTab) : `${tabLabel(activeTab)}.md`}
                     </span>
-                    {/* 데일리 노트를 열었을 때만 이전·오늘·다음 이동 */}
-                    {activeDailyDate && (
-                      <div className="ml-auto">
-                        <DailyNav
-                          date={activeDailyDate}
-                          onOpenFile={handleOpenFile}
-                          onOpenToday={() => void openDailyNote(new Date())}
-                        />
-                      </div>
-                    )}
                   </div>
                   <MarkdownPreview
                     ref={previewRef}

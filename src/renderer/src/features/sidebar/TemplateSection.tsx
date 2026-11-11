@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { ContextMenu, type ContextMenuItem } from '../../components/ContextMenu'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { useSettingsStore } from '../../stores/settingsStore'
-import { DAILY_TEMPLATE_ID, type NoteTemplate } from '../../utils/noteTemplate'
+import type { NoteTemplate } from '../../utils/noteTemplate'
 import { TemplateEditDialog } from './TemplateEditDialog'
 import PlusIcon from '../../icons/ctx-plus.svg?react'
 import RenameIcon from '../../icons/ctx-rename.svg?react'
@@ -46,16 +46,12 @@ export function TemplateSection({
       sepBefore: true,
       onClick: () => setEditing({ template: t, isNew: false })
     },
-    ...(t.id === DAILY_TEMPLATE_ID
-      ? []
-      : [
-          {
-            label: '삭제',
-            icon: <TrashIcon width={16} height={16} />,
-            danger: true,
-            onClick: () => setDeleting(t)
-          }
-        ])
+    {
+      label: '삭제',
+      icon: <TrashIcon width={16} height={16} />,
+      danger: true,
+      onClick: () => setDeleting(t)
+    }
   ]
 
   return (
@@ -77,9 +73,6 @@ export function TemplateSection({
           className={ROW}
         >
           <span className="truncate">{t.name}</span>
-          {t.id === DAILY_TEMPLATE_ID && (
-            <span className="shrink-0 text-[11px] text-text-tertiary">데일리 노트</span>
-          )}
           <button
             type="button"
             onClick={(e) => {

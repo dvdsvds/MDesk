@@ -1,6 +1,5 @@
 import { useSettingsStore } from '../stores/settingsStore'
 import SearchIcon from '../icons/search.svg?react'
-import CalendarIcon from '../icons/calendar.svg?react'
 import TodoIcon from '../icons/todo.svg?react'
 import BacklinksIcon from '../icons/backlinks.svg?react'
 import GraphIcon from '../icons/graph.svg?react'
@@ -16,14 +15,12 @@ const BTN =
 /** 사이드바 왼쪽의 아이콘 세로 줄. 사이드바를 접어도 남는다 */
 export function ActivityBar({
   onOpenSearch,
-  onOpenDaily,
   onOpenTodo,
   onOpenBacklinks,
   onOpenGraph,
   onOpenSettings
 }: {
   onOpenSearch: () => void
-  onOpenDaily: () => void
   onOpenTodo: () => void
   onOpenBacklinks: () => void
   onOpenGraph: () => void
@@ -40,14 +37,6 @@ export function ActivityBar({
         className={BTN}
       >
         <SearchIcon width={17} height={17} />
-      </button>
-      <button
-        type="button"
-        onClick={onOpenDaily}
-        title={`오늘의 노트 (${shortcuts.dailyNote})`}
-        className={BTN}
-      >
-        <CalendarIcon width={17} height={17} />
       </button>
       <button
         type="button"

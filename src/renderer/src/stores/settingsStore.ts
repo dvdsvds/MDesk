@@ -1,12 +1,11 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { DEFAULT_SHORTCUTS, type ShortcutAction, type ShortcutMap } from '../utils/shortcuts'
-import { DAILY_TEMPLATE_ID, DEFAULT_TEMPLATES, type NoteTemplate } from '../utils/noteTemplate'
-import { DEFAULT_SNIPPETS, type CssSnippet } from '../utils/cssSnippets'
+import { DEFAULT_TEMPLATES, type NoteTemplate } from '../utils/noteTemplate'
 import { DEFAULT_EDITOR_FONT_FAMILY, PREVIOUS_EDITOR_FONT_FAMILY } from '../utils/editorFonts'
 
-const OLD_DAILY_CONTENT =
-  '# {{date:YYYY년 M월 D일 dddd}}\n\n← [[{{yesterday}}]] · [[{{tomorrow}}]] →\n\n## 오늘 할 일\n\n- [ ] \n\n## 메모\n\n'
+/** 예전에 기본으로 들어 있던 템플릿(지금은 기본 템플릿이 없어서 저장돼 있어도 없앤다) */
+const REMOVED_DEFAULT_TEMPLATE_IDS = ['daily', 'meeting', 'weekly']
 
 export type ThemePreference = 'system' | 'light' | 'dark'
 
@@ -52,9 +51,6 @@ interface SettingsState {
   setTagsSectionOpen: (value: boolean) => void
   collapsedFolders: string[]
   setFolderCollapsed: (path: string, collapsed: boolean) => void
-  dailyFolder: string
-  dailyFormat: string
-  setDailyNote: (partial: Partial<{ folder: string; format: string }>) => void
   templates: NoteTemplate[]
   saveTemplate: (template: NoteTemplate) => void
   deleteTemplate: (id: string) => void
@@ -62,10 +58,6 @@ interface SettingsState {
   setTemplatesSectionOpen: (value: boolean) => void
   datesSectionOpen: boolean
   setDatesSectionOpen: (value: boolean) => void
-  snippets: CssSnippet[]
-  saveSnippet: (snippet: CssSnippet) => void
-  deleteSnippet: (id: string) => void
-  toggleSnippet: (id: string) => void
   /** 사이드바 태그 섹션에서 접어 둔 상태 값 */
   tagCollapsedGroups: string[]
   toggleTagGroup: (label: string) => void
@@ -133,18 +125,11 @@ export const useSettingsStore = create<SettingsState>()(
       setUiZoom: (value) =>
         set({ uiZoom: Math.min(200, Math.max(50, Math.round(value / 10) * 10)) }),
       sidebarCollapsed: false,
-      setSidebarCollapsed: (value) => set({ sidebarCollapsed: value}),
+      setSidebarCollapsed: (value) => set({ sidebarCollapsed: value }),
       filesSectionOpen: true,
       setFilesSectionOpen: (value) => set({ filesSectionOpen: value }),
       tagsSectionOpen: true,
       setTagsSectionOpen: (value) => set({ tagsSectionOpen: value }),
-      dailyFolder: '데일리',
-      dailyFormat: 'YYYY-MM-DD',
-      setDailyNote: (partial) =>
-        set((state) => ({
-          dailyFolder: partial.folder ?? state.dailyFolder,
-          dailyFormat: partial.format ?? state.dailyFormat
-        })),
       templates: DEFAULT_TEMPLATES,
       saveTemplate: (template) =>
         set((state) => ({
@@ -158,18 +143,6 @@ export const useSettingsStore = create<SettingsState>()(
       setTemplatesSectionOpen: (value) => set({ templatesSectionOpen: value }),
       datesSectionOpen: true,
       setDatesSectionOpen: (value) => set({ datesSectionOpen: value }),
-      snippets: DEFAULT_SNIPPETS,
-      saveSnippet: (snippet) =>
-        set((state) => ({
-          snippets: state.snippets.some((s) => s.id === snippet.id)
-            ? state.snippets.map((s) => (s.id === snippet.id ? snippet : s))
-            : [...state.snippets, snippet]
-        })),
-      deleteSnippet: (id) => set((state) => ({ snippets: state.snippets.filter((s) => s.id !== id) })),
-      toggleSnippet: (id) =>
-        set((state) => ({
-          snippets: state.snippets.map((s) => (s.id === id ? { ...s, enabled: !s.enabled } : s))
-        })),
       collapsedFolders: [],
       setFolderCollapsed: (path, collapsed) =>
         set((state) => {
@@ -207,11 +180,8 @@ export const useSettingsStore = create<SettingsState>()(
           ...current,
           ...p,
           shortcuts: { ...DEFAULT_SHORTCUTS, ...(p.shortcuts ?? {}) },
-          // 사용자가 고치지 않은 예전 데일리 기본값(어제·내일 링크 줄 포함)은 새 기본값으로 바꾼다
-          templates: (p.templates ?? current.templates).map((t) =>
-            t.id === DAILY_TEMPLATE_ID && t.content === OLD_DAILY_CONTENT
-              ? { ...t, content: DEFAULT_TEMPLATES[0].content }
-              : t
+          templates: (p.templates ?? current.templates).filter(
+            (t) => !REMOVED_DEFAULT_TEMPLATE_IDS.includes(t.id)
           )
         }
       },

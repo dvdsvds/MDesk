@@ -17,6 +17,22 @@ body {
   overflow: hidden; /* 화면 구성이 직접 스크롤 영역을 관리 (탭 막대, 트리, 에디터 등) */
 }
 
+/* 글자 선택(드래그)은 에디터와 미리보기(마크다운, docx, xlsx)와 입력칸에서만 된다. 나머지 화면에서는 끌어도 글자가 선택되지 않는다 */
+body {
+  -webkit-user-select: none;
+  user-select: none;
+}
+.cm-editor,
+.prose-preview,
+.docx-viewer,
+.xlsx-table,
+input,
+textarea,
+[contenteditable='true'] {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
 /* 커스텀 제목 줄 영역: 드래그로 창을 이동시키는 기본 동작 */
 .titlebar-drag {
   -webkit-app-region: drag;

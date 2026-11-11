@@ -7,45 +7,27 @@ import { SHORTCUT_LABELS, type ShortcutAction } from '../../utils/shortcuts'
 import { ThemeToggle } from '../../components/ThemeToggle'
 import { INPUT, NumberField, Row, Toggle } from './SettingsParts'
 import { TrashSetting } from './TrashSetting'
-import { DailyNoteSetting } from './DailyNoteSetting'
-import { SnippetSetting } from './SnippetSetting'
 import { FontSelect } from './FontSelect'
+import { AboutSetting } from './AboutSetting'
 
-/** 설정의 단축키를 하는 일 기준으로 나눈 소제목. 모든 단축키가 여기 한 번씩 들어 있어야 한다 */
+/** 설정의 단축키를 하는 일 기준으로 나눈 소제목. 비교 화면의 적용·되돌리기는 키를 바꿀 수 없는 고정 단축키라 여기에 없다 */
 const SHORTCUT_GROUPS: { group: string; actions: ShortcutAction[] }[] = [
   { group: '파일', actions: ['newNote', 'save', 'copyPathAbsolute', 'copyPathRelative'] },
   {
     group: '사이드바',
-    actions: [
-      'toggleSidebar',
-      'renameItem',
-      'newFolder',
-      'revealItem',
-      'exportItem',
-      'compareItem',
-      'historyItem'
-    ]
+    actions: ['toggleSidebar', 'renameItem', 'newFolder', 'revealItem', 'exportItem']
   },
   {
     group: '보기',
     actions: ['viewEditor', 'viewSplit', 'viewPreview', 'zoomIn', 'zoomOut', 'zoomReset']
   },
   {
-    group: '이동·패널',
-    actions: [
-      'search',
-      'dailyNote',
-      'toggleToc',
-      'todoDashboard',
-      'backlinks',
-      'graph',
-      'toggleSettings'
-    ]
-  },
-  { group: '차이 화면', actions: ['diffApply', 'diffRestore'] }
+    group: '열기',
+    actions: ['search', 'todoDashboard', 'graph', 'toggleToc', 'backlinks', 'toggleSettings']
+  }
 ]
 
-export const CATEGORIES = ['일반', '화면', '단축키'] as const
+export const CATEGORIES = ['일반', '화면', '단축키', '정보'] as const
 export type Category = (typeof CATEGORIES)[number]
 
 export interface SettingItem {
@@ -173,13 +155,6 @@ export function useSettingItems(): SettingItem[] {
         )
       },
       {
-        id: 'daily-note',
-        category: '일반',
-        group: '데일리 노트',
-        label: '데일리 노트 폴더 형식',
-        render: () => <DailyNoteSetting />
-      },
-      {
         id: 'trash',
         category: '일반',
         group: '휴지통',
@@ -198,23 +173,13 @@ export function useSettingItems(): SettingItem[] {
         )
       },
       {
-        id: 'css-snippets',
-        category: '화면',
-        group: 'CSS 스니펫',
-        label: 'CSS 스니펫 꾸미기',
-        render: () => <SnippetSetting />
-      },
-      {
         id: 'editor-font-family',
         category: '화면',
         group: '에디터',
         label: '글꼴',
         render: () => (
           <Row label="글꼴">
-            <FontSelect
-              value={editorFontFamily}
-              onChange={(family) => setEditorFont({ family })}
-            />
+            <FontSelect value={editorFontFamily} onChange={(family) => setEditorFont({ family })} />
           </Row>
         )
       },
@@ -299,16 +264,28 @@ export function useSettingItems(): SettingItem[] {
           </Row>
         )
       },
+      {
+        id: 'about-app',
+        category: '정보',
+        group: '앱',
+        label: '앱 정보',
+        render: () => <AboutSetting section="app" />
+      },
+      {
+        id: 'about-env',
+        category: '정보',
+        group: '실행 환경',
+        label: '실행 환경',
+        render: () => <AboutSetting section="env" />
+      },
       ...SHORTCUT_GROUPS.flatMap(({ group, actions }) =>
-        actions.map(
-          (action): SettingItem => ({
-            id: `shortcut-${action}`,
-            category: '단축키',
-            group,
-            label: SHORTCUT_LABELS[action],
-            render: () => <ShortcutRow action={action} />
-          })
-        )
+        actions.map((action): SettingItem => ({
+          id: `shortcut-${action}`,
+          category: '단축키',
+          group,
+          label: SHORTCUT_LABELS[action],
+          render: () => <ShortcutRow action={action} />
+        }))
       )
     ],
     [
