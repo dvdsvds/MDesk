@@ -9,8 +9,6 @@ import {
 } from '../../utils/editorFonts'
 import { INPUT } from './SettingsParts'
 
-const LIST_WIDTH = 320
-
 /** 에디터 글꼴을 고르는 드롭다운. 목록에서 각 글꼴의 이름과 실제 생김새를 함께 보여 준다 */
 export function FontSelect({
   value,
@@ -20,7 +18,7 @@ export function FontSelect({
   onChange: (family: string) => void
 }): React.JSX.Element {
   const [open, setOpen] = useState(false)
-  const [pos, setPos] = useState<{ top: number; left: number } | null>(null)
+  const [pos, setPos] = useState<{ top: number; left: number; width: number } | null>(null)
   const buttonRef = useRef<HTMLButtonElement>(null)
   const listRef = useRef<HTMLDivElement>(null)
 
@@ -33,10 +31,8 @@ export function FontSelect({
   const openList = useCallback((): void => {
     const rect = buttonRef.current?.getBoundingClientRect()
     if (!rect) return
-    setPos({
-      top: rect.bottom + 4,
-      left: Math.max(8, Math.min(rect.right - LIST_WIDTH, window.innerWidth - LIST_WIDTH - 8))
-    })
+    // 목록은 드롭다운 바와 같은 폭·같은 왼쪽 위치에 붙인다
+    setPos({ top: rect.bottom + 4, left: rect.left, width: rect.width })
     setOpen(true)
   }, [])
 
@@ -82,7 +78,7 @@ export function FontSelect({
         createPortal(
           <div
             ref={listRef}
-            style={{ top: pos.top, left: pos.left, width: LIST_WIDTH }}
+            style={{ top: pos.top, left: pos.left, width: pos.width }}
             className="fixed z-[1000] overflow-hidden rounded-lg border border-border bg-bg-elevated py-1 shadow-[0_8px_24px_rgba(0,0,0,0.25)]"
           >
             {options.map((o) => {

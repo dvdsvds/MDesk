@@ -4,8 +4,10 @@ import { MarkdownEditor, type MarkdownEditorHandle } from './editor/MarkdownEdit
 import { MarkdownPreview, type MarkdownPreviewHandle } from './features/preview/MarkdownPreview'
 import { Sidebar, type SidebarHandle } from './features/sidebar/Sidebar'
 import { TabBar } from './components/TabBar'
+import { TooltipLayer } from './components/TooltipLayer'
 import { tabLabel } from './utils/tabLabel'
 import { ViewModeSwitch } from './components/ViewModeSwitch'
+import type { ViewMode } from './stores/settingsStore'
 import { SaveChangesDialog } from './components/SaveChangesDialog'
 import { useTabClose } from './hooks/useTabClose'
 import { useSidebarResize } from './hooks/useSidebarResize'
@@ -43,7 +45,6 @@ import SidebarIcon  from './icons/sidebar.svg?react'
 import { readTextFile, fileKindOf, isMarkdownPath } from './utils/fileKind'
 import { FileViewer } from './components/FileViewer'
 import { EmptyState } from './components/EmptyState'
-import { StatusBar } from './components/StatusBar'
 import { ActivityBar, ACTIVITY_BAR_WIDTH } from './components/ActivityBar'
 import SearchIcon from './icons/search.svg?react'
 import { useWorkspaceEvents } from './hooks/useWorkspaceEvents'
@@ -290,8 +291,22 @@ function App(): React.JSX.Element {
     [selectedFolderPath]
   )
 
+  // 보기 모드 버튼과 단축키가 같이 쓴다. 마크다운 노트가 아니면 미리보기가 없으니 바꾸지 않는다
+  const changeViewMode = (next: ViewMode): void => {
+    if (!(activeTab && activeTab.kind === 'text' && showPreview)) return
+    setAnimating(true)
+    setViewMode(next)
+  }
+  const shortcuts = useSettingsStore((s) => s.shortcuts)
+
   useGlobalShortcuts({
     settingsOpen,
+    setViewMode: changeViewMode,
+    sidebarCommand: (command) => {
+      // 접혀 있으면 펼친 다음, 화면이 그려지고 나서 실행한다
+      if (useSettingsStore.getState().sidebarCollapsed) setSidebarCollapsed(false)
+      requestAnimationFrame(() => sidebarRef.current?.runCommand(command))
+    },
     save: saveActiveTab,
     openSearch: () => setSearchOpen(true),
     newFile: () => {
@@ -726,9 +741,11 @@ function App(): React.JSX.Element {
           activeTab && activeTab.kind === 'text' && showPreview ? (
             <ViewModeSwitch
               value={viewMode}
-              onChange={(next) => {
-                setAnimating(true)
-                setViewMode(next)
+              onChange={changeViewMode}
+              shortcuts={{
+                editor: shortcuts.viewEditor,
+                split: shortcuts.viewSplit,
+                preview: shortcuts.viewPreview
               }}
             />
           ) : null
@@ -769,7 +786,8 @@ function App(): React.JSX.Element {
           </motion.div>
         }
       />
-      <main className="flex min-h-0 flex-1">
+      {/* 아래에 4px 여백: 사이드바·에디터·미리보기 카드가 창 맨 아래에 붙지 않게(양옆 틈과 같은 크기) */}
+      <main className="flex min-h-0 flex-1 pb-1">
         {/* 아이콘 줄과 사이드바를 한 테두리로 묶는다. 사이드바를 접으면 아이콘 줄만 남는다 */}
         <div className="flex shrink-0 rounded-r-xl border-y border-r border-border">
         <ActivityBar
@@ -944,7 +962,6 @@ function App(): React.JSX.Element {
           )}
         </div>
       </main>
-      <StatusBar tab={activeTab} isViewer={isViewer} />
       <AnimatePresence>
         {searchOpen && (
           <SearchPanel
@@ -961,6 +978,7 @@ function App(): React.JSX.Element {
         )}
       </AnimatePresence>
       <ToastStack onOpenDiff={handleOpenDiffFromToast} />
+      <TooltipLayer />
       {diffPopup && (
         <DiffView
           oldContent={diffPopup.oldContent}

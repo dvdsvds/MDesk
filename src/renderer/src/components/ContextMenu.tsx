@@ -9,6 +9,8 @@ export interface ContextMenuItem {
   icon?: React.ReactNode
   /** true면 이 항목 위에 구분선을 그린다 */
   sepBefore?: boolean
+  /** 항목 오른쪽에 흐리게 보이는 단축키 */
+  shortcut?: string
 }
 
 interface ContextMenuProps {
@@ -55,7 +57,7 @@ export function ContextMenu({ x, y, items, onClose }: ContextMenuProps): React.J
   return createPortal(
     <div
       ref={ref}
-      className="ctx-menu titlebar-no-drag fixed z-[1100] w-52 rounded-xl border border-border bg-bg-elevated p-1.5 shadow-xl"
+      className="ctx-menu titlebar-no-drag fixed z-[1100] w-max min-w-52 rounded-xl border border-border bg-bg-elevated p-1.5 shadow-xl"
       style={{ left: pos.left, top: pos.top }}
     >
       {items.map((item) => (
@@ -67,7 +69,7 @@ export function ContextMenu({ x, y, items, onClose }: ContextMenuProps): React.J
               item.onClick()
               onClose()
             }}
-            className={`flex h-8 w-full items-center gap-2.5 rounded-lg px-2.5 text-left text-[13px] focus:outline-none ${
+            className={`flex h-8 w-full items-center gap-2.5 whitespace-nowrap rounded-lg px-2.5 text-left text-[13px] focus:outline-none ${
               item.danger ? 'text-danger hover:bg-danger/12' : 'text-text hover:bg-bg-mute'
             }`}
           >
@@ -81,6 +83,11 @@ export function ContextMenu({ x, y, items, onClose }: ContextMenuProps): React.J
               </span>
             )}
             {item.label}
+            {item.shortcut && (
+              <span className="ml-auto pl-6 text-[11px] tabular-nums text-text-tertiary">
+                {item.shortcut}
+              </span>
+            )}
           </button>
         </div>
       ))}

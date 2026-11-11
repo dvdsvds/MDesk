@@ -16,6 +16,15 @@ export interface ShortcutMap {
   toggleSidebar: string
   graph: string
   dailyNote: string
+  viewEditor: string
+  viewSplit: string
+  viewPreview: string
+  renameItem: string
+  newFolder: string
+  revealItem: string
+  exportItem: string
+  compareItem: string
+  historyItem: string
 }
 
 export type ShortcutAction = keyof ShortcutMap
@@ -37,7 +46,16 @@ export const DEFAULT_SHORTCUTS: ShortcutMap = {
   backlinks: 'Ctrl+Shift+B',
   toggleSidebar: 'Ctrl+Shift+E',
   graph: 'Ctrl+Shift+G',
-  dailyNote: 'Ctrl+Shift+D'
+  dailyNote: 'Ctrl+Shift+D',
+  viewEditor: 'Ctrl+Alt+I',
+  viewSplit: 'Ctrl+Alt+O',
+  viewPreview: 'Ctrl+Alt+P',
+  renameItem: 'F2',
+  newFolder: 'Ctrl+Shift+N',
+  revealItem: 'Ctrl+Alt+R',
+  exportItem: 'Ctrl+Alt+E',
+  compareItem: 'Ctrl+Alt+D',
+  historyItem: 'Ctrl+Alt+H'
 }
 
 export const SHORTCUT_LABELS: Record<ShortcutAction, string> = {
@@ -57,7 +75,16 @@ export const SHORTCUT_LABELS: Record<ShortcutAction, string> = {
   backlinks: '백링크 패널',
   toggleSidebar: '사이드바 접기/펼치기',
   graph: '그래프 뷰',
-  dailyNote: '오늘 데일리 노트'
+  dailyNote: '오늘 데일리 노트',
+  viewEditor: '보기: 에디터만',
+  viewSplit: '보기: 분할',
+  viewPreview: '보기: 미리보기만',
+  renameItem: '사이드바: 이름 바꾸기',
+  newFolder: '사이드바: 새 폴더',
+  revealItem: '사이드바: 폴더에서 보기',
+  exportItem: '사이드바: 폴더 내보내기',
+  compareItem: '사이드바: 변경 내용 비교',
+  historyItem: '사이드바: 버전 기록'
 }
 
 function normalizeKey(key: string): string {

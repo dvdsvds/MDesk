@@ -17,7 +17,8 @@ const markdownHighlight = HighlightStyle.define([
     color: 'var(--color-syntax-heading)'
   },
   { tag: tags.strong, fontWeight: '400', color: 'var(--color-syntax-strong)' },
-  { tag: tags.emphasis, fontStyle: 'italic', color: 'var(--color-syntax-em)' },
+  // 기울임은 안쪽 글자에만 입힌다(markdownStyle.ts). 여기서는 색만 지정한다
+  { tag: tags.emphasis, color: 'var(--color-syntax-em)' },
   { tag: tags.strikethrough, textDecoration: 'line-through', color: 'var(--color-text-secondary)' },
   { tag: tags.monospace, fontFamily: 'var(--font-editor)', color: 'var(--color-syntax-code)' },
   { tag: tags.quote, color: 'var(--color-syntax-mark)', fontStyle: 'italic' },

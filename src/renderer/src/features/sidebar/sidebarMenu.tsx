@@ -1,5 +1,6 @@
 import type { TreeNode } from '../../types/workspace'
 import type { ContextMenuItem } from '../../components/ContextMenu'
+import type { ShortcutMap } from '../../utils/shortcuts'
 import PlusIcon from '../../icons/ctx-plus.svg?react'
 import RenameIcon from '../../icons/ctx-rename.svg?react'
 import CopyPathIcon from '../../icons/tb-copy.svg?react'
@@ -20,6 +21,8 @@ export interface MenuActions {
   openDelete: (node: TreeNode) => void
   onCompareChanges: (filePath: string) => void
   onOpenHistory: (filePath: string) => void
+  /** 항목 오른쪽에 보여 줄 단축키 */
+  shortcuts: ShortcutMap
 }
 
 export function buildMenuItems(node: TreeNode, a: MenuActions): ContextMenuItem[] {
@@ -28,6 +31,7 @@ export function buildMenuItems(node: TreeNode, a: MenuActions): ContextMenuItem[
     items.push({
       label: '파일',
       icon: <PlusIcon width={16} height={16} />,
+      shortcut: a.shortcuts.newNote,
       onClick: () => {
         a.expandPath(node.path)
         a.startNewFile(node.path)
@@ -36,6 +40,7 @@ export function buildMenuItems(node: TreeNode, a: MenuActions): ContextMenuItem[
     items.push({
       label: '폴더',
       icon: <PlusIcon width={16} height={16} />,
+      shortcut: a.shortcuts.newFolder,
       onClick: () => {
         a.expandPath(node.path)
         a.startNewFolder(node.path)
@@ -46,23 +51,27 @@ export function buildMenuItems(node: TreeNode, a: MenuActions): ContextMenuItem[
     label: '이름 바꾸기',
     icon: <RenameIcon width={16} height={16} />,
     sepBefore: node.type === 'folder',
+    shortcut: a.shortcuts.renameItem,
     onClick: () => a.startRename(node.path)
   })
   items.push({
     label: '경로 복사',
     icon: <CopyPathIcon width={16} height={16} />,
+    shortcut: a.shortcuts.copyPathAbsolute,
     onClick: () => void window.api.workspace.copyPath(node.path, false)
   })
   items.push({
     label: '폴더에서 보기',
     icon: <RevealIcon width={16} height={16} />,
     sepBefore: true,
+    shortcut: a.shortcuts.revealItem,
     onClick: () => void window.api.workspace.reveal(node.path)
   })
   if (node.type === 'folder') {
     items.push({
       label: '폴더 내보내기',
       icon: <ExportFolderIcon width={16} height={16} />,
+      shortcut: a.shortcuts.exportItem,
       onClick: () =>
         a.openExport({
           folderPath: node.path,
@@ -76,6 +85,7 @@ export function buildMenuItems(node: TreeNode, a: MenuActions): ContextMenuItem[
     items.push({
       label: '변경 내용 비교',
       icon: <DiffIcon width={16} height={16} />,
+      shortcut: a.shortcuts.compareItem,
       onClick: () => a.onCompareChanges(node.path)
     })
   }
@@ -83,6 +93,7 @@ export function buildMenuItems(node: TreeNode, a: MenuActions): ContextMenuItem[
     items.push({
       label: '버전 기록',
       icon: <HistoryIcon width={16} height={16} />,
+      shortcut: a.shortcuts.historyItem,
       onClick: () => a.onOpenHistory(node.path)
     })
   }
@@ -91,6 +102,7 @@ export function buildMenuItems(node: TreeNode, a: MenuActions): ContextMenuItem[
     danger: true,
     icon: <TrashIcon width={16} height={16} />,
     sepBefore: true,
+    shortcut: 'Delete',
     onClick: () => a.openDelete(node)
   })
   return items

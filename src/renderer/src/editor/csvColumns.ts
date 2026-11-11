@@ -1,19 +1,14 @@
-import {
-  RangeSetBuilder,
-  StateEffect,
-  StateField,
-  type EditorState,
-  type Extension
-} from '@codemirror/state'
+import { StateField, type Extension, type Range } from '@codemirror/state'
 import {
   Decoration,
-  EditorView,
   ViewPlugin,
+  WidgetType,
   type DecorationSet,
+  type EditorView,
   type ViewUpdate
 } from '@codemirror/view'
-import { create } from 'zustand'
 import { fileNameOf, splitName } from '../utils/path'
+import { refreshDecorations } from './markdownStyle'
 
 export const COLUMN_COLORS = 8
 
@@ -32,33 +27,6 @@ const SNIFF_LINES = 20
 
 export function delimitedHint(filePath: string): string | null {
   return EXT_HINT[splitName(fileNameOf(filePath)).ext.slice(1).toLowerCase()] ?? null
-}
-
-export function delimiterLabel(delimiter: string | null): string {
-  switch (delimiter) {
-    case null:
-      return '끔'
-    case '\t':
-      return '탭'
-    case ', ':
-      return '쉼표+공백'
-    case ' ':
-      return '공백'
-    case ',':
-      return '쉼표'
-    case ';':
-      return '세미콜론'
-    case '|':
-      return '파이프'
-    case '^':
-      return '캐럿'
-    case '~':
-      return '물결'
-    case ':':
-      return '콜론'
-    default:
-      return delimiter
-  }
 }
 
 export interface FieldRange {
@@ -179,33 +147,10 @@ export interface CsvConfig {
   header: boolean
 }
 
-export const setCsvConfig = StateEffect.define<Partial<CsvConfig>>()
-
 const csvConfigField = StateField.define<CsvConfig>({
   create: () => ({ delimiter: null, header: true }),
-  update(value, tr) {
-    for (const e of tr.effects) if (e.is(setCsvConfig)) value = { ...value, ...e.value }
-    return value
-  }
+  update: (value) => value
 })
-
-interface CsvStatus {
-  active: boolean
-  delimiter: string | null
-  header: boolean
-  column: number | null
-  columnName: string | null
-}
-
-const EMPTY_STATUS: CsvStatus = {
-  active: false,
-  delimiter: null,
-  header: true,
-  column: null,
-  columnName: null
-}
-
-export const useCsvStatus = create<CsvStatus>(() => EMPTY_STATUS)
 
 const cellMarks = Array.from({ length: COLUMN_COLORS }, (_, i) =>
   Decoration.mark({ class: `cm-csv-c${i}` })
@@ -215,11 +160,71 @@ const headMarks = Array.from({ length: COLUMN_COLORS }, (_, i) =>
 )
 const delimiterMark = Decoration.mark({ class: 'cm-csv-delim' })
 
-function buildDecorations(view: EditorView): DecorationSet {
-  const { delimiter, header } = view.state.field(csvConfigField)
-  const builder = new RangeSetBuilder<Decoration>()
-  if (!delimiter) return builder.finish()
+/** 열 너비를 구할 때 훑는 줄 수. 큰 파일에서 입력이 느려지지 않게 앞쪽만 본다 */
+const ALIGN_SCAN_LINES = 5000
+
+/** 글자 폭(칸 수): 한글·한자 같은 넓은 글자는 2칸, 나머지는 1칸 */
+function cellWidth(text: string): number {
+  let w = 0
+  for (const ch of text) {
+    const c = ch.codePointAt(0) ?? 0
+    w +=
+      (c >= 0x1100 && c <= 0x115f) ||
+      (c >= 0x2e80 && c <= 0xa4cf) ||
+      (c >= 0xac00 && c <= 0xd7a3) ||
+      (c >= 0xf900 && c <= 0xfaff) ||
+      (c >= 0xfe30 && c <= 0xfe6f) ||
+      (c >= 0xff00 && c <= 0xff60) ||
+      (c >= 0xffe0 && c <= 0xffe6)
+        ? 2
+        : 1
+  }
+  return w
+}
+
+/** 열마다 가장 긴 칸의 폭(칸 수) */
+function columnWidths(view: EditorView, delimiter: string): number[] {
   const doc = view.state.doc
+  const widths: number[] = []
+  const last = Math.min(doc.lines, ALIGN_SCAN_LINES)
+  for (let n = 1; n <= last; n++) {
+    const text = doc.line(n).text
+    const { cells, delimiters } = splitLine(text, delimiter)
+    if (delimiters.length === 0) continue
+    // 마지막 칸은 뒤에 구분자가 없어 맞출 필요가 없다
+    for (let i = 0; i < cells.length - 1; i++) {
+      widths[i] = Math.max(widths[i] ?? 0, cellWidth(text.slice(cells[i].from, cells[i].to)))
+    }
+  }
+  return widths
+}
+
+/** 문서에는 들어가지 않는 빈 간격. 칸 뒤에 놓아 열을 화면에서만 맞춘다 */
+class PadWidget extends WidgetType {
+  constructor(readonly px: number) {
+    super()
+  }
+  eq(other: PadWidget): boolean {
+    return other.px === this.px
+  }
+  toDOM(): HTMLElement {
+    const span = document.createElement('span')
+    span.style.display = 'inline-block'
+    span.style.width = `${this.px}px`
+    span.setAttribute('aria-hidden', 'true')
+    return span
+  }
+  ignoreEvent(): boolean {
+    return true
+  }
+}
+
+function buildDecorations(view: EditorView, widths: number[]): DecorationSet {
+  const { delimiter, header } = view.state.field(csvConfigField)
+  if (!delimiter) return Decoration.none
+  const ranges: Range<Decoration>[] = []
+  const doc = view.state.doc
+  const charW = view.defaultCharacterWidth
   for (const { from, to } of view.visibleRanges) {
     let pos = from
     while (pos <= to) {
@@ -228,78 +233,53 @@ function buildDecorations(view: EditorView): DecorationSet {
         const marks = header && line.number === 1 ? headMarks : cellMarks
         const { cells, delimiters } = splitLine(line.text, delimiter)
         // 구분자가 없는 줄은 칸이 하나뿐이라 색칠도 굵게도 하지 않는다
-        if (delimiters.length === 0) {
-          pos = line.to + 1
-          continue
-        }
-        for (let i = 0; i < cells.length; i++) {
-          const cell = cells[i]
-          if (cell.to > cell.from) {
-            builder.add(line.from + cell.from, line.from + cell.to, marks[i % COLUMN_COLORS])
+        if (delimiters.length > 0) {
+          for (let i = 0; i < cells.length; i++) {
+            const cell = cells[i]
+            if (cell.to > cell.from) {
+              ranges.push(marks[i % COLUMN_COLORS].range(line.from + cell.from, line.from + cell.to))
+            }
+            const d = delimiters[i]
+            if (d) {
+              const gap = (widths[i] ?? 0) - cellWidth(line.text.slice(cell.from, cell.to))
+              if (gap > 0) {
+                ranges.push(
+                  Decoration.widget({ widget: new PadWidget(gap * charW), side: -1 }).range(
+                    line.from + cell.to
+                  )
+                )
+              }
+              ranges.push(delimiterMark.range(line.from + d.from, line.from + d.to))
+            }
           }
-          const d = delimiters[i]
-          if (d) builder.add(line.from + d.from, line.from + d.to, delimiterMark)
         }
       }
       pos = line.to + 1
     }
   }
-  return builder.finish()
+  return Decoration.set(ranges, true)
 }
-
-function cellText(text: string, range: FieldRange): string {
-  const raw = text.slice(range.from, range.to).trim()
-  return raw.length >= 2 && raw.startsWith('"') && raw.endsWith('"')
-    ? raw.slice(1, -1).replace(/""/g, '"')
-    : raw
-}
-
-function statusOf(state: EditorState): CsvStatus {
-  const { delimiter, header } = state.field(csvConfigField)
-  if (!delimiter) return { ...EMPTY_STATUS, active: true, delimiter, header }
-  const head = state.selection.main.head
-  const line = state.doc.lineAt(head)
-  const { cells, delimiters } = splitLine(line.text, delimiter)
-  if (delimiters.length === 0) return { ...EMPTY_STATUS, active: true, delimiter, header }
-  const offset = head - line.from
-  let index = cells.findIndex((c) => offset <= c.to)
-  if (index === -1) index = cells.length - 1
-  let columnName: string | null = null
-  if (header) {
-    const first = state.doc.line(1).text
-    const headCell = splitLine(first, delimiter).cells[index]
-    columnName = headCell ? cellText(first, headCell) || null : null
-  }
-  return { active: true, delimiter, header, column: index + 1, columnName }
-}
-
-let statusOwner: object | null = null
 
 const csvPlugin = ViewPlugin.fromClass(
   class {
     decorations: DecorationSet
-    // 탭을 바꿀 때 새 플러그인이 먼저 생겨도 이전 플러그인의 destroy가 상태를 지우지 않게 하는 표시
-    private readonly owner = {}
+    widths: number[]
     constructor(view: EditorView) {
-      this.decorations = buildDecorations(view)
-      statusOwner = this.owner
-      useCsvStatus.setState(statusOf(view.state))
+      const { delimiter } = view.state.field(csvConfigField)
+      this.widths = delimiter ? columnWidths(view, delimiter) : []
+      this.decorations = buildDecorations(view, this.widths)
     }
     update(update: ViewUpdate): void {
-      const configChanged =
-        update.startState.field(csvConfigField) !== update.state.field(csvConfigField)
-      if (update.docChanged || update.viewportChanged || configChanged) {
-        this.decorations = buildDecorations(update.view)
+      const { delimiter } = update.state.field(csvConfigField)
+      if (update.docChanged && delimiter) this.widths = columnWidths(update.view, delimiter)
+      if (
+        update.docChanged ||
+        update.viewportChanged ||
+        update.geometryChanged ||
+        update.transactions.some((tr) => tr.annotation(refreshDecorations))
+      ) {
+        this.decorations = buildDecorations(update.view, this.widths)
       }
-      if (update.docChanged || update.selectionSet || configChanged) {
-        statusOwner = this.owner
-        useCsvStatus.setState(statusOf(update.state))
-      }
-    }
-    destroy(): void {
-      if (statusOwner !== this.owner) return
-      statusOwner = null
-      useCsvStatus.setState(EMPTY_STATUS)
     }
   },
   { decorations: (v) => v.decorations }

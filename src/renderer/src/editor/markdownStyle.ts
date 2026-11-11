@@ -9,6 +9,8 @@ import {
 } from '@codemirror/view'
 
 const inlineCodeDeco = Decoration.mark({ class: 'cm-inline-code' })
+const emphasisTextDeco = Decoration.mark({ class: 'cm-em-text' })
+const hrLineDeco = Decoration.line({ class: 'cm-hr-line' })
 
 /** 글꼴이 바뀌었으니 글자 폭으로 정하는 장식(표 상자 폭)을 다시 만들라는 신호 */
 export const refreshDecorations = Annotation.define<boolean>()
@@ -48,6 +50,20 @@ function buildDecos(view: EditorView): DecorationSet {
               tableLineDeco(n === first, n === last, Math.ceil(widest)).range(doc.line(n).from)
             )
           }
+          return
+        }
+        if (node.name === 'HorizontalRule') {
+          // --- 줄은 커서가 없을 때 하얀 가로줄로 보인다(css)
+          ranges.push(hrLineDeco.range(doc.lineAt(node.from).from))
+          return
+        }
+        if (node.name === 'Emphasis') {
+          // *글자* 는 기호를 빼고 안쪽 글자만 기울인다
+          const marks = node.node.getChildren('EmphasisMark')
+          if (marks.length >= 2 && marks[marks.length - 1].from > marks[0].to) {
+            ranges.push(emphasisTextDeco.range(marks[0].to, marks[marks.length - 1].from))
+          }
+          // 안쪽의 인라인 코드 등도 계속 처리한다
           return
         }
         if (node.name !== 'InlineCode') return

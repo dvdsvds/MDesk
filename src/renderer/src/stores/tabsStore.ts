@@ -9,7 +9,10 @@ export interface Tab {
   content: string
   dirty: boolean
   missing: boolean
+  /** 파일을 열 때의 내용. 바뀐 줄 표시(변경 표시줄)의 기준이라 저장해도 그대로다 */
   baseContent: string
+  /** 마지막으로 저장하거나 디스크에서 읽어 온 내용. 지금 내용과 같으면 저장 안 한 변경이 아니다 */
+  savedContent: string
   kind: FileKind
 }
 
@@ -52,6 +55,7 @@ function makeTab(filePath: string, content: string): Tab {
     filePath,
     content: text,
     baseContent: text,
+    savedContent: text,
     kind,
     dirty: false,
     missing: false
@@ -104,13 +108,18 @@ export const useTabsStore = create<TabsState>((set, get) => ({
 
   setContent: (tabId, content) =>
     set((s) => ({
-      tabs: s.tabs.map((t) => (t.id === tabId ? { ...t, content, dirty: true } : t))
+      // 고쳤다가 되돌려 저장된 내용과 같아지면 저장 안 한 변경이 아니다
+      tabs: s.tabs.map((t) =>
+        t.id === tabId ? { ...t, content, dirty: content !== t.savedContent } : t
+      )
     })),
 
   markSaved: (tabId, filePath, savedContent) =>
     set((s) => ({
       tabs: s.tabs.map((t) =>
-        t.id === tabId ? { ...t, filePath, dirty: t.content !== savedContent, missing: false } : t
+        t.id === tabId
+          ? { ...t, filePath, savedContent, dirty: t.content !== savedContent, missing: false }
+          : t
       )
     })),
 
@@ -132,7 +141,9 @@ export const useTabsStore = create<TabsState>((set, get) => ({
   syncExternalChange: (filePath, content) =>
     set((s) => ({
       tabs: s.tabs.map((t) =>
-        t.filePath === filePath && t.kind === 'text' ? { ...t, content, dirty: false } : t
+        t.filePath === filePath && t.kind === 'text'
+          ? { ...t, content, savedContent: content, dirty: false }
+          : t
       )
     })),
 

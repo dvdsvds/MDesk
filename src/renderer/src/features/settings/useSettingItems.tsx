@@ -11,24 +11,38 @@ import { DailyNoteSetting } from './DailyNoteSetting'
 import { SnippetSetting } from './SnippetSetting'
 import { FontSelect } from './FontSelect'
 
-const SHORTCUT_ACTIONS: ShortcutAction[] = [
-  'newNote',
-  'toggleSettings',
-  'copyPathAbsolute',
-  'copyPathRelative',
-  'save',
-  'search',
-  'zoomIn',
-  'zoomOut',
-  'zoomReset',
-  'diffApply',
-  'diffRestore',
-  'toggleToc',
-  'todoDashboard',
-  'backlinks',
-  'toggleSidebar',
-  'graph',
-  'dailyNote'
+/** 설정의 단축키를 하는 일 기준으로 나눈 소제목. 모든 단축키가 여기 한 번씩 들어 있어야 한다 */
+const SHORTCUT_GROUPS: { group: string; actions: ShortcutAction[] }[] = [
+  { group: '파일', actions: ['newNote', 'save', 'copyPathAbsolute', 'copyPathRelative'] },
+  {
+    group: '사이드바',
+    actions: [
+      'toggleSidebar',
+      'renameItem',
+      'newFolder',
+      'revealItem',
+      'exportItem',
+      'compareItem',
+      'historyItem'
+    ]
+  },
+  {
+    group: '보기',
+    actions: ['viewEditor', 'viewSplit', 'viewPreview', 'zoomIn', 'zoomOut', 'zoomReset']
+  },
+  {
+    group: '이동·패널',
+    actions: [
+      'search',
+      'dailyNote',
+      'toggleToc',
+      'todoDashboard',
+      'backlinks',
+      'graph',
+      'toggleSettings'
+    ]
+  },
+  { group: '차이 화면', actions: ['diffApply', 'diffRestore'] }
 ]
 
 export const CATEGORIES = ['일반', '화면', '단축키'] as const
@@ -285,13 +299,16 @@ export function useSettingItems(): SettingItem[] {
           </Row>
         )
       },
-      ...SHORTCUT_ACTIONS.map(
-        (action): SettingItem => ({
-          id: `shortcut-${action}`,
-          category: '단축키',
-          label: SHORTCUT_LABELS[action],
-          render: () => <ShortcutRow action={action} />
-        })
+      ...SHORTCUT_GROUPS.flatMap(({ group, actions }) =>
+        actions.map(
+          (action): SettingItem => ({
+            id: `shortcut-${action}`,
+            category: '단축키',
+            group,
+            label: SHORTCUT_LABELS[action],
+            render: () => <ShortcutRow action={action} />
+          })
+        )
       )
     ],
     [

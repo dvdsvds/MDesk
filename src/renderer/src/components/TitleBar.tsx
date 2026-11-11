@@ -44,7 +44,7 @@ function WindowControls(): React.JSX.Element {
       <button
         type="button"
         onClick={() => void window.api.window.close()}
-        title="닫기"
+        aria-label="닫기"
         className="flex h-7 w-8 items-center justify-center rounded-md text-text-secondary transition-colors hover:bg-[#e81123] hover:text-white"
       >
         <WindowCloseIcon />

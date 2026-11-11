@@ -46,10 +46,13 @@ const MODES: { mode: ViewMode; label: string; Icon: () => React.JSX.Element }[] 
 /** 타이틀바 가운데의 보기 모드 전환: 에디터만 / 분할 / 미리보기만 */
 export function ViewModeSwitch({
   value,
-  onChange
+  onChange,
+  shortcuts
 }: {
   value: ViewMode
   onChange: (mode: ViewMode) => void
+  /** 모드별 단축키. 마우스를 올리면 이름 옆에 보인다 */
+  shortcuts?: Record<ViewMode, string>
 }): React.JSX.Element {
   return (
     <div className="flex items-center gap-0.5 rounded-lg border border-border bg-bg p-0.5">
@@ -58,7 +61,7 @@ export function ViewModeSwitch({
           key={mode}
           type="button"
           onClick={() => onChange(mode)}
-          title={label}
+          title={shortcuts?.[mode] ? `${label} (${shortcuts[mode]})` : label}
           aria-pressed={value === mode}
           className={`flex h-6 w-9 items-center justify-center rounded-md transition-colors ${
             value === mode

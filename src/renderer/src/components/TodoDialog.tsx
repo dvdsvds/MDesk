@@ -166,7 +166,7 @@ export function TodoDialog({
             <button
               type="button"
               onClick={onClose}
-              title="닫기 (Esc)"
+              aria-label="닫기"
               className="flex h-[26px] w-[26px] items-center justify-center rounded-md text-text-tertiary transition-colors hover:bg-bg-mute hover:text-text"
             >
               <svg

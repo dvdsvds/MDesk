@@ -2,6 +2,8 @@ import { useEffect, useRef } from 'react'
 import { useSettingsStore } from '../stores/settingsStore'
 import { useTabsStore } from '../stores/tabsStore'
 import { matchesShortcut } from '../utils/shortcuts'
+import type { ViewMode } from '../stores/settingsStore'
+import type { SidebarCommand } from '../features/sidebar/Sidebar'
 
 export interface GlobalShortcutActions {
   settingsOpen: boolean
@@ -16,6 +18,10 @@ export interface GlobalShortcutActions {
   toggleSidebar: () => void
   toggleGraph: () => void
   openDailyNote: () => void
+  /** 보기 모드를 바꾼다. 마크다운 노트가 아니면 아무 일도 하지 않는다 */
+  setViewMode: (mode: ViewMode) => void
+  /** 사이드바에서 선택된 항목에 실행하는 동작(이름 바꾸기 등) */
+  sidebarCommand: (command: SidebarCommand) => void
 }
 
 function copyActivePath(e: KeyboardEvent, relative: boolean): void {
@@ -106,6 +112,39 @@ export function useGlobalShortcuts(actions: GlobalShortcutActions): void {
       if (matchesShortcut(e, shortcuts.dailyNote)) {
         e.preventDefault()
         a.openDailyNote()
+        return
+      }
+      // 사이드바 동작: 이름 입력칸 같은 곳에서 글을 칠 때는 건드리지 않는다
+      const typing = (e.target as HTMLElement | null)?.tagName
+      if (typing !== 'INPUT' && typing !== 'TEXTAREA') {
+        const sidebarKeys: [string, SidebarCommand][] = [
+          [shortcuts.renameItem, 'rename'],
+          [shortcuts.newFolder, 'newFolder'],
+          [shortcuts.revealItem, 'reveal'],
+          [shortcuts.exportItem, 'export'],
+          [shortcuts.compareItem, 'compare'],
+          [shortcuts.historyItem, 'history']
+        ]
+        const hit = sidebarKeys.find(([combo]) => matchesShortcut(e, combo))
+        if (hit) {
+          e.preventDefault()
+          a.sidebarCommand(hit[1])
+          return
+        }
+      }
+      if (matchesShortcut(e, shortcuts.viewEditor)) {
+        e.preventDefault()
+        a.setViewMode('editor')
+        return
+      }
+      if (matchesShortcut(e, shortcuts.viewSplit)) {
+        e.preventDefault()
+        a.setViewMode('split')
+        return
+      }
+      if (matchesShortcut(e, shortcuts.viewPreview)) {
+        e.preventDefault()
+        a.setViewMode('preview')
         return
       }
       if (e.key === 'Escape' && a.settingsOpen) {

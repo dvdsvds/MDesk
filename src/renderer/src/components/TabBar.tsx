@@ -193,7 +193,7 @@ export function TabBar({
                   e.stopPropagation()
                   onClose(tab.id)
                 }}
-                title="닫기"
+                aria-label="닫기"
                 className={`absolute inset-0 items-center justify-center rounded text-text-tertiary hover:bg-bg-mute hover:text-text ${
                   tab.dirty
                     ? 'hidden group-hover:flex'

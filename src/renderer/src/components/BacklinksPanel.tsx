@@ -83,7 +83,7 @@ export function BacklinksPanel({
           <button
             type="button"
             onClick={onClose}
-            title="닫기"
+            aria-label="닫기"
             className="rounded-md px-1 text-text-tertiary hover:bg-bg-mute hover:text-text"
           >
             ✕

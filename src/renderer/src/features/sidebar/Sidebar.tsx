@@ -1,4 +1,5 @@
 import { forwardRef, useImperativeHandle, useState } from 'react'
+import { AnimatePresence, motion } from 'motion/react'
 import type { TreeNode } from '../../types/workspace'
 import { ContextMenu } from '../../components/ContextMenu'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
@@ -10,7 +11,7 @@ import NewFileIcon from '../../icons/new-file.svg?react'
 import NewFolderIcon from '../../icons/new-folder.svg?react'
 import ChevronIcon from '../../icons/chevron.svg?react'
 import { InlineNameInput, NewFileRow } from './InlineInputs'
-import { TreeRow, type RowContext } from './TreeRow'
+import { TreeRow, findNodeByPath, type RowContext } from './TreeRow'
 import { buildMenuItems } from './sidebarMenu'
 import { useTreeFocus } from './useTreeFocus'
 import { useTreeActions, type DeleteTarget } from './useTreeActions'
@@ -44,9 +45,18 @@ interface SidebarProps {
   style?: React.CSSProperties
 }
 
+/** 단축키로 선택된 항목에 실행하는 사이드바 동작 */
+export type SidebarCommand = 'rename' | 'newFolder' | 'reveal' | 'export' | 'compare' | 'history'
+
 export interface SidebarHandle {
   startNewFile: (dirPath: string) => void
+  runCommand: (command: SidebarCommand) => void
 }
+
+/** 섹션을 접고 펼 때 움직이는 시간과 곡선 */
+const SECTION_TRANSITION = { duration: 0.2, ease: [0.4, 0, 0.2, 1] as const }
+/** 접힌 섹션의 높이: 머리 줄 36px + 위 테두리 1px */
+const SECTION_HEADER_BASIS = '37px'
 
 function SectionHeader({
   label,
@@ -141,6 +151,7 @@ export const Sidebar = forwardRef<SidebarHandle, SidebarProps>(function Sidebar(
   } | null>(null)
   const filesOpen = useSettingsStore((s) => s.filesSectionOpen)
   const setFilesOpen = useSettingsStore((s) => s.setFilesSectionOpen)
+  const shortcuts = useSettingsStore((s) => s.shortcuts)
   const tagsOpen = useSettingsStore((s) => s.tagsSectionOpen)
   const setTagsOpen = useSettingsStore((s) => s.setTagsSectionOpen)
   const datesOpen = useSettingsStore((s) => s.datesSectionOpen)
@@ -202,8 +213,49 @@ export const Sidebar = forwardRef<SidebarHandle, SidebarProps>(function Sidebar(
     onFileCreated
   })
 
+  // 단축키 동작의 대상: 삭제(Delete)와 같은 규칙으로 고른다(포커스한 줄, 선택한 폴더, 열려 있는 파일 순)
+  const runCommand = (command: SidebarCommand): void => {
+    const path = focusedPath ?? selectedFolderPath ?? activeFilePath
+    const node = path ? findNodeByPath(tree, path) : null
+    if (command === 'newFolder') {
+      const dir = node ? (node.type === 'folder' ? node.path : dirOf(node.path)) : rootDir
+      if (!dir) return
+      expandPath(dir)
+      setNewFolderIn(dir)
+      return
+    }
+    if (!node) return
+    const isMd = node.type === 'file' && node.name.toLowerCase().endsWith('.md')
+    switch (command) {
+      case 'rename':
+        if (node.type === 'file') expandPath(dirOf(node.path))
+        setEditingPath(node.path)
+        break
+      case 'reveal':
+        void window.api.workspace.reveal(node.path)
+        break
+      case 'export': {
+        // 폴더가 아니면 그 파일이 들어 있는 폴더를 내보낸다
+        const dir = node.type === 'folder' ? node.path : dirOf(node.path)
+        setExportTarget({
+          folderPath: dir,
+          isRoot: rootDir !== null && dir === rootDir,
+          label: node.type === 'folder' ? node.name : fileNameOf(dir)
+        })
+        break
+      }
+      case 'compare':
+        if (isMd && dirtyFilePaths.includes(node.path)) onCompareChanges(node.path)
+        break
+      case 'history':
+        if (isMd) onOpenHistory(node.path)
+        break
+    }
+  }
+
   useImperativeHandle(ref, () => ({
-    startNewFile: (dirPath: string) => setNewFileIn(dirPath)
+    startNewFile: (dirPath: string) => setNewFileIn(dirPath),
+    runCommand
   }))
 
   const resolveToolbarDir = (): string | null => {
@@ -261,7 +313,8 @@ export const Sidebar = forwardRef<SidebarHandle, SidebarProps>(function Sidebar(
         openExport: setExportTarget,
         openDelete: openDeleteConfirm,
         onCompareChanges,
-        onOpenHistory
+        onOpenHistory,
+        shortcuts
       })
     : []
 
@@ -364,31 +417,42 @@ export const Sidebar = forwardRef<SidebarHandle, SidebarProps>(function Sidebar(
         <div className="flex h-9 shrink-0 items-center pl-2 pr-2">
           <SectionHeader label="날짜" open={datesOpen} onToggle={() => setDatesOpen(!datesOpen)} />
         </div>
-        {datesOpen && (
-          <div className="max-h-56 overflow-auto pb-2">
-            <DateSection
-              tree={tree}
-              activeFilePath={activeFilePath}
-              focusDate={dailyFocusDate}
-              onOpenFile={onOpenFile}
-            />
-          </div>
-        )}
+        <AnimatePresence initial={false}>
+          {datesOpen && (
+            <motion.div
+              key="dates-body"
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={SECTION_TRANSITION}
+              style={{ overflow: 'hidden' }}
+            >
+              <div className="max-h-56 overflow-auto pb-2">
+                <DateSection
+                  tree={tree}
+                  activeFilePath={activeFilePath}
+                  focusDate={dailyFocusDate}
+                  onOpenFile={onOpenFile}
+                />
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
       <div
-        className={`flex min-h-0 flex-col border-t border-border ${tagsOpen ? 'flex-1' : 'shrink-0'}`}
+        className="flex min-h-0 flex-col overflow-hidden border-t border-border transition-[flex-grow] duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]"
+        style={{ flexGrow: tagsOpen ? 1 : 0, flexShrink: 1, flexBasis: SECTION_HEADER_BASIS }}
       >
         <div className="flex h-9 shrink-0 items-center pl-2 pr-2">
           <SectionHeader label="태그" open={tagsOpen} onToggle={() => setTagsOpen(!tagsOpen)} />
         </div>
-        {tagsOpen && (
-          <div className="flex-1 overflow-auto pb-2">
-            <TagSection tree={tree} activeFilePath={activeFilePath} onOpenFile={onOpenFile} />
-          </div>
-        )}
+        <div className="min-h-0 flex-1 overflow-auto pb-2" inert={!tagsOpen}>
+          <TagSection tree={tree} activeFilePath={activeFilePath} onOpenFile={onOpenFile} />
+        </div>
       </div>
       <div
-        className={`flex min-h-0 flex-col border-t border-border ${templatesOpen ? 'flex-1' : 'shrink-0'}`}
+        className="flex min-h-0 flex-col overflow-hidden border-t border-border transition-[flex-grow] duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]"
+        style={{ flexGrow: templatesOpen ? 1 : 0, flexShrink: 1, flexBasis: SECTION_HEADER_BASIS }}
       >
         <div className="flex h-9 shrink-0 items-center pl-2 pr-2">
           <SectionHeader
@@ -397,11 +461,9 @@ export const Sidebar = forwardRef<SidebarHandle, SidebarProps>(function Sidebar(
             onToggle={() => setTemplatesOpen(!templatesOpen)}
           />
         </div>
-        {templatesOpen && (
-          <div className="flex-1 overflow-auto pb-2">
-            <TemplateSection onInsert={onInsertTemplate} onCreateNote={onCreateFromTemplate} />
-          </div>
-        )}
+        <div className="min-h-0 flex-1 overflow-auto pb-2" inert={!templatesOpen}>
+          <TemplateSection onInsert={onInsertTemplate} onCreateNote={onCreateFromTemplate} />
+        </div>
       </div>
       {contextMenu && (
         <ContextMenu
