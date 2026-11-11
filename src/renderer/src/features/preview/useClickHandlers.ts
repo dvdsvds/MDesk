@@ -48,7 +48,16 @@ export function useClickHandlers(
       const li = input.closest('li[data-line]')
       const line = li ? Number(li.getAttribute('data-line')) : NaN
       if (Number.isNaN(line)) return
+      // 체크하면 미리보기 HTML이 통째로 다시 그려져 스크롤이 맨 위로 튀므로 위치를 기억했다가 복원한다
+      const top = el.scrollTop
       toggleTaskRef.current?.(line)
+      const restore = (): void => {
+        if (el.scrollTop !== top) el.scrollTop = top
+      }
+      requestAnimationFrame(() => {
+        restore()
+        requestAnimationFrame(restore)
+      })
     }
     el.addEventListener('click', handleClick)
     return () => el.removeEventListener('click', handleClick)

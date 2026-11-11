@@ -405,8 +405,22 @@ export const MarkdownEditor = forwardRef<MarkdownEditorHandle, MarkdownEditorPro
       if (!view || currentTabIdRef.current !== tabId) return
       const current = view.state.doc.toString()
       if (current !== value) {
+        // 전체를 갈아끼우면 커서와 스크롤이 맨 앞으로 튀므로, 앞뒤가 같은 부분은 두고 바뀐 가운데만 교체한다
+        let start = 0
+        const minLen = Math.min(current.length, value.length)
+        while (start < minLen && current.charCodeAt(start) === value.charCodeAt(start)) start++
+        let endCur = current.length
+        let endNew = value.length
+        while (
+          endCur > start &&
+          endNew > start &&
+          current.charCodeAt(endCur - 1) === value.charCodeAt(endNew - 1)
+        ) {
+          endCur--
+          endNew--
+        }
         view.dispatch({
-          changes: { from: 0, to: current.length, insert: value },
+          changes: { from: start, to: endCur, insert: value.slice(start, endNew) },
           annotations: externalSync.of(true)
         })
       }
