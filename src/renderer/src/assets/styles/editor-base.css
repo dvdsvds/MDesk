@@ -257,8 +257,8 @@
 /* ───────── 마크다운 글자 모양 ───────── */
 /* 인라인 코드: 백틱 안쪽 글자에만 테두리와 옅은 배경 */
 .cm-inline-code {
-  background: color-mix(in srgb, var(--color-accent) 7%, transparent);
-  border: 1px solid color-mix(in srgb, var(--color-accent) 32%, transparent);
+  background: color-mix(in srgb, var(--color-syntax-code) 9%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-syntax-code) 28%, transparent);
   border-radius: 5px;
   box-decoration-break: clone;
   -webkit-box-decoration-break: clone;
