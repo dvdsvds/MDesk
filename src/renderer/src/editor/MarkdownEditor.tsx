@@ -47,6 +47,7 @@ import { cursorReport, type CursorPosition } from './cursorReport'
 import { markdownColors } from './markdownColors'
 import { editorTheme } from './editorTheme'
 import { listTabSpace } from './listTab'
+import { tableEdit } from './tableEdit'
 import { fullLineSelection } from './fullLineSelection'
 
 const externalSync = Annotation.define<boolean>()
@@ -131,6 +132,7 @@ function buildExtensions(
     codeBlocks,
     selectionPerLine,
     listTabSpace,
+    tableEdit,
     keymap.of([...defaultKeymap, ...historyKeymap, ...searchKeymap, indentWithTab]),
     markdownLang,
     markdownColors,
