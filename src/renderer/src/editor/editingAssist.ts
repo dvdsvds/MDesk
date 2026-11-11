@@ -1,6 +1,6 @@
 import { syntaxTree } from '@codemirror/language'
-import { EditorView } from '@codemirror/view'
-import type { EditorState, Extension } from '@codemirror/state'
+import { EditorView, keymap } from '@codemirror/view'
+import { Prec, type EditorState, type Extension } from '@codemirror/state'
 
 const AUTO_PAIRS: Record<string, string> = { '(': ')', '[': ']', '{': '}' }
 const CLOSERS = new Set(Object.values(AUTO_PAIRS))
@@ -13,6 +13,32 @@ const WRAP_ONLY: Record<string, string> = {
   '~': '~'
 }
 const DOUBLING = new Set(['*', '~'])
+
+// 앞 기호 바로 뒤에서 Backspace를 치면 짝인 뒤 기호도 같이 지운다 (자동으로 만든 빈 짝을 한 번에 지우기 위함)
+const EMPTY_PAIRS: Record<string, string> = { ...AUTO_PAIRS, ...WRAP_ONLY }
+
+const backspacePair = Prec.high(
+  keymap.of([
+    {
+      key: 'Backspace',
+      run: (view) => {
+        const sel = view.state.selection.main
+        if (!sel.empty) return false
+        const pos = sel.head
+        const open = view.state.sliceDoc(pos - 1, pos)
+        const close = view.state.sliceDoc(pos, pos + 1)
+        if (!open || !Object.prototype.hasOwnProperty.call(EMPTY_PAIRS, open)) return false
+        if (EMPTY_PAIRS[open] !== close) return false
+        view.dispatch({
+          changes: { from: pos - 1, to: pos + 1 },
+          selection: { anchor: pos - 1 },
+          userEvent: 'delete.backward'
+        })
+        return true
+      }
+    }
+  ])
+)
 
 const CODE_NODES = new Set(['FencedCode', 'CodeBlock', 'InlineCode', 'CommentBlock', 'Comment'])
 
@@ -44,6 +70,10 @@ function backtickAction(view: EditorView, pos: number): 'skip' | 'pair' | 'plain
 }
 
 export function editingAssist(): Extension {
+  return [backspacePair, inputHandler()]
+}
+
+function inputHandler(): Extension {
   return EditorView.inputHandler.of((view, from, to, insertedText) => {
     const hasSelection = from !== to
     const state = view.state
