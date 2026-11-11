@@ -34,7 +34,7 @@ import { selectionPerLine } from './selectionPerLine'
 import { getCurrentView, setCurrentView } from './currentView'
 import { changeGutter } from './changeGutter'
 import { foldChevronGutter } from './foldGutter'
-import { markdownStyle } from './markdownStyle'
+import { markdownStyle, refreshDecorations } from './markdownStyle'
 import { listRenumber } from './listRenumber'
 import { cursorMetrics } from './cursorMetrics'
 import { gutterAlign } from './gutterAlign'
@@ -339,6 +339,8 @@ export const MarkdownEditor = forwardRef<MarkdownEditorHandle, MarkdownEditorPro
         const state = (view as unknown as { viewState?: { mustMeasureContent?: boolean } }).viewState
         if (state) state.mustMeasureContent = true
         view.requestMeasure()
+        // 글자 폭이 달라졌으니 표 상자 폭도 다시 잰다
+        view.dispatch({ annotations: refreshDecorations.of(true) })
       })
       return () => cancelAnimationFrame(id)
     }, [editorFontSize, editorLineHeight, editorFontFamily])

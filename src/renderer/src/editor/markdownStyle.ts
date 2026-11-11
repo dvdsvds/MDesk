@@ -1,5 +1,5 @@
 import { syntaxTree } from '@codemirror/language'
-import type { Extension, Range } from '@codemirror/state'
+import { Annotation, type Extension, type Range } from '@codemirror/state'
 import {
   Decoration,
   ViewPlugin,
@@ -9,6 +9,9 @@ import {
 } from '@codemirror/view'
 
 const inlineCodeDeco = Decoration.mark({ class: 'cm-inline-code' })
+
+/** 글꼴이 바뀌었으니 글자 폭으로 정하는 장식(표 상자 폭)을 다시 만들라는 신호 */
+export const refreshDecorations = Annotation.define<boolean>()
 
 /** 표 줄 장식. 상자 폭은 표에서 가장 긴 줄의 글자 폭에 맞춘다(width는 px) */
 function tableLineDeco(first: boolean, last: boolean, width: number): Decoration {
@@ -63,11 +66,25 @@ function buildDecos(view: EditorView): DecorationSet {
 export const markdownStyle: Extension = ViewPlugin.fromClass(
   class {
     decorations: DecorationSet
+    private readonly onFontsLoaded: () => void
     constructor(view: EditorView) {
       this.decorations = buildDecos(view)
+      // 글꼴 파일이 늦게 불러와지면 글자 폭이 달라지므로 그때도 다시 만든다
+      this.onFontsLoaded = (): void => view.dispatch({ annotations: refreshDecorations.of(true) })
+      document.fonts?.addEventListener('loadingdone', this.onFontsLoaded)
+    }
+    destroy(): void {
+      document.fonts?.removeEventListener('loadingdone', this.onFontsLoaded)
     }
     update(u: ViewUpdate): void {
-      if (u.docChanged || u.viewportChanged || syntaxTree(u.startState) !== syntaxTree(u.state)) {
+      // 글꼴이 바뀌거나 늦게 불러와져 글자 폭이 달라지면(geometryChanged) 표 상자 폭도 다시 잰다
+      if (
+        u.docChanged ||
+        u.viewportChanged ||
+        u.geometryChanged ||
+        u.transactions.some((tr) => tr.annotation(refreshDecorations)) ||
+        syntaxTree(u.startState) !== syntaxTree(u.state)
+      ) {
         this.decorations = buildDecos(u.view)
       }
     }

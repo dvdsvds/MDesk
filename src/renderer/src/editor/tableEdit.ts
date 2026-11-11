@@ -476,10 +476,40 @@ const tableNormalize: Extension = EditorState.transactionFilter.of((tr) => {
   ]
 })
 
+/**
+ * 한글 조합 중에는 정렬을 건너뛰므로, 조합이 끝나면 커서가 있는 표를 한 번 정리한다.
+ * (처음 칸에 있던 빈칸이 그대로 남아 `| 가상환경  |`처럼 공백이 둘이 되는 것을 막는다)
+ */
+const tableNormalizeAfterCompose: Extension = EditorView.domEventHandlers({
+  compositionend: (_e, view) => {
+    // 에디터가 조합 결과를 문서에 반영한 다음에 정리한다
+    setTimeout(() => {
+      const { state } = view
+      const head = state.selection.main.head
+      const info = tableAtDoc(state.doc, head)
+      if (!info) return
+      const edits = normalizeEdits(
+        state.doc,
+        state.doc.lineAt(info.from).number,
+        state.doc.lineAt(info.to).number,
+        head,
+        measureOf(view.contentDOM)
+      )
+      if (edits.length === 0) return
+      view.dispatch({
+        changes: edits,
+        annotations: [normalizing.of(true), Transaction.userEvent.of('input.table')]
+      })
+    }, 30)
+    return false
+  }
+})
+
 /** 표 안에서 Tab/Shift+Tab으로 칸을 옮기고, 끝에서 새 행을 만들며, 옮길 때마다 열 너비를 맞춘다 */
 export const tableEdit: Extension = [
   autoTable,
   tableNormalize,
+  tableNormalizeAfterCompose,
   Prec.high(
     keymap.of([
       { key: 'Tab', run: (v) => next(v, false) },

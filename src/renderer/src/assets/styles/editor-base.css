@@ -268,10 +268,10 @@
 .cm-line.cm-table-line {
   --table-line: color-mix(in srgb, var(--color-text) 30%, transparent);
   background: color-mix(in srgb, var(--color-text) 4%, transparent);
-  /* 폭은 장식에서 표 안 가장 긴 줄에 맞춰 준다. 여백은 상자 안쪽에 둔다 */
+  /* 폭은 장식에서 표 안 가장 긴 줄에 맞춰 준다. 오른쪽 여백은 일반 줄의 좌우 여백(2px)과 같게 둔다 */
   box-sizing: content-box;
-  max-width: calc(100% - 20px);
-  padding-right: 10px !important;
+  max-width: calc(100% - 4px);
+  padding-right: 2px !important;
   box-shadow:
     inset 1px 0 0 var(--table-line),
     inset -1px 0 0 var(--table-line);
