@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware'
 import { DEFAULT_SHORTCUTS, type ShortcutAction, type ShortcutMap } from '../utils/shortcuts'
 import { DAILY_TEMPLATE_ID, DEFAULT_TEMPLATES, type NoteTemplate } from '../utils/noteTemplate'
 import { DEFAULT_SNIPPETS, type CssSnippet } from '../utils/cssSnippets'
+import { DEFAULT_EDITOR_FONT_FAMILY, PREVIOUS_EDITOR_FONT_FAMILY } from '../utils/editorFonts'
 
 const OLD_DAILY_CONTENT =
   '# {{date:YYYY년 M월 D일 dddd}}\n\n← [[{{yesterday}}]] · [[{{tomorrow}}]] →\n\n## 오늘 할 일\n\n- [ ] \n\n## 메모\n\n'
@@ -13,7 +14,6 @@ export type ThemePreference = 'system' | 'light' | 'dark'
 export type ViewMode = 'editor' | 'split' | 'preview'
 
 const OLD_EDITOR_FONT_FAMILY = "'IBM Plex Mono', 'D2Coding', Pretendard, monospace"
-const DEFAULT_EDITOR_FONT_FAMILY = "'Roboto Mono', Pretendard, monospace"
 const DEFAULT_EDITOR_FONT_SIZE = 13.5
 const DEFAULT_EDITOR_LINE_HEIGHT = 1.4
 const DEFAULT_PREVIEW_FONT_FAMILY = 'Pretendard, sans-serif'
@@ -200,7 +200,7 @@ export const useSettingsStore = create<SettingsState>()(
     {
       name: 'mdesk-settings',
       // 5·6은 되돌린 속성 확장 작업이 쓰던 버전. 8부터 속성은 상태 하나(값 고정)뿐이다
-      version: 9,
+      version: 10,
       merge: (persisted, current) => {
         const p = (persisted ?? {}) as Partial<SettingsState>
         return {
@@ -246,6 +246,12 @@ export const useSettingsStore = create<SettingsState>()(
         if (version < 9) {
           // 에디터 줄 간격 기본값을 1.8에서 1.4로 낮췄다. 예전 기본값 그대로 쓰던 경우만 옮긴다
           if (s.editorLineHeight === 1.8) s.editorLineHeight = DEFAULT_EDITOR_LINE_HEIGHT
+        }
+        if (version < 10) {
+          // 에디터 기본 글꼴을 한글이 영문의 정확히 2배 폭인 Monoplex KR로 바꿨다. 예전 기본값 그대로 쓰던 경우만 옮긴다
+          if (s.editorFontFamily === PREVIOUS_EDITOR_FONT_FAMILY) {
+            s.editorFontFamily = DEFAULT_EDITOR_FONT_FAMILY
+          }
         }
         return s as SettingsState
       }

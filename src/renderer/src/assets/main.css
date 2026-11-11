@@ -5,7 +5,10 @@
 @import '@fontsource/roboto-mono/400.css';
 @import '@fontsource/roboto-mono/600.css';
 @import '@fontsource/roboto-mono/700.css';
+@import '@fontsource/nanum-gothic-coding/400.css';
+@import '@fontsource/nanum-gothic-coding/700.css';
 @import 'katex/dist/katex.min.css';
+@import './styles/fonts.css';
 @import './styles/base.css';
 @import './styles/preview.css';
 @import './styles/scrollbar.css';

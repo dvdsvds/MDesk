@@ -9,6 +9,7 @@ import { INPUT, NumberField, Row, Toggle } from './SettingsParts'
 import { TrashSetting } from './TrashSetting'
 import { DailyNoteSetting } from './DailyNoteSetting'
 import { SnippetSetting } from './SnippetSetting'
+import { FontSelect } from './FontSelect'
 
 const SHORTCUT_ACTIONS: ShortcutAction[] = [
   'newNote',
@@ -196,10 +197,9 @@ export function useSettingItems(): SettingItem[] {
         label: '글꼴',
         render: () => (
           <Row label="글꼴">
-            <input
+            <FontSelect
               value={editorFontFamily}
-              onChange={(e) => setEditorFont({ family: e.target.value })}
-              className={`${INPUT} w-64 text-[12.5px] text-text-secondary focus:text-text`}
+              onChange={(family) => setEditorFont({ family })}
             />
           </Row>
         )

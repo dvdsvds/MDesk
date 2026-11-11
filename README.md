@@ -44,6 +44,7 @@ Mdesk는 평범한 `.md` 파일을 폴더 그대로 열어 쓰는 편집기입�
 - [소스에서 빌드](#소스에서-빌드)
 - [자주 묻는 질문](#자주-묻는-질문)
 - [피드백](#피드백)
+- [글꼴 출처](#글꼴-출처)
 - [라이선스](#라이선스)
 
 ---
@@ -104,7 +105,7 @@ Mdesk는 평범한 `.md` 파일을 폴더 그대로 열어 쓰는 편집기입�
 ### 화면과 설정
 
 - gruvbox 계열의 라이트·다크·시스템 테마
-- 에디터와 미리보기의 글꼴·크기·줄 간격을 따로 설정
+- 에디터와 미리보기의 글꼴·크기·줄 간격을 따로 설정. 에디터 글꼴은 목록에서 고르며, 한글이 영문 폭의 정확히 2배인 고정폭 글꼴(Monoplex KR, D2Coding, 나눔고딕코딩)을 넣어 두어 한글이 섞인 표의 열도 맞습니다
 - 모든 단축키 변경, CSS 스니펫
 - 화면 확대·축소 (`Ctrl + =`, `Ctrl + -`, `Ctrl + 0`)
 
@@ -282,7 +283,7 @@ print(sum(range(10)))
 | 마크다운 변환 | markdown-it (각주, 체크리스트), KaTeX (수식), Mermaid (도표), DOMPurify |
 | 파일 보기 | pdf.js (PDF), docx-preview (docx), ExcelJS (xlsx) |
 | 코드 실행 | JavaScript 격리 실행, Pyodide (Python) |
-| 글꼴 | Pretendard, Roboto Mono |
+| 글꼴 | Pretendard, Roboto Mono, Monoplex KR, D2Coding, 나눔고딕코딩 ([출처](#글꼴-출처)) |
 | 빌드·검사 | Vite 7, ESLint, Prettier, GitHub Actions (세 운영체제 빌드와 릴리스) |
 
 앱 아이콘 원본은 [`build/icon.svg`](build/icon.svg)이고, `npx electron scripts/make-icons.mjs`로 png·ico·icns를 다시 만듭니다.
@@ -356,6 +357,22 @@ npm run build:linux  # Linux
 ## 피드백
 
 혼자 쓰려고 만들다가 공개한 프로그램이라, 디자인이나 사용성에 대한 의견이 큰 도움이 됩니다. 버그나 의견은 [Issues](https://github.com/dvdsvds/MDesk/issues)에 남겨 주십시오.
+
+---
+
+## 글꼴 출처
+
+앱에는 아래 글꼴이 들어 있습니다. 모두 글꼴 파일을 고치지 않고 그대로 사용하며, Monoplex KR만 용량을 줄이려고 TTF를 WOFF2로 바꾸었습니다. 각 글꼴의 라이선스 원문은 [`src/renderer/src/assets/fonts`](src/renderer/src/assets/fonts) 아래 해당 폴더에 있습니다.
+
+| 글꼴 | 만든 곳 | 라이선스 | 출처 | 쓰이는 곳 |
+|---|---|---|---|---|
+| Monoplex KR 1.3.0 | Kim Yangsu (IBM Plex Mono와 IBM Plex Sans KR을 합침) | SIL OFL 1.1 | [y-kim/monoplex](https://github.com/y-kim/monoplex) | 에디터 (기본) |
+| D2Coding | NAVER Corporation | SIL OFL 1.1 | [naver/d2codingfont](https://github.com/naver/d2codingfont) | 에디터 |
+| 나눔고딕코딩 | NHN Corporation, 디자인 Sandoll Communications | SIL OFL 1.1 | [Fontsource](https://fontsource.org/fonts/nanum-gothic-coding) | 에디터 |
+| Roboto Mono | Google, Christian Robertson | Apache 2.0 | [Fontsource](https://fontsource.org/fonts/roboto-mono) | 에디터 (영문 대체) |
+| Pretendard | Kil Hyung-jin | SIL OFL 1.1 | [orioncactus/pretendard](https://github.com/orioncactus/pretendard) | 화면, 미리보기 |
+
+Monoplex KR, D2Coding, 나눔고딕코딩은 한글 한 글자가 영문 한 글자의 정확히 두 배 폭이라 표의 `|`가 줄마다 같은 위치에 놓입니다.
 
 ---
 
