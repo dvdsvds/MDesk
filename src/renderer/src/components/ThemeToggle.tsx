@@ -2,8 +2,8 @@ import { useSettingsStore, type ThemePreference } from '../stores/settingsStore'
 
 const OPTIONS: { value: ThemePreference; label: string }[] = [
   { value: 'system', label: '시스템' },
-  { value: 'light', label: '라이트' },
-  { value: 'dark', label: '다크' }
+  { value: 'light', label: '밝게' },
+  { value: 'dark', label: '어둡게' }
 ]
 
 const ITEM_WIDTH = 60
