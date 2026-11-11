@@ -263,3 +263,35 @@
   box-decoration-break: clone;
   -webkit-box-decoration-break: clone;
 }
+/* 표: 줄마다 좌우 테두리를 긋고 첫 줄 위·마지막 줄 아래를 이어서 하나의 상자로 보이게 한다.
+   테두리는 안쪽 그림자라 글자 위치가 밀리지 않는다 */
+.cm-line.cm-table-line {
+  --table-line: color-mix(in srgb, var(--color-text) 30%, transparent);
+  background: color-mix(in srgb, var(--color-text) 4%, transparent);
+  /* 폭은 장식에서 표 안 가장 긴 줄에 맞춰 준다. 여백은 상자 안쪽에 둔다 */
+  box-sizing: content-box;
+  max-width: calc(100% - 20px);
+  padding-right: 10px !important;
+  box-shadow:
+    inset 1px 0 0 var(--table-line),
+    inset -1px 0 0 var(--table-line);
+}
+.cm-line.cm-table-first {
+  border-top-left-radius: 6px;
+  border-top-right-radius: 6px;
+  box-shadow:
+    inset 1px 0 0 var(--table-line),
+    inset -1px 0 0 var(--table-line),
+    inset 0 1px 0 var(--table-line);
+}
+.cm-line.cm-table-last {
+  border-bottom-left-radius: 6px;
+  border-bottom-right-radius: 6px;
+  box-shadow:
+    inset 1px 0 0 var(--table-line),
+    inset -1px 0 0 var(--table-line),
+    inset 0 -1px 0 var(--table-line);
+}
+.cm-line.cm-table-first.cm-table-last {
+  box-shadow: inset 0 0 0 1px var(--table-line);
+}
