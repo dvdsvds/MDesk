@@ -4,6 +4,7 @@ import { useCodeRun } from './useCodeRun'
 import { useScrollSync } from './useScrollSync'
 import { useClickHandlers } from './useClickHandlers'
 import { useMermaid } from './useMermaid'
+import { useAccordionState } from './useAccordionState'
 import { useCodeDecorations } from './useCodeDecorations'
 import { useOutputBlocks } from './useOutputBlocks'
 import { useTemplateRender } from '../template/preview/useTemplateRender'
@@ -76,6 +77,7 @@ export const MarkdownPreview = forwardRef<MarkdownPreviewHandle, MarkdownPreview
       onHasTemplateChangeRef.current?.(html.includes('snote-template'))
     }, [html])
 
+    useAccordionState(containerRef, html, docKey)
     useMermaid(containerRef, html)
     useEmbeds(containerRef, html, baseDir, docKey)
     useCodeDecorations(containerRef, html)

@@ -8,6 +8,7 @@ import footnote from 'markdown-it-footnote'
 import DOMPurify, { type Config as SanitizeConfig } from 'dompurify'
 import { wikilinkPlugin } from './wikilinkPlugin'
 import { calloutPlugin } from './calloutPlugin'
+import { accordionPlugin } from './accordionPlugin'
 import { embedPlugin } from './embedPlugin'
 import { blockPlugin } from './blockPlugin'
 import { colorSpanPlugin } from './colorSpanPlugin'
@@ -41,6 +42,7 @@ function createMarkdownIt(): InstanceType<typeof MarkdownIt> {
   md.use(embedPlugin)
   md.use(wikilinkPlugin)
   md.use(calloutPlugin)
+  md.use(accordionPlugin)
   md.use(blockPlugin)
   md.use(templatePlugin)
   md.use(mathPlugin)

@@ -228,6 +228,50 @@
 .prose-preview blockquote > :last-child {
   margin-bottom: 0;
 }
+
+/* 아코디언: [>] 제목 + 들여쓴 내용. 항상 접힌 채로 시작한다 */
+.prose-preview details.accordion {
+  margin: 0.6em 0;
+}
+.prose-preview details.accordion > summary {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  cursor: pointer;
+  list-style: none;
+  font-weight: 600;
+  color: var(--color-text);
+}
+.prose-preview details.accordion > summary::-webkit-details-marker {
+  display: none;
+}
+.prose-preview details.accordion > summary::before {
+  content: '';
+  flex-shrink: 0;
+  width: 0.4em;
+  height: 0.4em;
+  border-right: 1.5px solid var(--color-text-tertiary);
+  border-bottom: 1.5px solid var(--color-text-tertiary);
+  transform: rotate(-45deg);
+  transition: transform 0.15s;
+}
+.prose-preview details.accordion > summary:hover::before {
+  border-color: var(--color-text);
+}
+.prose-preview details.accordion[open] > summary::before {
+  transform: rotate(45deg);
+}
+.prose-preview .accordion-body {
+  margin: 0.35em 0 0 0.2em;
+  padding-left: 1em;
+  border-left: 1px solid var(--color-border-strong);
+}
+.prose-preview .accordion-body > :first-child {
+  margin-top: 0;
+}
+.prose-preview .accordion-body > :last-child {
+  margin-bottom: 0;
+}
 .prose-preview code {
   font-family: var(--font-editor);
   background: color-mix(in srgb, var(--color-accent) 13%, transparent);
