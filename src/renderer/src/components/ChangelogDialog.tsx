@@ -1,4 +1,5 @@
-import { useEffect } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { markdownRenderer } from '../markdown/renderMarkdown'
 
 interface ChangelogDialogProps {
   content: string
@@ -10,11 +11,13 @@ interface ChangelogDialogProps {
  * 버튼, Esc, 바깥 클릭 아무걸로나 닫힌다.
  */
 export function ChangelogDialog({ content, onClose }: ChangelogDialogProps): React.JSX.Element {
-  // 변경 내역은 줄마다 "- 항목" 형식이다. 앞의 기호를 떼고 목록으로 그린다
-  const items = content
-    .split(/\r?\n/)
-    .map((line) => line.replace(/^\s*[-*]\s+/, '').trim())
-    .filter(Boolean)
+  // 변경 내역은 마크다운이다. 미리보기와 같은 렌더러로 읽기 전용으로 그린다
+  const html = useMemo(() => markdownRenderer.render(content), [content])
+  const [version, setVersion] = useState('')
+
+  useEffect(() => {
+    void window.api.app.getInfo().then((info) => setVersion(info.version))
+  }, [])
 
   useEffect(() => {
     const handler = (e: KeyboardEvent): void => {
@@ -31,10 +34,13 @@ export function ChangelogDialog({ content, onClose }: ChangelogDialogProps): Rea
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="w-96 max-w-[90vw] rounded-xl border border-border bg-bg-elevated p-5 shadow-2xl"
+        className="flex max-h-[80vh] w-[28rem] max-w-[90vw] flex-col rounded-xl border border-border bg-bg-elevated p-5 shadow-2xl"
       >
         <div className="flex items-center justify-between">
-          <h2 className="text-[15px] font-semibold text-text">새로워진 점</h2>
+          <h2 className="text-[15px] font-semibold text-text">
+            업데이트
+            {version && <span className="ml-1.5 font-normal text-text-tertiary">· {version}</span>}
+          </h2>
           <button
             type="button"
             onClick={onClose}
@@ -43,11 +49,11 @@ export function ChangelogDialog({ content, onClose }: ChangelogDialogProps): Rea
             ✕
           </button>
         </div>
-        <ul className="mt-3 list-disc space-y-1 pl-4 text-[13px] leading-relaxed text-text-secondary marker:text-text-tertiary">
-          {items.map((item, i) => (
-            <li key={i}>{item}</li>
-          ))}
-        </ul>
+        <div
+          className="prose-preview mt-3 min-h-0 flex-1 overflow-y-auto pr-1"
+          style={{ fontSize: '13px', lineHeight: 1.6 }}
+          dangerouslySetInnerHTML={{ __html: html }}
+        />
         <div className="mt-5 flex justify-end">
           <button
             type="button"
