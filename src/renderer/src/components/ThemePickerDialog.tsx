@@ -7,8 +7,8 @@ interface ThemePickerDialogProps {
 }
 
 /**
- * 새로 설치했거나 이 기능이 들어간 버전으로 업데이트한 뒤 첫 실행에서 한 번만 뜨는 테마 선택 창.
- * Paper 4종만 보이고, 지금 쓰는 테마(없으면 OS 설정에 맞는 테마)가 미리 골라져 있어서
+ * 새로 설치해서 처음 실행할 때만 한 번 뜨는 테마 선택 창(업데이트한 사용자에게는 뜨지 않는다).
+ * Paper 4종만 보이고, OS 설정에 맞는 테마가 미리 골라져 있어서
  * 바로 "시작하기"만 눌러도 된다. 나중에는 설정 > 화면 > 색 테마에서 바꿀 수 있다.
  */
 export function ThemePickerDialog({ onConfirm }: ThemePickerDialogProps): React.JSX.Element {

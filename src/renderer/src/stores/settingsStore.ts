@@ -232,13 +232,13 @@ export const useSettingsStore = create<SettingsState>()(
         }
         if (version < 11) {
           // 색 테마를 이름 있는 목록에서 고르게 바꿨다. 예전 밝게·어둡게는 Paper Light·Paper Dark로 옮기고,
-          // 시스템은 지금 OS 설정에 맞는 쪽으로 정한다. 이미 쓰던 사용자에게도 업데이트 후 첫 실행에서
-          // 테마 선택 창을 한 번 보여 준다(지금 테마가 미리 골라져 있다)
+          // 시스템은 지금 OS 설정에 맞는 쪽으로 정한다. 이미 쓰던 사용자에게는 선택 창을 보이지 않는다
+          // (테마 선택 창은 새로 설치해서 처음 실행할 때만 뜬다)
           const old = s as Record<string, unknown>
           if (old.theme === 'light') s.theme = 'paper-light'
           else if (old.theme === 'dark') s.theme = 'paper-dark'
           else s.theme = osDefaultTheme()
-          s.themeChosen = false
+          s.themeChosen = true
         }
         return s as SettingsState
       }
