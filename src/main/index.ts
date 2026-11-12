@@ -38,6 +38,9 @@ type UpdateStatus =
 let updateStatus: UpdateStatus = { state: 'idle' }
 let installOnClose = false
 
+/** 실행 중에 새 버전을 다시 확인하는 간격 */
+const UPDATE_CHECK_INTERVAL_MS = 4 * 60 * 60 * 1000
+
 function setUpdateStatus(next: UpdateStatus): void {
   updateStatus = next
   mainWindowRef?.webContents.send('update:status', next)
@@ -153,7 +156,8 @@ app.whenReady().then(() => {
   ipcMain.handle('window:confirmClose', () => {
     closeConfirmed = true
     if (installOnClose) {
-      autoUpdater.quitAndInstall()
+      // 설치가 끝나면 앱이 자동으로 다시 실행되게 한다
+      autoUpdater.quitAndInstall(false, true)
       return
     }
     mainWindowRef?.close()
@@ -200,7 +204,14 @@ app.whenReady().then(() => {
       console.error('자동 업데이트 확인에 실패했어요:', err)
       if (updateStatus.state === 'downloading') setUpdateStatus({ state: 'idle' })
     })
-    autoUpdater.checkForUpdates().catch(() => {})
+    const checkForUpdate = (): void => {
+      // 이미 받는 중이거나 받아 둔 업데이트가 있으면 다시 확인하지 않는다
+      if (updateStatus.state !== 'idle') return
+      autoUpdater.checkForUpdates().catch(() => {})
+    }
+    checkForUpdate()
+    // 앱을 켜 둔 채로 있어도 새 버전을 받을 수 있게 주기적으로 확인한다
+    setInterval(checkForUpdate, UPDATE_CHECK_INTERVAL_MS)
   }
 
   const rendererRoot = join(__dirname, '../renderer')
