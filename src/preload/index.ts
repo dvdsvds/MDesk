@@ -87,6 +87,11 @@ interface AppInfo {
   arch: string
 }
 
+type UpdateStatus =
+  | { state: 'idle' }
+  | { state: 'downloading'; version: string; percent: number }
+  | { state: 'ready'; version: string }
+
 interface HistoryEntry {
   id: number
   size: number
@@ -96,6 +101,15 @@ const api = {
   app: {
     getChangelog: (): Promise<string | null> => ipcRenderer.invoke('app:getChangelog'),
     getInfo: (): Promise<AppInfo> => ipcRenderer.invoke('app:getInfo')
+  },
+  update: {
+    getStatus: (): Promise<UpdateStatus> => ipcRenderer.invoke('update:getStatus'),
+    install: (): Promise<void> => ipcRenderer.invoke('update:install'),
+    onStatus: (callback: (status: UpdateStatus) => void): (() => void) => {
+      const listener = (_event: unknown, status: UpdateStatus): void => callback(status)
+      ipcRenderer.on('update:status', listener)
+      return () => ipcRenderer.removeListener('update:status', listener)
+    }
   },
   window: {
     minimize: (): Promise<void> => ipcRenderer.invoke('window:minimize'),

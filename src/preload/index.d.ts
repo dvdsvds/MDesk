@@ -77,10 +77,20 @@ export interface AppInfo {
   arch: string
 }
 
+export type UpdateStatus =
+  | { state: 'idle' }
+  | { state: 'downloading'; version: string; percent: number }
+  | { state: 'ready'; version: string }
+
 export interface MdeskApi {
   app: {
     getChangelog: () => Promise<string | null>
     getInfo: () => Promise<AppInfo>
+  }
+  update: {
+    getStatus: () => Promise<UpdateStatus>
+    install: () => Promise<void>
+    onStatus: (callback: (status: UpdateStatus) => void) => () => void
   }
   window: {
     minimize: () => Promise<void>

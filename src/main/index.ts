@@ -30,6 +30,19 @@ const devServerUrl = process.env['ELECTRON_RENDERER_URL']
 let mainWindowRef: BrowserWindow | null = null
 let closeConfirmed = true
 
+type UpdateStatus =
+  | { state: 'idle' }
+  | { state: 'downloading'; version: string; percent: number }
+  | { state: 'ready'; version: string }
+
+let updateStatus: UpdateStatus = { state: 'idle' }
+let installOnClose = false
+
+function setUpdateStatus(next: UpdateStatus): void {
+  updateStatus = next
+  mainWindowRef?.webContents.send('update:status', next)
+}
+
 // 같은 작업 폴더를 두 앱이 동시에 감시·저장하지 않도록 한 번만 실행되게 한다.
 // 두 번째로 실행하면 새로 띄우지 않고 이미 떠 있는 창을 앞으로 가져온다.
 const gotInstanceLock = app.requestSingleInstanceLock()
@@ -139,6 +152,10 @@ app.whenReady().then(() => {
   ipcMain.handle('window:close', () => mainWindowRef?.close())
   ipcMain.handle('window:confirmClose', () => {
     closeConfirmed = true
+    if (installOnClose) {
+      autoUpdater.quitAndInstall()
+      return
+    }
     mainWindowRef?.close()
   })
   ipcMain.handle('window:isMaximized', () => mainWindowRef?.isMaximized() ?? false)
@@ -159,12 +176,31 @@ app.whenReady().then(() => {
     arch: process.arch
   }))
 
+  ipcMain.handle('update:getStatus', () => updateStatus)
+  ipcMain.handle('update:install', () => {
+    if (updateStatus.state !== 'ready') return
+    // 저장 안 한 변경이 있으면 기존 닫기 확인 흐름을 거친 뒤에 설치한다.
+    installOnClose = true
+    mainWindowRef?.close()
+  })
+
   if (!is.dev) {
     autoUpdater.autoDownload = true
+    autoUpdater.on('update-available', (info) => {
+      setUpdateStatus({ state: 'downloading', version: info.version, percent: 0 })
+    })
+    autoUpdater.on('download-progress', (p) => {
+      if (updateStatus.state !== 'downloading') return
+      setUpdateStatus({ ...updateStatus, percent: Math.round(p.percent) })
+    })
+    autoUpdater.on('update-downloaded', (info) => {
+      setUpdateStatus({ state: 'ready', version: info.version })
+    })
     autoUpdater.on('error', (err) => {
       console.error('자동 업데이트 확인에 실패했어요:', err)
+      if (updateStatus.state === 'downloading') setUpdateStatus({ state: 'idle' })
     })
-    autoUpdater.checkForUpdatesAndNotify().catch(() => {})
+    autoUpdater.checkForUpdates().catch(() => {})
   }
 
   const rendererRoot = join(__dirname, '../renderer')

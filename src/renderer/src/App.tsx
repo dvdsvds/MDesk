@@ -16,6 +16,7 @@ import { restoreOpenTabs, usePersistOpenTabs } from './hooks/useOpenTabsPersiste
 import { SearchPanel } from './components/SearchPanel'
 import { SettingsPanel } from './features/settings/SettingsPanel'
 import { ToastStack } from './components/ToastStack'
+import { UpdateToast } from './components/UpdateToast'
 import { DiffView } from './components/DiffView'
 import { HistoryDialog } from './components/HistoryDialog'
 import { RecoveryDialog } from './components/RecoveryDialog'
@@ -926,6 +927,7 @@ function App(): React.JSX.Element {
         )}
       </AnimatePresence>
       <ToastStack onOpenDiff={handleOpenDiffFromToast} />
+      <UpdateToast />
       <TooltipLayer />
       {diffPopup && (
         <DiffView
