@@ -1,29 +1,32 @@
+/*
+ * 색 테마. <html>에 data-theme(테마 id)와 data-mode(light|dark)가 붙는다 (stores/useAppliedTheme.ts).
+ * 설정의 미리보기처럼 일부 영역만 다른 테마로 보일 때는 그 요소에 같은 속성을 붙인다.
+ *  - :root 는 글꼴·크기와 Paper Light(기본) 색
+ *  - Paper 4종은 모든 색을 직접 적는다
+ *  - 나머지 테마는 기본 색 14개(--t-*)만 적고, 테두리·hover·diff 같은 파생 색은 맨 아래 한 곳에서 만든다
+ *  - [data-mode='dark'] 는 밝기별로 공통인 값(파일 아이콘 색)
+ * 테마를 늘릴 때는 --t-* 블록 하나와 파생 규칙의 선택자, utils/themes.ts 목록에 한 줄씩 더하면 된다.
+ */
 :root {
-  /* 배경 */
-  --color-bg: #fbf1c7;
-  --color-bg-soft: #f2e5bc; /* 사이드바, 상태 표시줄, 패널 */
-  --color-bg-mute: rgba(60, 56, 54, 0.08); /* hover, 선택된 행 */
-  --color-bg-elevated: #f9f5d7; /* 팝업, 설정 패널 */
+  /* UI / 에디터 / 프리뷰 글꼴 (에디터·프리뷰는 설정에서 따로 조절) */
+  --font-ui:
+    Pretendard, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo',
+    'Noto Sans KR', sans-serif;
+  --font-editor:
+    'Monoplex KR', 'Roboto Mono', Pretendard, ui-monospace, 'SF Mono', 'Cascadia Code', Consolas, 'Noto Sans KR',
+    monospace;
+  --font-preview:
+    Pretendard, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo',
+    'Noto Sans KR', sans-serif;
+  --editor-font-size: 13.5px;
+  --editor-line-height: 1.4;
+  --preview-font-size: 15px;
+  --preview-line-height: 1.7;
 
-  /* 테두리 */
-  --color-border: rgba(60, 56, 54, 0.12);
-  --color-border-strong: rgba(60, 56, 54, 0.22);
-
-  /* 글자 */
-  --color-text: #3c3836;
-  --color-text-secondary: #665c54;
-  --color-text-tertiary: #928374;
-  --color-text-inverted: #fbf1c7;
-
-  /* 강조 */
-  --color-accent: #076678;
-  --color-accent-soft: rgba(7, 102, 120, 0.12);
-  --color-danger: #cc241d;
-  --color-danger-soft: #f2d5bf;
+  /* 파일 종류별 색은 서로 겹치지 않게 색상환을 따라 나눈다 (밝은 화면용) */
   --icon-folder: #7c6f64;
   --icon-sys: #928374;
   --icon-md: #3b78e7;
-  /* 파일 종류별 색은 서로 겹치지 않게 색상환을 따라 나눈다 */
   --icon-pdf: #d8433c;
   --icon-pptx: #e0662a;
   --icon-archive: #9a6a3c;
@@ -40,136 +43,9 @@
   --icon-audio: #d63b8a;
   --icon-html: #d6365f;
   --icon-doc: #7c6f64;
-  --color-warning: #b57614;
-
-  /* 차이(diff) 비교 */
-  --color-diff-add-bg: #d8e3d0;
-  --color-diff-add-text: #076678;
-  --color-diff-remove-bg: #f2d5bf;
-  --color-diff-remove-text: #9d0006;
-
-  /* 탭 밖에서 바뀌었거나 삭제된 메모 */
-  --color-stale: #cc241d;
-
-  /* UI / 에디터 / 프리뷰 글꼴 (에디터·프리뷰는 설정에서 따로 조절) */
-  --font-ui:
-    Pretendard, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo',
-    'Noto Sans KR', sans-serif;
-  --font-editor:
-    'Monoplex KR', 'Roboto Mono', Pretendard, ui-monospace, 'SF Mono', 'Cascadia Code', Consolas, 'Noto Sans KR',
-    monospace;
-  --font-preview:
-    Pretendard, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Apple SD Gothic Neo',
-    'Noto Sans KR', sans-serif;
-  --editor-font-size: 13.5px;
-  --editor-line-height: 1.4;
-  --preview-font-size: 15px;
-  --preview-line-height: 1.7;
-
-  --color-syntax-code: #427b58;
-  --color-syntax-mark: #076678;
-  --color-syntax-heading: #79740e;
-  --color-syntax-bullet: #9d0006;
-  --color-syntax-strong: #b57614;
-  --color-syntax-em: #af3a03;
-  --color-syntax-fence: #928374;
-  --color-syntax-task: #8f3f71;
-
-  --code-keyword: #9d0006;
-  --code-string: #79740e;
-  --code-number: #8f3f71;
-  --code-function: #427b58;
-  --code-type: #b57614;
-  --code-property: #076678;
-
-  color-scheme: light;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) {
-    --color-bg: #282828;
-    --color-bg-soft: #1d2021;
-    --color-bg-mute: rgba(235, 219, 178, 0.07);
-    --color-bg-elevated: #32302f;
-
-    --color-border: rgba(235, 219, 178, 0.08);
-    --color-border-strong: rgba(235, 219, 178, 0.15);
-
-    --color-text: #ebdbb2;
-    --color-text-secondary: #bdae93;
-    --color-text-tertiary: #928374;
-    --color-text-inverted: #282828;
-
-    --color-accent: #83a598;
-    --color-accent-soft: rgba(131, 165, 152, 0.16);
-    --color-danger: #fb4934;
-    --color-danger-soft: #3c1f1e;
-    --icon-folder: #a89984;
-    --icon-sys: #928374;
-    --icon-md: #6b9bff;
-    --icon-pdf: #ff6b64;
-    --icon-pptx: #ff935c;
-    --icon-archive: #d09a5e;
-    --icon-code: #f0b43c;
-    --icon-yaml: #e3d34f;
-    --icon-text: #a8d454;
-    --icon-xlsx: #4cc27e;
-    --icon-csv: #3cc8b4;
-    --icon-config: #4fb8e6;
-    --icon-docx: #8f95ff;
-    --icon-img: #a780ff;
-    --icon-css: #d184ff;
-    --icon-video: #f27ddc;
-    --icon-audio: #ff79b9;
-    --icon-html: #ff6f8f;
-    --icon-doc: #a89984;
-    --color-warning: #fabd2f;
-
-    --color-diff-add-bg: #2a3a38;
-    --color-diff-add-text: #83a598;
-    --color-diff-remove-bg: #3c1f1e;
-    --color-diff-remove-text: #fb4934;
-
-    --color-stale: #fb4934;
-
-    --color-syntax-code: #8fa882;
-    --color-syntax-mark: #83a598;
-    --color-syntax-heading: #b8bb26;
-    --color-syntax-bullet: #fb4934;
-    --color-syntax-strong: #fabd2f;
-    --color-syntax-em: #fe8019;
-    --color-syntax-fence: #928374;
-    --color-syntax-task: #d3869b;
-
-    --code-keyword: #fb4934;
-    --code-string: #b8bb26;
-    --code-number: #d3869b;
-    --code-function: #8ec07c;
-    --code-type: #fabd2f;
-    --code-property: #83a598;
-
-    color-scheme: dark;
-  }
-}
-
-:root[data-theme='dark'] {
-  --color-bg: #282828;
-  --color-bg-soft: #1d2021;
-  --color-bg-mute: rgba(235, 219, 178, 0.07);
-  --color-bg-elevated: #32302f;
-
-  --color-border: rgba(235, 219, 178, 0.08);
-  --color-border-strong: rgba(235, 219, 178, 0.15);
-
-  --color-text: #ebdbb2;
-  --color-text-secondary: #bdae93;
-  --color-text-tertiary: #928374;
-  --color-text-inverted: #282828;
-
-  --color-accent: #83a598;
-  --color-accent-soft: rgba(131, 165, 152, 0.16);
-  --color-danger: #fb4934;
-  --color-danger-soft: #3c1f1e;
+[data-mode='dark'] {
   --icon-folder: #a89984;
   --icon-sys: #928374;
   --icon-md: #6b9bff;
@@ -189,30 +65,501 @@
   --icon-audio: #ff79b9;
   --icon-html: #ff6f8f;
   --icon-doc: #a89984;
-  --color-warning: #fabd2f;
+}
 
-  --color-diff-add-bg: #2a3a38;
-  --color-diff-add-text: #83a598;
-  --color-diff-remove-bg: #3c1f1e;
-  --color-diff-remove-text: #fb4934;
+/* Paper Light (기본) */
+:root,
+[data-theme='paper-light'] {
+  --color-bg: #ffffff;
+  --color-bg-soft: #f7f7f5; /* 사이드바, 패널 */
+  --color-bg-mute: rgba(0, 0, 0, 0.055); /* hover, 선택된 행 */
+  --color-bg-elevated: #ffffff; /* 팝업, 설정 패널 */
 
-  --color-stale: #fb4934;
+  --color-border: rgba(0, 0, 0, 0.09);
+  --color-border-strong: rgba(0, 0, 0, 0.17);
 
-  --color-syntax-code: #8fa882;
-  --color-syntax-mark: #83a598;
-  --color-syntax-heading: #b8bb26;
-  --color-syntax-bullet: #fb4934;
-  --color-syntax-strong: #fabd2f;
-  --color-syntax-em: #fe8019;
-  --color-syntax-fence: #928374;
-  --color-syntax-task: #d3869b;
+  --color-text: #2b2b29;
+  --color-text-secondary: #6b6b66;
+  --color-text-tertiary: #9b9b95;
+  --color-text-inverted: #ffffff; /* 강조색 위의 글자 */
 
-  --code-keyword: #fb4934;
-  --code-string: #b8bb26;
-  --code-number: #d3869b;
-  --code-function: #8ec07c;
-  --code-type: #fabd2f;
-  --code-property: #83a598;
+  --color-accent: #3b6cf0;
+  --color-accent-soft: rgba(59, 108, 240, 0.11);
+  --color-danger: #d14343;
+  --color-danger-soft: #fbe4e2;
+  --color-warning: #b7791f;
+
+  /* 차이(diff) 비교 */
+  --color-diff-add-bg: #e2f0e5;
+  --color-diff-add-text: #15803d;
+  --color-diff-remove-bg: #fbe4e2;
+  --color-diff-remove-text: #b42318;
+
+  /* 탭 밖에서 바뀌었거나 삭제된 메모 */
+  --color-stale: #d14343;
+
+  --color-syntax-code: #c2410c;
+  --color-syntax-mark: #3b6cf0;
+  --color-syntax-heading: #1a1a18;
+  --color-syntax-bullet: #c026d3;
+  --color-syntax-strong: #1a1a18;
+  --color-syntax-em: #d14343;
+  --color-syntax-fence: #9b9b95;
+  --color-syntax-task: #7c3aed;
+
+  --code-keyword: #c026d3;
+  --code-string: #15803d;
+  --code-number: #c2410c;
+  --code-function: #2563eb;
+  --code-type: #0f766e;
+  --code-property: #0369a1;
+
+  color-scheme: light;
+}
+
+/* Paper Dark */
+[data-theme='paper-dark'] {
+  --color-bg: #191919;
+  --color-bg-soft: #141414;
+  --color-bg-mute: rgba(255, 255, 255, 0.06);
+  --color-bg-elevated: #222222;
+
+  --color-border: rgba(255, 255, 255, 0.08);
+  --color-border-strong: rgba(255, 255, 255, 0.15);
+
+  --color-text: #e6e6e3;
+  --color-text-secondary: #a3a3a0;
+  --color-text-tertiary: #737372;
+  --color-text-inverted: #111111;
+
+  --color-accent: #6e9bff;
+  --color-accent-soft: rgba(110, 155, 255, 0.15);
+  --color-danger: #ff7a70;
+  --color-danger-soft: #3a2120;
+  --color-warning: #e8b04a;
+
+  --color-diff-add-bg: #1f3326;
+  --color-diff-add-text: #7fd49a;
+  --color-diff-remove-bg: #3a2120;
+  --color-diff-remove-text: #ff7a70;
+
+  --color-stale: #ff7a70;
+
+  --color-syntax-code: #f0a070;
+  --color-syntax-mark: #6e9bff;
+  --color-syntax-heading: #f2f2ef;
+  --color-syntax-bullet: #d98cf0;
+  --color-syntax-strong: #f2f2ef;
+  --color-syntax-em: #ff7a70;
+  --color-syntax-fence: #737372;
+  --color-syntax-task: #b79cff;
+
+  --code-keyword: #d98cf0;
+  --code-string: #7fd49a;
+  --code-number: #f0a070;
+  --code-function: #7aa8ff;
+  --code-type: #5fd0c0;
+  --code-property: #6e9bff;
 
   color-scheme: dark;
+}
+
+/* Paper Warm Light */
+[data-theme='paper-warm-light'] {
+  --color-bg: #faf4e6;
+  --color-bg-soft: #f0e8d4;
+  --color-bg-mute: rgba(53, 49, 44, 0.08);
+  --color-bg-elevated: #fdf9ee;
+
+  --color-border: rgba(53, 49, 44, 0.13);
+  --color-border-strong: rgba(53, 49, 44, 0.22);
+
+  --color-text: #35312c;
+  --color-text-secondary: #6b6358;
+  --color-text-tertiary: #968c7d;
+  --color-text-inverted: #faf4e6;
+
+  --color-accent: #2f6f7a;
+  --color-accent-soft: rgba(47, 111, 122, 0.13);
+  --color-danger: #b83a2e;
+  --color-danger-soft: #f0d6c8;
+  --color-warning: #a8691a;
+
+  --color-diff-add-bg: #e0e8cf;
+  --color-diff-add-text: #4f6b1d;
+  --color-diff-remove-bg: #f0d6c8;
+  --color-diff-remove-text: #9f2a20;
+
+  --color-stale: #b83a2e;
+
+  --color-syntax-code: #3f7a57;
+  --color-syntax-mark: #2f6f7a;
+  --color-syntax-heading: #6f7416;
+  --color-syntax-bullet: #a8322a;
+  --color-syntax-strong: #a8691a;
+  --color-syntax-em: #b4531f;
+  --color-syntax-fence: #968c7d;
+  --color-syntax-task: #8a4a73;
+
+  --code-keyword: #a8322a;
+  --code-string: #6f7416;
+  --code-number: #8a4a73;
+  --code-function: #3f7a57;
+  --code-type: #a8691a;
+  --code-property: #2f6f7a;
+
+  color-scheme: light;
+}
+
+/* Paper Warm Dark */
+[data-theme='paper-warm-dark'] {
+  --color-bg: #262420;
+  --color-bg-soft: #1c1b18;
+  --color-bg-mute: rgba(232, 224, 207, 0.07);
+  --color-bg-elevated: #302d28;
+
+  --color-border: rgba(232, 224, 207, 0.09);
+  --color-border-strong: rgba(232, 224, 207, 0.16);
+
+  --color-text: #e8e0cf;
+  --color-text-secondary: #b5ab98;
+  --color-text-tertiary: #867d6e;
+  --color-text-inverted: #262420;
+
+  --color-accent: #7fb0a6;
+  --color-accent-soft: rgba(127, 176, 166, 0.16);
+  --color-danger: #ef6a57;
+  --color-danger-soft: #3b2220;
+  --color-warning: #e5b04a;
+
+  --color-diff-add-bg: #2c3322;
+  --color-diff-add-text: #b7bb55;
+  --color-diff-remove-bg: #3b2220;
+  --color-diff-remove-text: #ef6a57;
+
+  --color-stale: #ef6a57;
+
+  --color-syntax-code: #8fb59a;
+  --color-syntax-mark: #7fb0a6;
+  --color-syntax-heading: #b7bb55;
+  --color-syntax-bullet: #ef6a57;
+  --color-syntax-strong: #e5b04a;
+  --color-syntax-em: #e58a4a;
+  --color-syntax-fence: #867d6e;
+  --color-syntax-task: #d391b8;
+
+  --code-keyword: #ef6a57;
+  --code-string: #b7bb55;
+  --code-number: #d391b8;
+  --code-function: #8fc4a0;
+  --code-type: #e5b04a;
+  --code-property: #7fb0a6;
+
+  color-scheme: dark;
+}
+
+/* ---- 기본 색 14개만 적는 테마 ---- */
+
+/* Gruvbox Light */
+[data-theme='gruvbox-light'] {
+  --t-bg: #fbf1c7;
+  --t-soft: #f2e5bc;
+  --t-elev: #f9f5d7;
+  --t-text: #3c3836;
+  --t-sec: #665c54;
+  --t-ter: #928374;
+  --t-accent: #076678;
+  --t-red: #9d0006;
+  --t-orange: #af3a03;
+  --t-yellow: #b57614;
+  --t-green: #79740e;
+  --t-cyan: #427b58;
+  --t-blue: #076678;
+  --t-purple: #8f3f71;
+  color-scheme: light;
+}
+
+/* Gruvbox Dark */
+[data-theme='gruvbox-dark'] {
+  --t-bg: #282828;
+  --t-soft: #1d2021;
+  --t-elev: #32302f;
+  --t-text: #ebdbb2;
+  --t-sec: #bdae93;
+  --t-ter: #928374;
+  --t-accent: #83a598;
+  --t-red: #fb4934;
+  --t-orange: #fe8019;
+  --t-yellow: #fabd2f;
+  --t-green: #b8bb26;
+  --t-cyan: #8ec07c;
+  --t-blue: #83a598;
+  --t-purple: #d3869b;
+  color-scheme: dark;
+}
+
+/* Tokyo Night */
+[data-theme='tokyo-night'] {
+  --t-bg: #1a1b26;
+  --t-soft: #16161e;
+  --t-elev: #24283b;
+  --t-text: #c0caf5;
+  --t-sec: #a9b1d6;
+  --t-ter: #565f89;
+  --t-accent: #7aa2f7;
+  --t-red: #f7768e;
+  --t-orange: #ff9e64;
+  --t-yellow: #e0af68;
+  --t-green: #9ece6a;
+  --t-cyan: #7dcfff;
+  --t-blue: #7aa2f7;
+  --t-purple: #bb9af7;
+  color-scheme: dark;
+}
+
+/* Tokyo Night Light */
+[data-theme='tokyo-night-light'] {
+  --t-bg: #e1e2e7;
+  --t-soft: #d5d6db;
+  --t-elev: #ebecf0;
+  --t-text: #343b58;
+  --t-sec: #565a6e;
+  --t-ter: #8990b3;
+  --t-accent: #34548a;
+  --t-red: #8c4351;
+  --t-orange: #965027;
+  --t-yellow: #8f5e15;
+  --t-green: #485e30;
+  --t-cyan: #0f4b6e;
+  --t-blue: #34548a;
+  --t-purple: #5a4a78;
+  color-scheme: light;
+}
+
+/* Catppuccin Latte */
+[data-theme='catppuccin-latte'] {
+  --t-bg: #eff1f5;
+  --t-soft: #e6e9ef;
+  --t-elev: #f8f9fb;
+  --t-text: #4c4f69;
+  --t-sec: #6c6f85;
+  --t-ter: #9ca0b0;
+  --t-accent: #1e66f5;
+  --t-red: #d20f39;
+  --t-orange: #fe640b;
+  --t-yellow: #df8e1d;
+  --t-green: #40a02b;
+  --t-cyan: #179299;
+  --t-blue: #1e66f5;
+  --t-purple: #8839ef;
+  color-scheme: light;
+}
+
+/* Catppuccin Mocha */
+[data-theme='catppuccin-mocha'] {
+  --t-bg: #1e1e2e;
+  --t-soft: #181825;
+  --t-elev: #313244;
+  --t-text: #cdd6f4;
+  --t-sec: #a6adc8;
+  --t-ter: #6c7086;
+  --t-accent: #89b4fa;
+  --t-red: #f38ba8;
+  --t-orange: #fab387;
+  --t-yellow: #f9e2af;
+  --t-green: #a6e3a1;
+  --t-cyan: #94e2d5;
+  --t-blue: #89b4fa;
+  --t-purple: #cba6f7;
+  color-scheme: dark;
+}
+
+/* Nord */
+[data-theme='nord'] {
+  --t-bg: #2e3440;
+  --t-soft: #2b303b;
+  --t-elev: #3b4252;
+  --t-text: #eceff4;
+  --t-sec: #d8dee9;
+  --t-ter: #7b88a1;
+  --t-accent: #88c0d0;
+  --t-red: #bf616a;
+  --t-orange: #d08770;
+  --t-yellow: #ebcb8b;
+  --t-green: #a3be8c;
+  --t-cyan: #8fbcbb;
+  --t-blue: #81a1c1;
+  --t-purple: #b48ead;
+  color-scheme: dark;
+}
+
+/* Dracula */
+[data-theme='dracula'] {
+  --t-bg: #282a36;
+  --t-soft: #21222c;
+  --t-elev: #343746;
+  --t-text: #f8f8f2;
+  --t-sec: #c0c3d6;
+  --t-ter: #6272a4;
+  --t-accent: #bd93f9;
+  --t-red: #ff5555;
+  --t-orange: #ffb86c;
+  --t-yellow: #f1fa8c;
+  --t-green: #50fa7b;
+  --t-cyan: #8be9fd;
+  --t-blue: #8be9fd;
+  --t-purple: #bd93f9;
+  color-scheme: dark;
+}
+
+/* Solarized Light */
+[data-theme='solarized-light'] {
+  --t-bg: #fdf6e3;
+  --t-soft: #eee8d5;
+  --t-elev: #fffaf0;
+  --t-text: #586e75;
+  --t-sec: #657b83;
+  --t-ter: #93a1a1;
+  --t-accent: #268bd2;
+  --t-red: #dc322f;
+  --t-orange: #cb4b16;
+  --t-yellow: #b58900;
+  --t-green: #859900;
+  --t-cyan: #2aa198;
+  --t-blue: #268bd2;
+  --t-purple: #6c71c4;
+  color-scheme: light;
+}
+
+/* Solarized Dark */
+[data-theme='solarized-dark'] {
+  --t-bg: #002b36;
+  --t-soft: #00212b;
+  --t-elev: #073642;
+  --t-text: #93a1a1;
+  --t-sec: #839496;
+  --t-ter: #586e75;
+  --t-accent: #268bd2;
+  --t-red: #dc322f;
+  --t-orange: #cb4b16;
+  --t-yellow: #b58900;
+  --t-green: #859900;
+  --t-cyan: #2aa198;
+  --t-blue: #268bd2;
+  --t-purple: #6c71c4;
+  color-scheme: dark;
+}
+
+/* One Dark */
+[data-theme='one-dark'] {
+  --t-bg: #282c34;
+  --t-soft: #21252b;
+  --t-elev: #2c313a;
+  --t-text: #abb2bf;
+  --t-sec: #9da5b4;
+  --t-ter: #5c6370;
+  --t-accent: #61afef;
+  --t-red: #e06c75;
+  --t-orange: #d19a66;
+  --t-yellow: #e5c07b;
+  --t-green: #98c379;
+  --t-cyan: #56b6c2;
+  --t-blue: #61afef;
+  --t-purple: #c678dd;
+  color-scheme: dark;
+}
+
+/* Rosé Pine */
+[data-theme='rose-pine'] {
+  --t-bg: #191724;
+  --t-soft: #16141f;
+  --t-elev: #1f1d2e;
+  --t-text: #e0def4;
+  --t-sec: #908caa;
+  --t-ter: #6e6a86;
+  --t-accent: #c4a7e7;
+  --t-red: #eb6f92;
+  --t-orange: #ebbcba;
+  --t-yellow: #f6c177;
+  --t-green: #9ccfd8;
+  --t-cyan: #9ccfd8;
+  --t-blue: #31748f;
+  --t-purple: #c4a7e7;
+  color-scheme: dark;
+}
+
+/* Rosé Pine Dawn */
+[data-theme='rose-pine-dawn'] {
+  --t-bg: #faf4ed;
+  --t-soft: #fffaf3;
+  --t-elev: #f2e9e1;
+  --t-text: #575279;
+  --t-sec: #797593;
+  --t-ter: #9893a5;
+  --t-accent: #907aa9;
+  --t-red: #b4637a;
+  --t-orange: #d7827e;
+  --t-yellow: #ea9d34;
+  --t-green: #56949f;
+  --t-cyan: #56949f;
+  --t-blue: #286983;
+  --t-purple: #907aa9;
+  color-scheme: light;
+}
+
+/* 위 테마들의 파생 색 */
+[data-theme='gruvbox-light'],
+[data-theme='gruvbox-dark'],
+[data-theme='tokyo-night'],
+[data-theme='tokyo-night-light'],
+[data-theme='catppuccin-latte'],
+[data-theme='catppuccin-mocha'],
+[data-theme='nord'],
+[data-theme='dracula'],
+[data-theme='solarized-light'],
+[data-theme='solarized-dark'],
+[data-theme='one-dark'],
+[data-theme='rose-pine'],
+[data-theme='rose-pine-dawn'] {
+  --color-bg: var(--t-bg);
+  --color-bg-soft: var(--t-soft);
+  --color-bg-elevated: var(--t-elev);
+  --color-bg-mute: color-mix(in srgb, var(--t-text) 7%, transparent);
+
+  --color-border: color-mix(in srgb, var(--t-text) 10%, transparent);
+  --color-border-strong: color-mix(in srgb, var(--t-text) 18%, transparent);
+
+  --color-text: var(--t-text);
+  --color-text-secondary: var(--t-sec);
+  --color-text-tertiary: var(--t-ter);
+  --color-text-inverted: var(--t-bg);
+
+  --color-accent: var(--t-accent);
+  --color-accent-soft: color-mix(in srgb, var(--t-accent) 15%, transparent);
+  --color-danger: var(--t-red);
+  --color-danger-soft: color-mix(in srgb, var(--t-red) 16%, var(--t-bg));
+  --color-warning: var(--t-orange);
+
+  --color-diff-add-bg: color-mix(in srgb, var(--t-green) 16%, var(--t-bg));
+  --color-diff-add-text: var(--t-green);
+  --color-diff-remove-bg: color-mix(in srgb, var(--t-red) 16%, var(--t-bg));
+  --color-diff-remove-text: var(--t-red);
+
+  --color-stale: var(--t-red);
+
+  --color-syntax-code: var(--t-green);
+  --color-syntax-mark: var(--t-accent);
+  --color-syntax-heading: var(--t-yellow);
+  --color-syntax-bullet: var(--t-purple);
+  --color-syntax-strong: var(--t-orange);
+  --color-syntax-em: var(--t-red);
+  --color-syntax-fence: var(--t-ter);
+  --color-syntax-task: var(--t-cyan);
+
+  --code-keyword: var(--t-purple);
+  --code-string: var(--t-green);
+  --code-number: var(--t-orange);
+  --code-function: var(--t-blue);
+  --code-type: var(--t-yellow);
+  --code-property: var(--t-cyan);
 }

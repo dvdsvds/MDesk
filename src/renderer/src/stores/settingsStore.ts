@@ -7,7 +7,9 @@ import { DEFAULT_EDITOR_FONT_FAMILY, PREVIOUS_EDITOR_FONT_FAMILY } from '../util
 /** 예전에 기본으로 들어 있던 템플릿(지금은 기본 템플릿이 없어서 저장돼 있어도 없앤다) */
 const REMOVED_DEFAULT_TEMPLATE_IDS = ['daily', 'meeting', 'weekly']
 
-export type ThemePreference = 'system' | 'light' | 'dark'
+import { osDefaultTheme, type ThemePreference } from '../utils/themes'
+
+export type { ThemePreference }
 
 /** 본문 보기: 에디터만 / 에디터와 미리보기 나란히 / 미리보기만 */
 export type ViewMode = 'editor' | 'split' | 'preview'
@@ -20,6 +22,9 @@ const DEFAULT_PREVIEW_FONT_FAMILY = 'Pretendard, sans-serif'
 interface SettingsState {
   theme: ThemePreference
   setTheme: (theme: ThemePreference) => void
+  /** 처음 실행 때 테마를 한 번 골랐는지. 골랐거나 예전 설정이 있으면 다시 묻지 않는다 */
+  themeChosen: boolean
+  setThemeChosen: (value: boolean) => void
   vimMode: boolean
   setVimMode: (value: boolean) => void
   vimMouse: boolean
@@ -70,8 +75,10 @@ interface SettingsState {
 export const useSettingsStore = create<SettingsState>()(
   persist(
     (set) => ({
-      theme: 'system',
+      theme: osDefaultTheme(),
       setTheme: (theme) => set({ theme }),
+      themeChosen: false,
+      setThemeChosen: (value) => set({ themeChosen: value }),
       vimMode: false,
       setVimMode: (value) => set({ vimMode: value }),
       vimMouse: false,
@@ -173,7 +180,7 @@ export const useSettingsStore = create<SettingsState>()(
     {
       name: 'mdesk-settings',
       // 5·6은 되돌린 속성 확장 작업이 쓰던 버전. 8부터 속성은 상태 하나(값 고정)뿐이다
-      version: 10,
+      version: 11,
       merge: (persisted, current) => {
         const p = (persisted ?? {}) as Partial<SettingsState>
         return {
@@ -222,6 +229,16 @@ export const useSettingsStore = create<SettingsState>()(
           if (s.editorFontFamily === PREVIOUS_EDITOR_FONT_FAMILY) {
             s.editorFontFamily = DEFAULT_EDITOR_FONT_FAMILY
           }
+        }
+        if (version < 11) {
+          // 색 테마를 이름 있는 목록에서 고르게 바꿨다. 예전 밝게·어둡게는 Paper Light·Paper Dark로 옮기고,
+          // 시스템은 지금 OS 설정에 맞는 쪽으로 정한다. 이미 쓰던 사용자에게도 업데이트 후 첫 실행에서
+          // 테마 선택 창을 한 번 보여 준다(지금 테마가 미리 골라져 있다)
+          const old = s as Record<string, unknown>
+          if (old.theme === 'light') s.theme = 'paper-light'
+          else if (old.theme === 'dark') s.theme = 'paper-dark'
+          else s.theme = osDefaultTheme()
+          s.themeChosen = false
         }
         return s as SettingsState
       }

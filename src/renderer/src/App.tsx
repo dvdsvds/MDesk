@@ -17,6 +17,7 @@ import { SearchPanel } from './components/SearchPanel'
 import { SettingsPanel } from './features/settings/SettingsPanel'
 import { ToastStack } from './components/ToastStack'
 import { UpdateToast } from './components/UpdateToast'
+import { ThemePickerDialog } from './components/ThemePickerDialog'
 import { DiffView } from './components/DiffView'
 import { HistoryDialog } from './components/HistoryDialog'
 import { RecoveryDialog } from './components/RecoveryDialog'
@@ -90,6 +91,8 @@ interface DiffPopupState {
 
 function App(): React.JSX.Element {
   useAppliedTheme()
+  const themeChosen = useSettingsStore((s) => s.themeChosen)
+  const setThemeChosen = useSettingsStore((s) => s.setThemeChosen)
   useAppliedFonts()
   useAppliedZoom()
   useWorkspaceEvents()
@@ -952,6 +955,7 @@ function App(): React.JSX.Element {
         <RecoveryDialog items={recoveryItems} onDone={() => setRecoveryItems(null)} />
       )}
       {changelog && <ChangelogDialog content={changelog} onClose={() => setChangelog(null)} />}
+      {!themeChosen && <ThemePickerDialog onConfirm={() => setThemeChosen(true)} />}
       {tabClose.closeConfirm && (
         <SaveChangesDialog
           title={tabClose.closeConfirm.title}

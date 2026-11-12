@@ -10,20 +10,7 @@
   --csv-c7: #4f46e5;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) {
-    --csv-c0: #6cb6ff;
-    --csv-c1: #57d18b;
-    --csv-c2: #f0a35e;
-    --csv-c3: #c49bff;
-    --csv-c4: #f783ac;
-    --csv-c5: #4fd1c5;
-    --csv-c6: #e3c15a;
-    --csv-c7: #9ea7ff;
-  }
-}
-
-:root[data-theme='dark'] {
+[data-mode='dark'] {
   --csv-c0: #6cb6ff;
   --csv-c1: #57d18b;
   --csv-c2: #f0a35e;

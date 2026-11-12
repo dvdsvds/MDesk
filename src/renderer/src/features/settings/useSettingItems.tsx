@@ -4,7 +4,8 @@ import { useSettingsStore } from '../../stores/settingsStore'
 import { ShortcutRow } from './ShortcutRow'
 import { FileTypeIcon } from '../../components/FileTypeIcon'
 import { SHORTCUT_LABELS, type ShortcutAction } from '../../utils/shortcuts'
-import { ThemeToggle } from '../../components/ThemeToggle'
+import { ThemeSelect } from './ThemeSelect'
+import { ThemePreviewCard } from './ThemePreview'
 import { INPUT, NumberField, Row, Toggle } from './SettingsParts'
 import { TrashSetting } from './TrashSetting'
 import { FontSelect } from './FontSelect'
@@ -162,14 +163,20 @@ export function useSettingItems(): SettingItem[] {
         render: () => <TrashSetting />
       },
       {
-        id: 'theme',
+        id: 'theme-preview',
         category: '화면',
         group: '테마',
-        label: '색상 모드',
+        label: '테마 미리보기',
+        render: () => <ThemePreviewCard />
+      },
+      {
+        id: 'theme',
+        category: '화면',
+        label: '테마',
         render: () => (
-          <Row label="색상 모드">
-            <ThemeToggle />
-          </Row>
+          <div className="p-3">
+            <ThemeSelect />
+          </div>
         )
       },
       {
