@@ -17,7 +17,13 @@ export function cursorMetrics(): Extension {
             const lineHs = view.defaultLineHeight
             const lineH = lineHs / sy
             const head = view.state.selection.main.head
-            const c = view.coordsAtPos(head)
+            let c = view.coordsAtPos(head)
+            // 줄 끝에 크기 0짜리 위젯(코드 블록 복사 버튼)이 있으면 그 위젯의 좌표가 나와 커서가 줄 아래로 밀린다.
+            // 높이가 거의 없으면 앞 글자 쪽 좌표를 쓴다
+            if (!c || c.bottom - c.top < 2) {
+              const prev = view.coordsAtPos(head, -1)
+              if (prev && prev.bottom - prev.top >= 2) c = prev
+            }
             const node = view.domAtPos(head).node
             const el = (node.nodeType === 1 ? (node as Element) : node.parentElement)?.closest(
               '.cm-line'

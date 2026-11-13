@@ -217,12 +217,50 @@ function skipSep(row: number, dir: 1 | -1): number {
   return row === 1 ? row + dir : row
 }
 
+/** 아직 구분선이 없는 한 줄짜리 헤더(`| a |`)인지 */
+function isLoneRow(state: EditorState, lineNo: number): boolean {
+  const doc = state.doc
+  if (!ROW_RE.test(doc.line(lineNo).text) || inCodeFence(doc, lineNo)) return false
+  if (lineNo > 1 && ROW_RE.test(doc.line(lineNo - 1).text)) return false
+  if (lineNo < doc.lines && ROW_RE.test(doc.line(lineNo + 1).text)) return false
+  return true
+}
+
+/** 한 줄짜리 헤더에서 Tab: 다음 칸으로 가고, 마지막 칸이면 오른쪽에 새 칸을 만든다 */
+function loneRowTab(view: EditorView, shift: boolean): boolean {
+  const { state } = view
+  const head = state.selection.main.head
+  const line = state.doc.lineAt(head)
+  if (!isLoneRow(state, line.number)) return false
+  const p = pipePositions(line.text)
+  const cells = p.length - 1
+  if (cells < 1) return false
+  const col = Math.min(cells - 1, columnAt(line.text, head - line.from))
+  if (shift) {
+    if (col === 0) return true
+    view.dispatch({ selection: { anchor: line.from + p[col - 1] + 2 }, scrollIntoView: true })
+    return true
+  }
+  if (col < cells - 1) {
+    view.dispatch({ selection: { anchor: line.from + p[col + 1] + 2 }, scrollIntoView: true })
+    return true
+  }
+  const body = line.text.trimEnd()
+  view.dispatch({
+    changes: { from: line.from + body.length, to: line.to, insert: '  |' },
+    selection: { anchor: line.from + body.length + 1 },
+    scrollIntoView: true,
+    userEvent: 'input.table'
+  })
+  return true
+}
+
 function next(view: EditorView, shift: boolean): boolean {
   const sel = view.state.selection.main
   const info = tableAt(view.state, sel.head)
-  if (!info) return false
+  if (!info) return loneRowTab(view, shift)
   let { row, col } = info
-  let rows = info.rows
+  const rows = info.rows
   if (shift) {
     col--
     if (col < 0) {
@@ -233,11 +271,20 @@ function next(view: EditorView, shift: boolean): boolean {
   } else {
     col++
     if (col >= info.cols) {
-      row = skipSep(row + 1, 1)
-      col = 0
+      // 마지막 칸에서 Tab: 오른쪽에 새 열을 만들고 같은 행의 새 칸으로 간다 (새 행은 Enter)
+      const widened: TableInfo = {
+        ...info,
+        cols: info.cols + 1,
+        aligns: [...info.aligns, 'none']
+      }
+      goTo(
+        view,
+        widened,
+        info.rows.map((r) => [...r, '']),
+        { row: info.row === 1 ? 2 : info.row, col: info.cols }
+      )
+      return true
     }
-    if (row === 1) row = 2
-    if (row >= rows.length) rows = withNewRow(info)
   }
   goTo(view, info, rows, { row, col })
   return true
@@ -254,7 +301,8 @@ function headerEnter(view: EditorView): boolean {
   const { state } = view
   const head = state.selection.main.head
   const line = state.doc.lineAt(head)
-  if (!ROW_RE.test(line.text) || head !== line.to) return false
+  // 줄 끝이 아니어도(`| a |`의 칸 안) Enter로 구분선과 빈 행을 붙인다
+  if (!ROW_RE.test(line.text)) return false
   if (line.number > 1 && ROW_RE.test(state.doc.line(line.number - 1).text)) return false
   if (line.number < state.doc.lines && ROW_RE.test(state.doc.line(line.number + 1).text))
     return false
@@ -308,6 +356,18 @@ const autoTable: Extension = EditorView.inputHandler.of((view, from, to, text) =
   const { state } = view
   const line = state.doc.lineAt(from)
   if (from !== line.to || inCodeFence(state.doc, line.number)) return false
+  // 빈 줄에서 처음 `|`를 치면 `|  |`로 닫고 커서를 안쪽 칸에 둔다. 이어서 글자를 치면 `| a |`가 된다
+  if (line.text.trim() === '') {
+    const near = (n: number): boolean =>
+      n >= 1 && n <= state.doc.lines && ROW_RE.test(state.doc.line(n).text)
+    if (near(line.number - 1) || near(line.number + 1)) return false
+    view.dispatch({
+      changes: { from, insert: '|  |' },
+      selection: { anchor: from + 2 },
+      userEvent: 'input.type'
+    })
+    return true
+  }
   const typed = line.text + '|'
   if (!ROW_RE.test(typed)) return false
   const hasPrev = line.number > 1 && ROW_RE.test(state.doc.line(line.number - 1).text)
@@ -477,6 +537,108 @@ const tableNormalize: Extension = EditorState.transactionFilter.of((tr) => {
 })
 
 /**
+ * 표의 칸 한가운데에 `|`를 쳐서 칸을 나누면 그 행만 칸이 늘어난다.
+ * 헤더와 구분선의 칸 수가 다르면 표로 인식되지 않아 박스가 풀리므로, 나머지 행에도 같은 자리에 빈 칸을 넣어 맞춘다.
+ * (칸 수가 이미 어긋나 있던 행은 건드리지 않는다)
+ */
+const tableColumnSync: Extension = EditorState.transactionFilter.of((tr) => {
+  if (tr.annotation(normalizing) || !tr.docChanged || !tr.isUserEvent('input.type')) return tr
+  if (tr.isUserEvent('input.type.compose')) return tr
+  let pos = -1
+  let count = 0
+  let typedPipe = false
+  tr.changes.iterChanges((fa, ta, fb, _tb, ins) => {
+    count++
+    typedPipe = fa === ta && ins.toString() === '|'
+    pos = fb
+  })
+  if (count !== 1 || !typedPipe) return tr
+  const doc = tr.newDoc
+  // 앞이 \ 면 이스케이프된 파이프라서 칸을 나누지 않는다
+  if (pos > 0 && doc.sliceString(pos - 1, pos) === '\\') return tr
+  const info = tableAtDoc(doc, pos)
+  if (!info) return tr
+  const typed = doc.lineAt(pos)
+  const first = doc.lineAt(info.from).number
+  const last = doc.lineAt(info.to).number
+  const typedPipes = pipePositions(typed.text)
+  const idx = pipePositions(typed.text.slice(0, pos - typed.from)).length // 새로 생긴 칸의 열 번호
+  const typedCells = typedPipes.length - 1
+  if (idx < 1 || typedCells < 2) return tr
+  const edits: Edit[] = []
+  for (let n = first; n <= last; n++) {
+    if (n === typed.number) continue
+    const line = doc.line(n)
+    const p = pipePositions(line.text)
+    if (p.length - 1 !== typedCells - 1) continue
+    // 새 칸의 열 번호(idx)와 같은 자리, 즉 idx번째 파이프 바로 뒤에 빈 칸을 끼운다. 그 파이프가 없으면 줄 끝에 붙인다
+    const at = idx < p.length ? line.from + p[idx] + 1 : line.to
+    edits.push({ from: at, to: at, insert: n === first + 1 ? ' --- |' : '  |' })
+  }
+  if (edits.length === 0) return tr
+  return [
+    tr,
+    { changes: edits, sequential: true, annotations: [Transaction.userEvent.of('input.table')] }
+  ]
+})
+
+/**
+ * 헤더 줄에서 칸(`b |`)을 지워 헤더의 칸 수가 구분선보다 줄면, 그 열을 구분선과 나머지 행에서도 지운다.
+ * 헤더와 구분선의 칸 수가 다르면 표가 풀리기 때문이다.
+ * 지워진 열의 자리는 지우기 전후 칸 목록을 비교해 찾는다(맨 끝부터 한 글자씩 지워도 같다).
+ * 두 칸이 합쳐진 경우처럼 어느 칸이 지워졌는지 정해지지 않으면 아무것도 하지 않는다
+ */
+const tableColumnDelete: Extension = EditorState.transactionFilter.of((tr) => {
+  if (tr.annotation(normalizing) || !tr.docChanged || !tr.isUserEvent('delete')) return tr
+  let count = 0
+  let pos = -1
+  let removedOnly = true
+  tr.changes.iterChanges((fa, ta, fb, tb) => {
+    count++
+    pos = fb
+    if (fb !== tb) removedOnly = false
+    if (tr.startState.doc.sliceString(fa, ta).includes('\n')) removedOnly = false
+  })
+  if (count !== 1 || !removedOnly) return tr
+  const oldDoc = tr.startState.doc
+  const doc = tr.newDoc
+  const line = doc.lineAt(pos)
+  if (line.number >= doc.lines || inCodeFence(doc, line.number)) return tr
+  const sepLine = doc.line(line.number + 1)
+  if (!SEP_RE.test(sepLine.text) || !ROW_RE.test(sepLine.text)) return tr
+  if (line.number > 1 && ROW_RE.test(doc.line(line.number - 1).text)) return tr
+  const oldLine = oldDoc.line(line.number)
+  if (!ROW_RE.test(line.text) && !line.text.trimStart().startsWith('|')) return tr
+  const trimmed = (cells: string[]): string[] => cells.map((c) => c.trim())
+  const before = trimmed(splitRow(oldLine.text))
+  const after = trimmed(splitRow(line.text))
+  const sepCells = pipePositions(sepLine.text).length - 1
+  const k = sepCells - after.length
+  if (k <= 0 || before.length - after.length !== k) return tr
+  let p0 = 0
+  while (p0 < after.length && before[p0] === after[p0]) p0++
+  let s0 = 0
+  while (s0 < after.length - p0 && before[before.length - 1 - s0] === after[after.length - 1 - s0])
+    s0++
+  if (p0 + s0 < after.length) return tr
+  const idx = p0
+  const edits: Edit[] = []
+  for (let n = line.number + 1; n <= doc.lines; n++) {
+    const text = doc.line(n).text
+    if (!ROW_RE.test(text)) break
+    const p = pipePositions(text)
+    if (p.length - 1 !== sepCells || idx + k >= p.length) continue
+    const base = doc.line(n).from
+    edits.push({ from: base + p[idx], to: base + p[idx + k], insert: '' })
+  }
+  if (edits.length === 0) return tr
+  return [
+    tr,
+    { changes: edits, sequential: true, annotations: [Transaction.userEvent.of('delete.table')] }
+  ]
+})
+
+/**
  * 한글 조합 중에는 정렬을 건너뛰므로, 조합이 끝나면 커서가 있는 표를 한 번 정리한다.
  * (처음 칸에 있던 빈칸이 그대로 남아 `| 가상환경  |`처럼 공백이 둘이 되는 것을 막는다)
  */
@@ -512,6 +674,9 @@ const tableNormalizeAfterCompose: Extension = EditorView.domEventHandlers({
 export const tableEdit: Extension = [
   autoTable,
   tableNormalize,
+  // 필터는 뒤에서부터 실행된다. 칸을 먼저 맞춘 다음 정렬이 그 결과를 이어받도록 정렬 필터 뒤에 둔다
+  tableColumnSync,
+  tableColumnDelete,
   tableNormalizeAfterCompose,
   Prec.high(
     keymap.of([
