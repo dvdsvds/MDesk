@@ -484,6 +484,9 @@ const tableNormalizeAfterCompose: Extension = EditorView.domEventHandlers({
   compositionend: (_e, view) => {
     // 에디터가 조합 결과를 문서에 반영한 다음에 정리한다
     setTimeout(() => {
+      // 다음 글자 조합이 벌써 시작됐으면 건드리지 않는다. 조합 중에 문서를 고치면 IME가 글자를 한 번 더 넣는다("밖에서서").
+      // 그 조합이 끝날 때 이 핸들러가 다시 돌아 정리한다
+      if (view.composing || view.compositionStarted) return
       const { state } = view
       const head = state.selection.main.head
       const info = tableAtDoc(state.doc, head)
