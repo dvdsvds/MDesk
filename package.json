@@ -51,7 +51,7 @@
     "codemirror": "^6.0.2",
     "docx-preview": "^0.4.1",
     "dompurify": "^3.4.16",
-    "electron": "^39.2.6",
+    "electron": "^45.3.3",
     "electron-builder": "^26.0.12",
     "electron-vite": "^5.0.0",
     "eslint": "^9.39.1",
@@ -80,7 +80,7 @@
     "zustand": "^5.0.15"
   },
   "allowScripts": {
-    "electron@39.8.10": true,
+    "electron@45.3.3": true,
     "electron-winstaller@5.4.0": true,
     "esbuild@0.28.2": true
   }
