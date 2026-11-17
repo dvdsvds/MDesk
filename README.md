@@ -59,15 +59,18 @@
 
 ### 문서 작성 및 편집
 
-- Vim 키 바인딩 지원
+- Vim 키 바인딩 지원: 마우스 클릭과 드래그도 함께 사용할 수 있습니다.
 - 서식 툴바와 `/` 메뉴를 통한 블록 삽입
-- 괄호, 강조 기호, 백틱 자동 완성 및 목록 번호 자동 정리
+- 괄호, 강조 기호, 백틱 자동 완성
+- 번호 목록 자동 정리: 항목을 지우면 남은 항목의 번호를 다시 매기고, 빈 항목에서 Enter를 치면 기호만 지웁니다.
+- 표 편집 보조: 헤더 줄을 `|`로 닫으면 구분선과 빈 행이 자동으로 생기며, `Tab`으로 칸을 이동하고 마지막 칸에서는 새 열을 추가합니다. `Enter`는 다음 행의 첫 칸으로 이동하고, 빈 마지막 행에서 `Enter`를 치면 표를 나갑니다. 빈 행의 바깥 `|`를 지우면 행 전체가 삭제되며, 헤더의 열을 지우면 모든 행에서 함께 삭제됩니다.
 - 자동 저장 및 비정상 종료 후 미저장 내용 복구
 - 파일별 버전 기록 비교 및 이전 버전 복원
 
 ### Markdown 지원
 
 - CommonMark 및 GFM 지원: 표, 체크리스트, 취소선, 각주
+- 문서에 직접 쓴 HTML은 실행하지 않고 글자로 표시하며, 렌더링 결과는 DOMPurify로 한 번 더 정제하고 콘텐츠 보안 정책(CSP)을 적용합니다.
 - 수식 렌더링: KaTeX를 이용한 인라인 및 블록 수식
 - Mermaid 코드 블록을 이용한 다이어그램 생성
 - 콜아웃 문법 지원: `> [!tip] 제목`
@@ -78,7 +81,7 @@
 ### 문서 관리
 
 - 실제 파일 시스템을 기반으로 작업 공간 구성 및 중첩 디렉터리 제한 없이 사용
-- 여러 문서를 탭으로 열 수 있으며, 애플리케이션 재실행 시 이전 탭 복원
+- 여러 문서를 탭으로 열 수 있으며, 애플리케이션 재실행 시 이전 탭 복원. `Alt+숫자`와 `Alt+>` · `Alt+<`로 탭을 이동합니다.
 - 빠른 검색(`Ctrl+P`) 및 문서 본문 전체 검색
 - 위키링크 지원: `[[노트]]`, `[[노트#제목]]`, `[[노트|별칭]]`
 - 위키링크 대상 자동완성 및 파일 이름 · 경로 변경 시 참조 링크 자동 갱신
@@ -152,7 +155,7 @@ scripts/            아이콘 생성, Pyodide 복사 등 보조 스크립트
 
 | 영역 | 사용 기술 |
 |---|---|
-| 애플리케이션 프레임워크 | Electron 39, electron-vite, electron-builder, electron-updater |
+| 애플리케이션 프레임워크 | Electron 45, electron-vite, electron-builder, electron-updater |
 | 사용자 인터페이스 | React 19, TypeScript 5, Tailwind CSS 4, Zustand, Motion |
 | 코드 에디터 | CodeMirror 6, `@replit/codemirror-vim` (Vim 키 바인딩), `@codemirror/lang-markdown` |
 | 마크다운 처리 | markdown-it (각주, 체크리스트), KaTeX (수식), Mermaid (도표), DOMPurify |
@@ -175,7 +178,7 @@ npx electron scripts/make-icons.mjs
 
 ### 설치
 
-Mdesk는 Windows, macOS, Linux 환경을 지원합니다.
+Mdesk는 Windows, macOS, Linux 환경을 지원합니다. macOS는 13 이상이 필요합니다.
 
 [Releases](https://github.com/dvdsvds/MDesk/releases)에서 최신 버전을 확인하고 운영체제에 맞는 설치 파일을 다운로드합니다.
 
