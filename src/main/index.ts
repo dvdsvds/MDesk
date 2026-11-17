@@ -38,7 +38,9 @@ let updateStatus: UpdateStatus = { state: 'idle' }
 let installOnClose = false
 
 /** 실행 중에 새 버전을 다시 확인하는 간격 */
-const UPDATE_CHECK_INTERVAL_MS = 4 * 60 * 60 * 1000
+const UPDATE_CHECK_INTERVAL_MS = 30 * 60 * 1000
+/** 창으로 돌아올 때 확인하되, 직전 확인과 이만큼은 떨어져 있어야 한다 */
+const UPDATE_FOCUS_GAP_MS = 5 * 60 * 1000
 
 function setUpdateStatus(next: UpdateStatus): void {
   updateStatus = next
@@ -212,12 +214,18 @@ app.whenReady().then(() => {
       console.error('자동 업데이트 확인에 실패했어요:', err)
       if (updateStatus.state === 'downloading') setUpdateStatus({ state: 'idle' })
     })
+    let lastCheckAt = 0
     const checkForUpdate = (): void => {
       // 이미 받는 중이거나 받아 둔 업데이트가 있으면 다시 확인하지 않는다
       if (updateStatus.state !== 'idle') return
+      lastCheckAt = Date.now()
       autoUpdater.checkForUpdates().catch(() => {})
     }
     checkForUpdate()
+    // 오래 켜 둔 창으로 돌아올 때도 확인한다
+    app.on('browser-window-focus', () => {
+      if (Date.now() - lastCheckAt >= UPDATE_FOCUS_GAP_MS) checkForUpdate()
+    })
     // 앱을 켜 둔 채로 있어도 새 버전을 받을 수 있게 주기적으로 확인한다
     setInterval(checkForUpdate, UPDATE_CHECK_INTERVAL_MS)
   }
