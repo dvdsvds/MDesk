@@ -1,7 +1,7 @@
 import { mdToolbarKeys, mdToolbarPanel } from './editorToolbar'
 import { slashMenu } from './slashMenu'
 import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react'
-import { Annotation, Compartment, EditorState, type Extension } from '@codemirror/state'
+import { Annotation, Compartment, EditorState, Prec, type Extension } from '@codemirror/state'
 import { EditorView, keymap, drawSelection, tooltips, } from '@codemirror/view'
 import { basicSetup } from 'codemirror'
 import {
@@ -12,7 +12,12 @@ import {
   redo,
   undo
 } from '@codemirror/commands'
-import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
+import {
+  deleteMarkupBackward,
+  insertNewlineContinueMarkupCommand,
+  markdown,
+  markdownLanguage
+} from '@codemirror/lang-markdown'
 import { languages } from '@codemirror/language-data'
 import { LanguageDescription } from '@codemirror/language'
 import { isMarkdownPath } from '../utils/fileKind'
@@ -110,7 +115,14 @@ function buildExtensions(
   baseContent: string,
   onChangeClick: () => void
 ): Extension[] {
-  const markdownLang = markdown({ base: markdownLanguage, codeLanguages: languages })
+  // 기본 Enter(빈 두 번째 항목에서 목록 사이에 빈 줄을 넣어 느슨한 목록으로 바꿈)는 쓰지 않고, 빈 항목에서 Enter를 치면 마커만 지우도록 직접 연결한다
+  const markdownLang = markdown({ base: markdownLanguage, codeLanguages: languages, addKeymap: false })
+  const markdownKeys = Prec.high(
+    keymap.of([
+      { key: 'Enter', run: insertNewlineContinueMarkupCommand({ nonTightLists: false }) },
+      { key: 'Backspace', run: deleteMarkupBackward }
+    ])
+  )
   return [
     cursorMetrics(),
     gutterAlign(),
@@ -133,6 +145,7 @@ function buildExtensions(
     tableEdit,
     keymap.of([...defaultKeymap, ...historyKeymap, ...searchKeymap, indentWithTab]),
     markdownLang,
+    markdownKeys,
     markdownColors,
     markdownStyle,
     calloutMarkerColors,
