@@ -1,4 +1,4 @@
-import { app, shell, BrowserWindow, protocol, net, ipcMain } from 'electron'
+import { app, shell, BrowserWindow, protocol, net, ipcMain, session } from 'electron'
 import { autoUpdater } from 'electron-updater'
 import { basename, join, resolve, sep } from 'path'
 import { electronApp, is, optimizer } from '@electron-toolkit/utils'
@@ -139,6 +139,17 @@ app.whenReady().then(() => {
     optimizer.watchWindowShortcuts(window)
   })
 
+  // 카메라·위치·알림 같은 권한은 쓰지 않으므로 모두 거절한다. 코드 복사용 클립보드 쓰기만 허용한다
+  const allowPermission = (permission: string): boolean => permission === 'clipboard-sanitized-write'
+  session.defaultSession.setPermissionRequestHandler((_wc, permission, callback) =>
+    callback(allowPermission(permission))
+  )
+  session.defaultSession.setPermissionCheckHandler((_wc, permission) => allowPermission(permission))
+  // <webview>는 쓰지 않는다. 노트 내용이 어떤 경로로든 webview를 만들지 못하게 막는다
+  app.on('web-contents-created', (_e, contents) => {
+    contents.on('will-attach-webview', (event) => event.preventDefault())
+  })
+
   registerWorkspaceIpc(() => mainWindowRef)
   registerCodeRunner()
   registerPdfExport(() => mainWindowRef)
@@ -222,7 +233,7 @@ app.whenReady().then(() => {
       const res = await net.fetch(pathToFileURL(target).href)
       if (basename(target) !== 'js-worker.js') return res
       const headers = new Headers(res.headers)
-      headers.set('Content-Security-Policy', "default-src 'none; script-src 'unsafe-eval'")
+      headers.set('Content-Security-Policy', "default-src 'none'; script-src 'unsafe-eval'")
       return new Response(res.body, { status: res.status, headers })
     } catch {
       return new Response(null, { status: 404 })

@@ -5,7 +5,7 @@ export interface MarkdownRenderer {
 import MarkdownIt from 'markdown-it'
 import taskLists from 'markdown-it-task-lists'
 import footnote from 'markdown-it-footnote'
-import DOMPurify, { type Config as SanitizeConfig } from 'dompurify'
+import { sanitizeHtml } from './sanitize'
 import { wikilinkPlugin } from './wikilinkPlugin'
 import { calloutPlugin } from './calloutPlugin'
 import { accordionPlugin } from './accordionPlugin'
@@ -65,11 +65,6 @@ function createMarkdownIt(): InstanceType<typeof MarkdownIt> {
 
 const md = createMarkdownIt()
 
-const sanitizeConfig: SanitizeConfig = {
-  ADD_TAGS: ['input'],
-  ADD_ATTR: ['type', 'checked', 'disabled', 'id', 'class', 'data-wikilink', 'data-heading', 'data-callout', 'data-color', 'open', 'data-embed-note', 'data-embed-file', 'data-alias', 'data-width', ' data-line']
-}
-
 function resolveAttachmentSrcs(html: string, baseDir: string): string {
   return html.replace(/(<img\b[^>]*\bsrc=")([^"]+)(")/g, (match, prefix, src, suffix) => {
     if (/^[a-z][a-z0-9+.-]*:/i.test(src) || src.startsWith('/')) return match
@@ -86,7 +81,7 @@ function markdownItRenderer(): MarkdownRenderer {
   return {
     render(source: string, baseDir?: string): string {
       const rawHtml = md.render(source)
-      const clean = DOMPurify.sanitize(rawHtml, sanitizeConfig)
+      const clean = sanitizeHtml(rawHtml)
       return baseDir ? resolveAttachmentSrcs(clean, baseDir) : clean
     }
   }
