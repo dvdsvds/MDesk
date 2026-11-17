@@ -66,7 +66,6 @@ interface MarkdownEditorProps {
   getNoteIndex: () => NoteRef[]
   getAttachmentDir: () => string
   vimMode: boolean
-  vimMouse: boolean
   baseContent: string
   onOpenBaseDiff?: () => void
   onSave?: () => void
@@ -108,7 +107,6 @@ function buildExtensions(
   vimModeInitial: boolean,
   reportCursor: (pos: CursorPosition) => void,
   reportVimMode: (mode: string) => void,
-  getVimMouse: () => boolean,
   baseContent: string,
   onChangeClick: () => void
 ): Extension[] {
@@ -147,7 +145,7 @@ function buildExtensions(
     markdownLang.language.data.of({ autocomplete: calloutCompletionSource }),
     editingAssist(),
     listRenumber(),
-    vimPointer(getVimMouse),
+    vimPointer(),
     pasteDrop(getAttachmentDir),
     EditorView.lineWrapping,
     vimModeTracker(reportVimMode),
@@ -161,7 +159,6 @@ function buildCodeExtensions(
   vimModeInitial: boolean,
   reportCursor: (pos: CursorPosition) => void,
   reportVimMode: (mode: string) => void,
-  getVimMouse: () => boolean,
   baseContent: string,
   onChangeClick: () => void,
   wrap: boolean
@@ -182,12 +179,22 @@ function buildCodeExtensions(
     keymap.of([...defaultKeymap, ...historyKeymap, ...searchKeymap, indentWithTab]),
     languageCompartment.of([]),
     vimImeGuard(),
-    vimPointer(getVimMouse),
+    vimPointer(),
     wrap ? EditorView.lineWrapping : [],
     vimModeTracker(reportVimMode),
     cursorReport(reportCursor),
     editorTheme
   ]
+}
+
+/** 파일을 열거나 탭을 바꾸면 커서가 보이도록 에디터에 포커스를 준다. 검색창 같은 입력칸에 쓰는 중이면 건드리지 않는다 */
+function focusEditor(view: EditorView): void {
+  requestAnimationFrame(() => {
+    const active = document.activeElement
+    if (active && !view.dom.contains(active) && active.matches('input, textarea, select, [contenteditable="true"]'))
+      return
+    view.focus()
+  })
 }
 
 export const MarkdownEditor = forwardRef<MarkdownEditorHandle, MarkdownEditorProps>(
@@ -200,7 +207,6 @@ export const MarkdownEditor = forwardRef<MarkdownEditorHandle, MarkdownEditorPro
       getNoteIndex,
       getAttachmentDir,
       vimMode,
-      vimMouse,
       baseContent,
       onOpenBaseDiff,
       onSave,
@@ -220,7 +226,6 @@ export const MarkdownEditor = forwardRef<MarkdownEditorHandle, MarkdownEditorPro
     const getNoteIndexRef = useRef(getNoteIndex)
     const getAttachmentDirRef = useRef(getAttachmentDir)
     const vimModeRef = useRef(vimMode)
-    const vimMouseRef = useRef(vimMouse)
     const baseContentRef = useRef(baseContent)
     const onOpenBaseDiffRef = useRef(onOpenBaseDiff)
     const onSaveRef = useRef(onSave)
@@ -234,7 +239,6 @@ export const MarkdownEditor = forwardRef<MarkdownEditorHandle, MarkdownEditorPro
       onCursorChangeRef.current = onCursorChange
       onScrollRatioRef.current = onScrollRatio
       onVimModeChangeRef.current = onVimModeChange
-      vimMouseRef.current = vimMouse
       baseContentRef.current = baseContent
       onOpenBaseDiffRef.current = onOpenBaseDiff
       onSaveRef.current = onSave
@@ -298,7 +302,6 @@ export const MarkdownEditor = forwardRef<MarkdownEditorHandle, MarkdownEditorPro
               vimModeRef.current,
               (pos) => onCursorChangeRef.current?.(pos),
               (mode) => onVimModeChangeRef.current?.(mode),
-              () => vimMouseRef.current,
               baseContentRef.current,
               () => onOpenBaseDiffRef.current?.(),
               !desc
@@ -317,7 +320,6 @@ export const MarkdownEditor = forwardRef<MarkdownEditorHandle, MarkdownEditorPro
             vimModeRef.current,
             (pos) => onCursorChangeRef.current?.(pos),
             (mode) => onVimModeChangeRef.current?.(mode),
-            () => vimMouseRef.current,
             baseContentRef.current,
             () => onOpenBaseDiffRef.current?.()
           ),
@@ -374,6 +376,7 @@ export const MarkdownEditor = forwardRef<MarkdownEditorHandle, MarkdownEditorPro
       const view = new EditorView({ state: initialState, parent: containerRef.current })
       viewRef.current = view
       setCurrentView(view)
+      focusEditor(view)
       Vim.defineEx('write', 'w', () => onSaveRef.current?.())
 
       const handleScroll = (): void => {
@@ -402,6 +405,7 @@ export const MarkdownEditor = forwardRef<MarkdownEditorHandle, MarkdownEditorPro
         statesRef.current.set(tabId, state)
       }
       view.setState(state)
+      focusEditor(view)
     }, [tabId])
 
     useEffect(() => {

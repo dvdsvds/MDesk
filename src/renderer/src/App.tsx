@@ -217,7 +217,6 @@ function App(): React.JSX.Element {
     })
   }, [])
   const vimMode = useSettingsStore((s) => s.vimMode)
-  const vimMouse = useSettingsStore((s) => s.vimMouse)
 
   const saveTab = useCallback(
     async (tabId: string): Promise<void> => {
@@ -627,7 +626,14 @@ function App(): React.JSX.Element {
       const tab = state.tabs.find((t) => t.id === state.activeTabId)
       if (!tab) return
       const next = toggleTaskAtLine(tab.content, line)
-      if (next !== null) setContent(tab.id, next)
+      if (next === null) return
+      // 원문이 바뀌면서 생기는 에디터 스크롤 이벤트가 미리보기를 비율로 다시 끌고 가지 않게 잠깐 동기화를 멈춘다
+      scrollSourceRef.current = 'jump'
+      if (jumpTimerRef.current) clearTimeout(jumpTimerRef.current)
+      jumpTimerRef.current = setTimeout(() => {
+        scrollSourceRef.current = null
+      }, 400)
+      setContent(tab.id, next)
     },
     [setContent]
   )
@@ -850,7 +856,6 @@ function App(): React.JSX.Element {
                     getNoteIndex={getNoteIndex}
                     getAttachmentDir={getAttachmentDir}
                     vimMode={vimMode}
-                    vimMouse={vimMouse}
                     baseContent={activeTab.baseContent}
                     onOpenBaseDiff={handleOpenBaseDiff}
                     onSave={saveActiveTab}

@@ -129,15 +129,6 @@ const api = {
       return () => ipcRenderer.removeListener('window:maximized-changed', listener)
     }
   },
-  quick: {
-    submit: (text: string): Promise<void> => ipcRenderer.invoke('quick:submit', text),
-    hide: (): Promise<void> => ipcRenderer.invoke('quick:hide'),
-    onShown: (callback: () => void): (() => void) => {
-      const listener = (): void => callback()
-      ipcRenderer.on('quick:shown', listener)
-      return () => ipcRenderer.removeListener('quick:shown', listener)
-    }
-  },
   export: {
     pdf: (payload: {
       title: string

@@ -22,6 +22,8 @@ export interface ShortcutMap {
   newFolder: string
   revealItem: string
   exportItem: string
+  nextTab: string
+  prevTab: string
 }
 
 export type ShortcutAction = keyof ShortcutMap
@@ -43,13 +45,15 @@ export const DEFAULT_SHORTCUTS: ShortcutMap = {
   backlinks: 'Ctrl+Shift+B',
   toggleSidebar: 'Ctrl+Shift+E',
   graph: 'Ctrl+Shift+G',
-  viewEditor: 'Ctrl+Alt+I',
-  viewSplit: 'Ctrl+Alt+O',
-  viewPreview: 'Ctrl+Alt+P',
+  viewEditor: 'Alt+I',
+  viewSplit: 'Alt+O',
+  viewPreview: 'Alt+P',
   renameItem: 'F2',
   newFolder: 'Ctrl+Shift+N',
   revealItem: 'Ctrl+Alt+R',
-  exportItem: 'Ctrl+Alt+E'
+  exportItem: 'Ctrl+Alt+E',
+  nextTab: 'Alt+.',
+  prevTab: 'Alt+,'
 }
 
 export const SHORTCUT_LABELS: Record<ShortcutAction, string> = {
@@ -75,7 +79,9 @@ export const SHORTCUT_LABELS: Record<ShortcutAction, string> = {
   renameItem: '이름 바꾸기',
   newFolder: '새 폴더',
   revealItem: '탐색기에서 보기',
-  exportItem: '내보내기'
+  exportItem: '내보내기',
+  nextTab: '다음 탭',
+  prevTab: '이전 탭'
 }
 
 function normalizeKey(key: string): string {

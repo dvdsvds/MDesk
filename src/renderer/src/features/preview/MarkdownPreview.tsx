@@ -11,6 +11,9 @@ import { useTemplateRender } from '../template/preview/useTemplateRender'
 import { useTemplateEdit } from '../template/preview/useTemplateEdit'
 import { getLiveEdit, subscribeLiveEdit } from '../template/preview/liveEdit'
 import { useEmbeds } from './useEmbeds'
+import { toggleTaskAtLine } from '../../utils/tasks'
+
+const TASK_LINE_RE = /^\s*(?:[-*+]|\d+[.)])\s+\[([ xX])\]/
 
 export interface MarkdownPreviewHandle {
   scrollToRatio: (ratio: number) => void
@@ -61,11 +64,40 @@ export const MarkdownPreview = forwardRef<MarkdownPreviewHandle, MarkdownPreview
 
     const live = useSyncExternalStore(subscribeLiveEdit, getLiveEdit)
     const shownRef = useRef(source)
-    if (!live) shownRef.current = source
+    // 체크박스를 눌러 바뀐 원문. 이 원문일 때는 미리보기를 다시 그리지 않고 체크 표시만 제자리에서 맞춘다
+    // (통째로 다시 그리면 mermaid·임베드·이미지가 다시 만들어지며 높이가 계속 변해 화면이 움직인다)
+    const taskSourceRef = useRef<string | null>(null)
+    if (!live && source !== taskSourceRef.current) shownRef.current = source
     const shown = shownRef.current
     const html = useMemo(() => markdownRenderer.render(shown, baseDir), [shown, baseDir])
     useScrollSync(containerRef, ref, onScrollRatio)
-    useClickHandlers(containerRef, onWikilinkClick, onToggleTask, onLinkClick)
+    const handleToggleTask = useMemo(() => {
+      if (!onToggleTask) return undefined
+      return (line: number): void => {
+        const next = toggleTaskAtLine(sourceRef.current, line)
+        const el = containerRef.current
+        if (next !== null && el) {
+          taskSourceRef.current = next
+          // 상위·하위가 함께 바뀌므로 브라우저가 바꾼 한 칸만이 아니라 모든 체크 표시를 새 원문에 맞춘다
+          const lines = next.split('\n')
+          el.querySelectorAll<HTMLLIElement>('li[data-line]').forEach((li) => {
+            if (li.closest('.embed-body')) return
+            // 체크박스는 label 안에 있을 수 있다. 하위 목록의 것이 아니라 이 항목 자신의 것만 고른다
+            const input = Array.from(
+              li.querySelectorAll<HTMLInputElement>('input.task-list-item-checkbox')
+            ).find((i) => i.closest('li') === li)
+            const m = TASK_LINE_RE.exec(lines[Number(li.getAttribute('data-line'))] ?? '')
+            if (input && m) input.checked = m[1] !== ' '
+          })
+        }
+        onToggleTask(line)
+      }
+    }, [onToggleTask])
+    useClickHandlers(containerRef, onWikilinkClick, handleToggleTask, onLinkClick)
+    useEffect(() => {
+      // 체크 말고 다른 이유로 원문이 바뀌면 기억해 둔 원문을 버린다
+      if (source !== taskSourceRef.current) taskSourceRef.current = null
+    })
 
     const onHasTemplateChangeRef = useRef(onHasTemplateChange)
 

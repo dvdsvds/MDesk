@@ -7,7 +7,6 @@ import { registerWorkspaceIpc } from './workspace/ipc'
 import { stopWatcher } from './workspace/watcher'
 import { assertInsideRoot, getLastSeenVersion, setLastSeenVersion } from './workspace/paths'
 import { readChangelogFor } from './updateInfo'
-import { registerQuickCapture, destroyQuickCapture } from './quickCapture'
 import { registerCodeRunner } from './codeRunner'
 import { registerPdfExport } from './pdfExport'
 import { pathToFileURL } from 'url'
@@ -100,7 +99,6 @@ function createWindow(): void {
 
   mainWindow.on('closed', () => {
     if (mainWindowRef === mainWindow) mainWindowRef = null
-    destroyQuickCapture()
   })
 
   const sendMaximizedChanged = (): void => {
@@ -142,7 +140,6 @@ app.whenReady().then(() => {
   })
 
   registerWorkspaceIpc(() => mainWindowRef)
-  registerQuickCapture()
   registerCodeRunner()
   registerPdfExport(() => mainWindowRef)
 

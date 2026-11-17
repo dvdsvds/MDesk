@@ -14,6 +14,10 @@ const IME_TOGGLE = new Set([
 ])
 const MODIFIER_KEYS = new Set(['Shift', 'Control', 'Alt', 'Meta', 'CapsLock'])
 const imeRestore = Annotation.define<boolean>()
+/** 한글 조합이 문서·커서를 건드리지 못하게 막는 시간(ms). 짧을수록 영어로 바꾼 직후 명령이 빨리 먹히지만, 너무 짧으면 조합 결과가 새어 들어간다 */
+const GUARD_MS = 80
+/** 막는 동안 흔들린 커서를 원래 자리로 되돌리는 시점(ms) */
+const RESTORE_MS = 50
 
 export function vimImeGuard(): Extension {
   return [
@@ -30,12 +34,12 @@ export function vimImeGuard(): Extension {
         if (!e.isComposing && e.key !== 'Process') imeGuardUntil = 0
         if (vs && !vs.insertMode && (e.key === 'Process' || e.isComposing)) {
           const saved = view.state.selection
-          imeGuardUntil = Date.now() + 200
+          imeGuardUntil = Date.now() + GUARD_MS
           setTimeout(() => {
             if (view.state.selection.eq(saved)) {
               view.dispatch({ selection: saved, annotations: imeRestore.of(true) })
             }
-          }, 120)
+          }, RESTORE_MS)
           e.preventDefault()
           return true
         }

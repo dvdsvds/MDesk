@@ -102,11 +102,6 @@ export interface MdeskApi {
     platform: () => Promise<NodeJS.Platform>
     onMaximizedChanged: (callback: (isMaximized: boolean) => void) => () => void
   }
-  quick: {
-    submit: (text: string) => Promise<void>
-    hide: () => Promise<void>
-    onShown: (callback: () => void) => () => void
-  }
   export: {
     pdf: (payload: {
       title: string

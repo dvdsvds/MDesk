@@ -31,6 +31,22 @@ function copyActivePath(e: KeyboardEvent, relative: boolean): void {
   void window.api.workspace.copyPath(tab.filePath, relative)
 }
 
+/** 열려 있는 탭을 순서대로 옮긴다. 끝에서는 반대쪽 끝으로 이어진다 */
+function moveTab(delta: 1 | -1): void {
+  const { tabs, activeTabId, setActiveTab } = useTabsStore.getState()
+  if (tabs.length < 2) return
+  const idx = tabs.findIndex((t) => t.id === activeTabId)
+  const next = tabs[(Math.max(idx, 0) + delta + tabs.length) % tabs.length]
+  setActiveTab(next.id)
+}
+
+/** n번째 탭(1부터)으로 간다. 탭이 그만큼 없으면 아무 일도 하지 않는다 */
+function goToTab(n: number): void {
+  const { tabs, setActiveTab } = useTabsStore.getState()
+  const tab = tabs[n - 1]
+  if (tab) setActiveTab(tab.id)
+}
+
 export function useGlobalShortcuts(actions: GlobalShortcutActions): void {
   const actionsRef = useRef(actions)
   actionsRef.current = actions
@@ -106,6 +122,25 @@ export function useGlobalShortcuts(actions: GlobalShortcutActions): void {
       if (matchesShortcut(e, shortcuts.graph)) {
         e.preventDefault()
         a.toggleGraph()
+        return
+      }
+      // Alt+> / Alt+< 는 Shift를 함께 누른 입력이라 따로 받는다 (Alt+. / Alt+, 도 같은 동작)
+      const altOnly = e.altKey && !e.ctrlKey && !e.metaKey
+      if (matchesShortcut(e, shortcuts.nextTab) || (altOnly && e.key === '>')) {
+        e.preventDefault()
+        moveTab(1)
+        return
+      }
+      if (matchesShortcut(e, shortcuts.prevTab) || (altOnly && e.key === '<')) {
+        e.preventDefault()
+        moveTab(-1)
+        return
+      }
+      // Alt+숫자: n번째 탭으로 이동. 한글 입력 상태에서도 되도록 글자가 아니라 키 위치로 판별한다
+      const digit = altOnly && !e.shiftKey ? /^(?:Digit|Numpad)([1-9])$/.exec(e.code) : null
+      if (digit) {
+        e.preventDefault()
+        goToTab(Number(digit[1]))
         return
       }
       // 사이드바 동작: 이름 입력칸 같은 곳에서 글을 칠 때는 건드리지 않는다
