@@ -12,7 +12,6 @@ interface SettingsPanelProps {
 
 export function SettingsPanel({ onClose }: SettingsPanelProps): React.JSX.Element {
   const resetEditorFont = useSettingsStore((s) => s.resetEditorFont)
-  const resetPreviewFont = useSettingsStore((s) => s.resetPreviewFont)
   const resetAllShortcuts = useSettingsStore((s) => s.resetAllShortcuts)
 
   const [query, setQuery] = useState('')
@@ -114,7 +113,6 @@ export function SettingsPanel({ onClose }: SettingsPanelProps): React.JSX.Elemen
             setViewMode('category')
           }}
           onResetEditorFont={resetEditorFont}
-          onResetPreviewFont={resetPreviewFont}
           onResetShortcuts={() => setConfirmResetShortcuts(true)}
         />
         </div>

@@ -67,7 +67,7 @@ export function ShortcutRow({ action }: ShortcutRowProps): React.JSX.Element {
           <button
             type="button"
             onClick={() => resetShortcut(action)}
-            title="기본값으로"
+            title="기본값"
             className="rounded px-1.5 text-xs text-text-tertiary hover:text-accent"
           >
             ↺

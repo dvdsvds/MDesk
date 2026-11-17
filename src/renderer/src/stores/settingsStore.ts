@@ -17,7 +17,6 @@ export type ViewMode = 'editor' | 'split' | 'preview'
 const OLD_EDITOR_FONT_FAMILY = "'IBM Plex Mono', 'D2Coding', Pretendard, monospace"
 const DEFAULT_EDITOR_FONT_SIZE = 13.5
 const DEFAULT_EDITOR_LINE_HEIGHT = 1.4
-const DEFAULT_PREVIEW_FONT_FAMILY = 'Pretendard, sans-serif'
 
 interface SettingsState {
   theme: ThemePreference
@@ -27,8 +26,6 @@ interface SettingsState {
   setThemeChosen: (value: boolean) => void
   vimMode: boolean
   setVimMode: (value: boolean) => void
-  vimMouse: boolean
-  setVimMouse: (value: boolean) => void
   h1Warning: boolean
   setH1Warning: (value: boolean) => void
   showToolbar: boolean
@@ -37,13 +34,8 @@ interface SettingsState {
   editorFontSize: number
   editorLineHeight: number
   setEditorFont: (partial: Partial<{ family: string; size: number; lineHeight: number }>) => void
-  previewFontFamily: string
-  previewFontSize: number
-  previewLineHeight: number
-  setPreviewFont: (partial: Partial<{ family: string; size: number; lineHeight: number }>) => void
   resetFonts: () => void
   resetEditorFont: () => void
-  resetPreviewFont: () => void
   viewMode: ViewMode
   setViewMode: (mode: ViewMode) => void
   uiZoom: number
@@ -81,8 +73,6 @@ export const useSettingsStore = create<SettingsState>()(
       setThemeChosen: (value) => set({ themeChosen: value }),
       vimMode: false,
       setVimMode: (value) => set({ vimMode: value }),
-      vimMouse: false,
-      setVimMouse: (value) => set({ vimMouse: value }),
       h1Warning: true,
       setH1Warning: (value) => set({ h1Warning: value }),
       showToolbar: false,
@@ -96,35 +86,17 @@ export const useSettingsStore = create<SettingsState>()(
           editorFontSize: partial.size ?? state.editorFontSize,
           editorLineHeight: partial.lineHeight ?? state.editorLineHeight
         })),
-      previewFontFamily: DEFAULT_PREVIEW_FONT_FAMILY,
-      previewFontSize: 15,
-      previewLineHeight: 1.7,
-      setPreviewFont: (partial) =>
-        set((state) => ({
-          previewFontFamily: partial.family ?? state.previewFontFamily,
-          previewFontSize: partial.size ?? state.previewFontSize,
-          previewLineHeight: partial.lineHeight ?? state.previewLineHeight
-        })),
       resetFonts: () =>
         set({
           editorFontFamily: DEFAULT_EDITOR_FONT_FAMILY,
           editorFontSize: DEFAULT_EDITOR_FONT_SIZE,
-          editorLineHeight: DEFAULT_EDITOR_LINE_HEIGHT,
-          previewFontFamily: DEFAULT_PREVIEW_FONT_FAMILY,
-          previewFontSize: 15,
-          previewLineHeight: 1.7
+          editorLineHeight: DEFAULT_EDITOR_LINE_HEIGHT
         }),
       resetEditorFont: () =>
         set({
           editorFontFamily: DEFAULT_EDITOR_FONT_FAMILY,
           editorFontSize: DEFAULT_EDITOR_FONT_SIZE,
           editorLineHeight: DEFAULT_EDITOR_LINE_HEIGHT
-        }),
-      resetPreviewFont: () =>
-        set({
-          previewFontFamily: DEFAULT_PREVIEW_FONT_FAMILY,
-          previewFontSize: 15,
-          previewLineHeight: 1.7
         }),
       viewMode: 'split',
       setViewMode: (mode) => set({ viewMode: mode }),
@@ -180,7 +152,7 @@ export const useSettingsStore = create<SettingsState>()(
     {
       name: 'mdesk-settings',
       // 5·6은 되돌린 속성 확장 작업이 쓰던 버전. 8부터 속성은 상태 하나(값 고정)뿐이다
-      version: 11,
+      version: 12,
       merge: (persisted, current) => {
         const p = (persisted ?? {}) as Partial<SettingsState>
         return {
@@ -202,11 +174,6 @@ export const useSettingsStore = create<SettingsState>()(
             s.editorFontSize = DEFAULT_EDITOR_FONT_SIZE
           }
           if (s.editorLineHeight === 1.6) s.editorLineHeight = DEFAULT_EDITOR_LINE_HEIGHT
-        }
-        if (version < 2) {
-          if (s.previewFontFamily?.includes('Source Serif')) {
-            s.previewFontFamily = DEFAULT_PREVIEW_FONT_FAMILY
-          }
         }
         if (version < 3) {
           s.showToolbar = false
@@ -239,6 +206,22 @@ export const useSettingsStore = create<SettingsState>()(
           else if (old.theme === 'dark') s.theme = 'paper-dark'
           else s.theme = osDefaultTheme()
           s.themeChosen = true
+        }
+        if (version < 12) {
+          // 보기 전환 기본 단축키를 Ctrl+Alt+I/O/P에서 Alt+I/O/P로 줄였다. 예전 기본값 그대로 쓰던 것만 옮기고,
+          // 직접 바꿔 둔 키는 건드리지 않는다
+          const saved = (s.shortcuts ?? {}) as Record<string, string>
+          const moved: Record<string, [string, string]> = {
+            viewEditor: ['Ctrl+Alt+I', 'Alt+I'],
+            viewSplit: ['Ctrl+Alt+O', 'Alt+O'],
+            viewPreview: ['Ctrl+Alt+P', 'Alt+P'],
+            nextTab: ['Ctrl+Tab', 'Alt+.'],
+            prevTab: ['Ctrl+Shift+Tab', 'Alt+,']
+          }
+          for (const [action, [from, to]] of Object.entries(moved)) {
+            if (saved[action] === from) saved[action] = to
+          }
+          s.shortcuts = saved as unknown as ShortcutMap
         }
         return s as SettingsState
       }

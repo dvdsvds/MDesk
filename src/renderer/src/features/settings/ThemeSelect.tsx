@@ -60,13 +60,20 @@ export function ThemeSelect(): React.JSX.Element {
         closeList()
       }
     }
+    // 설정을 스크롤하면 목록도 드롭다운 바를 따라간다
+    const follow = (): void => {
+      const rect = buttonRef.current?.getBoundingClientRect()
+      if (rect) setPos({ top: rect.bottom + 4, left: rect.left, width: rect.width })
+    }
     window.addEventListener('mousedown', onDown)
     window.addEventListener('keydown', onKey, true)
     window.addEventListener('resize', closeList)
+    window.addEventListener('scroll', follow, true)
     return () => {
       window.removeEventListener('mousedown', onDown)
       window.removeEventListener('keydown', onKey, true)
       window.removeEventListener('resize', closeList)
+      window.removeEventListener('scroll', follow, true)
     }
   }, [open, closeList])
 
@@ -90,7 +97,7 @@ export function ThemeSelect(): React.JSX.Element {
           <div
             ref={listRef}
             style={{ top: pos.top, left: pos.left, width: pos.width }}
-            className="fixed z-[1000] max-h-72 overflow-y-auto rounded-lg border border-border bg-bg-elevated shadow-[0_8px_24px_rgba(0,0,0,0.25)]"
+            className="fixed z-[1000] max-h-72 overflow-y-auto rounded-lg [scrollbar-width:none] [&::-webkit-scrollbar]:hidden border border-border bg-bg-elevated shadow-[0_8px_24px_rgba(0,0,0,0.25)]"
             onMouseLeave={() => onHover(null)}
           >
             {THEMES.map((o) => (

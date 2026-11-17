@@ -103,12 +103,15 @@ export function FileTypeIcon({
   name,
   kind,
   size = 18,
-  open = false
+  open = false,
+  raise = true
 }: {
   name: string
   kind: 'file' | 'folder'
   size?: number
   open?: boolean
+  /** 폴더 아이콘을 글자 높이에 맞춰 살짝 올릴지. 글자 없이 아이콘만 가운데 놓는 곳에서는 끈다 */
+  raise?: boolean
 }): React.JSX.Element {
   const type = typeOf(name, kind)
   const Svg = kind === 'folder' && open ? FolderOpenSvg : SVGS[type]
@@ -118,7 +121,7 @@ export function FileTypeIcon({
       // 폴더는 몸통이 아래쪽에 몰려 있어 가운데 정렬해도 글자보다 내려가 보이므로 살짝 올린다
       style={{
         color: `var(--icon-${type})`,
-        transform: kind === 'folder' ? 'translateY(-1.8px)' : undefined
+        transform: kind === 'folder' && raise ? 'translateY(-1.8px)' : undefined
       }}
       aria-hidden="true"
     >

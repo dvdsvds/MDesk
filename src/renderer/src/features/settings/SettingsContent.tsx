@@ -13,7 +13,6 @@ export function SettingsContent({
   activeCategory,
   onGoCategory,
   onResetEditorFont,
-  onResetPreviewFont,
   onResetShortcuts
 }: {
   showSearchResults: boolean
@@ -22,11 +21,10 @@ export function SettingsContent({
   activeCategory: Category
   onGoCategory: (cat: Category) => void
   onResetEditorFont: () => void
-  onResetPreviewFont: () => void
   onResetShortcuts: () => void
 }): React.JSX.Element {
   return (
-    <div className="min-h-0 flex-1 overflow-y-auto pl-7 pr-4 pb-6 pt-1 [scrollbar-color:transparent_transparent] [scrollbar-width:thin] hover:[scrollbar-color:var(--color-border-strong)_transparent]">
+    <div className="min-h-0 flex-1 overflow-y-auto pl-7 pr-4 pb-4 pt-1 [scrollbar-color:transparent_transparent] [scrollbar-width:thin] hover:[scrollbar-color:var(--color-border-strong)_transparent]">
       {showSearchResults ? (
         filtered.length === 0 ? (
           <p className="py-6 text-center text-[13px] text-text-tertiary">검색 결과가 없어요</p>
@@ -47,17 +45,17 @@ export function SettingsContent({
       ) : (
         <>
           {sections.map((sec, i) => (
-            <section key={`${sec.group ?? 'none'}-${i}`} className="mb-5">
+            <section key={`${sec.group ?? 'none'}-${i}`} className="mb-5 last:mb-0">
               {sec.group && (
                 <div className="mb-2 flex items-center justify-between px-0.5 text-xs text-text-tertiary">
                   <span>{sec.group}</span>
-                  {(sec.group === '에디터' || sec.group === '프리뷰') && (
+                  {sec.group === '에디터' && (
                     <button
                       type="button"
-                      onClick={sec.group === '에디터' ? onResetEditorFont : onResetPreviewFont}
+                      onClick={onResetEditorFont}
                       className="transition-colors hover:text-accent"
                     >
-                      기본값으로
+                      기본값
                     </button>
                   )}
                 </div>
@@ -75,7 +73,7 @@ export function SettingsContent({
               onClick={onResetShortcuts}
               className="h-8 rounded-lg bg-bg-mute px-3 text-[13px] text-text-secondary outline-none transition-colors hover:text-danger"
             >
-              모두 기본값으로
+              모두 기본값
             </button>
           )}
         </>

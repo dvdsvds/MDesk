@@ -50,13 +50,20 @@ export function FontSelect({
       }
     }
     const close = (): void => setOpen(false)
+    // 설정을 스크롤하면 목록도 드롭다운 바를 따라간다
+    const follow = (): void => {
+      const rect = buttonRef.current?.getBoundingClientRect()
+      if (rect) setPos({ top: rect.bottom + 4, left: rect.left, width: rect.width })
+    }
     window.addEventListener('mousedown', onDown)
     window.addEventListener('keydown', onKey, true)
     window.addEventListener('resize', close)
+    window.addEventListener('scroll', follow, true)
     return () => {
       window.removeEventListener('mousedown', onDown)
       window.removeEventListener('keydown', onKey, true)
       window.removeEventListener('resize', close)
+      window.removeEventListener('scroll', follow, true)
     }
   }, [open])
 
@@ -79,7 +86,7 @@ export function FontSelect({
           <div
             ref={listRef}
             style={{ top: pos.top, left: pos.left, width: pos.width }}
-            className="fixed z-[1000] overflow-hidden rounded-lg border border-border bg-bg-elevated py-1 shadow-[0_8px_24px_rgba(0,0,0,0.25)]"
+            className="fixed z-[1000] overflow-hidden rounded-lg border border-border bg-bg-elevated shadow-[0_8px_24px_rgba(0,0,0,0.25)]"
           >
             {options.map((o) => {
               const selected = o.family === value
@@ -95,9 +102,9 @@ export function FontSelect({
                     selected ? 'bg-accent/15' : ''
                   }`}
                 >
-                  <span className="text-[11.5px] text-text-tertiary">{o.name}</span>
+                  <span className="text-[14px] font-medium text-text">{o.name}</span>
                   <span
-                    className="text-[14px] leading-snug text-text"
+                    className="text-[12px] leading-snug text-text-secondary"
                     style={{ fontFamily: o.family }}
                   >
                     {FONT_SAMPLE}

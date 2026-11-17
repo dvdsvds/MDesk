@@ -20,7 +20,7 @@ export function ThemePreviewCard(): React.JSX.Element {
       data-theme={shown.id}
       data-mode={shown.mode}
       aria-hidden="true"
-      className="flex h-56 select-none overflow-hidden rounded-[11px] bg-bg text-[11.5px] text-text"
+      className="flex h-44 select-none overflow-hidden rounded-[11px] bg-bg text-[11.5px] text-text"
     >
       <div className="flex w-[22%] shrink-0 flex-col gap-0.5 border-r border-border bg-bg-soft p-2">
         <span className="flex items-center gap-1.5 rounded bg-bg-mute px-1.5 py-1">
@@ -53,9 +53,6 @@ export function ThemePreviewCard(): React.JSX.Element {
               <span style={{ color: 'var(--color-syntax-mark)' }}>- [ ]</span> 할 일
             </div>
             <div>
-              <span style={{ color: 'var(--color-syntax-mark)' }}>- [x]</span> 완료
-            </div>
-            <div>
               <span style={{ color: 'var(--color-syntax-strong)' }}>**굵게**</span>{' '}
               <span style={{ color: 'var(--color-syntax-em)' }}>*기울임*</span>
             </div>
@@ -72,10 +69,6 @@ export function ThemePreviewCard(): React.JSX.Element {
             <div className="text-[16px] font-semibold">제목</div>
             <div className="mt-1 flex items-center gap-1.5 text-text-secondary">
               <i className="h-2.5 w-2.5 rounded-[3px] border-[1.5px] border-accent" />할 일
-            </div>
-            <div className="flex items-center gap-1.5 text-text-secondary">
-              <i className="h-2.5 w-2.5 rounded-[3px] bg-accent" />
-              완료
             </div>
             <div className="mt-1 text-text-secondary">
               <b className="text-text">굵게</b> <i>기울임</i>{' '}
