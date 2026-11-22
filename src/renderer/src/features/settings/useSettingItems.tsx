@@ -10,6 +10,7 @@ import { NumberField, Row, Toggle } from './SettingsParts'
 import { TrashSetting } from './TrashSetting'
 import { FontSelect } from './FontSelect'
 import { AboutSetting } from './AboutSetting'
+import { CloudSetting } from './CloudSetting'
 
 /** 설정의 단축키를 하는 일 기준으로 나눈 소제목. 비교 화면의 적용·되돌리기는 키를 바꿀 수 없는 고정 단축키라 여기에 없다 */
 const SHORTCUT_GROUPS: { group: string; actions: ShortcutAction[] }[] = [
@@ -29,7 +30,7 @@ const SHORTCUT_GROUPS: { group: string; actions: ShortcutAction[] }[] = [
   }
 ]
 
-export const CATEGORIES = ['일반', '화면', '단축키', '정보'] as const
+export const CATEGORIES = ['일반', '클라우드', '화면', '단축키', '정보'] as const
 export type Category = (typeof CATEGORIES)[number]
 
 export interface SettingItem {
@@ -147,6 +148,13 @@ export function useSettingItems(): SettingItem[] {
         group: '휴지통',
         label: '앱 휴지통',
         render: () => <TrashSetting />
+      },
+      {
+        id: 'cloud-google',
+        category: '클라우드',
+        group: 'Google Drive',
+        label: 'Google Drive 연결',
+        render: () => <CloudSetting />
       },
       {
         id: 'theme-preview',

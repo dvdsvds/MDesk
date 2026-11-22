@@ -9,6 +9,7 @@ import { assertInsideRoot, getLastSeenVersion, setLastSeenVersion } from './work
 import { readChangelogFor } from './updateInfo'
 import { registerCodeRunner } from './codeRunner'
 import { registerPdfExport } from './pdfExport'
+import { registerCloudIpc } from './cloud/ipc'
 import { pathToFileURL } from 'url'
 
 app.disableHardwareAcceleration()
@@ -155,6 +156,7 @@ app.whenReady().then(() => {
   registerWorkspaceIpc(() => mainWindowRef)
   registerCodeRunner()
   registerPdfExport(() => mainWindowRef)
+  registerCloudIpc()
 
   ipcMain.handle('window:minimize', () => mainWindowRef?.minimize())
   ipcMain.handle('window:toggleMaximize', () => {

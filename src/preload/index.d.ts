@@ -82,7 +82,20 @@ export type UpdateStatus =
   | { state: 'downloading'; version: string; percent: number }
   | { state: 'ready'; version: string }
 
+export interface CloudStatus {
+  configured: boolean
+  connected: boolean
+  email: string | null
+}
+
+export type CloudConnectResult = { ok: true; email: string | null } | { ok: false; error: string }
+
 export interface MdeskApi {
+  cloud: {
+    getStatus: () => Promise<CloudStatus>
+    connectGoogle: () => Promise<CloudConnectResult>
+    disconnectGoogle: () => Promise<void>
+  }
   app: {
     getChangelog: () => Promise<string | null>
     getInfo: () => Promise<AppInfo>

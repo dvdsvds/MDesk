@@ -97,7 +97,20 @@ interface HistoryEntry {
   size: number
 }
 
+interface CloudStatus {
+  configured: boolean
+  connected: boolean
+  email: string | null
+}
+
+type CloudConnectResult = { ok: true; email: string | null } | { ok: false; error: string }
+
 const api = {
+  cloud: {
+    getStatus: (): Promise<CloudStatus> => ipcRenderer.invoke('cloud:getStatus'),
+    connectGoogle: (): Promise<CloudConnectResult> => ipcRenderer.invoke('cloud:connectGoogle'),
+    disconnectGoogle: (): Promise<void> => ipcRenderer.invoke('cloud:disconnectGoogle')
+  },
   app: {
     getChangelog: (): Promise<string | null> => ipcRenderer.invoke('app:getChangelog'),
     getInfo: (): Promise<AppInfo> => ipcRenderer.invoke('app:getInfo')
