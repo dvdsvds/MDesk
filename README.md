@@ -204,6 +204,13 @@ xattr -cr /Applications/Mdesk.app
 
 #### Linux
 
+Releases에서 배포판에 맞는 파일을 하나 받습니다. 64비트(x64) 기준입니다.
+
+| 파일 | 대상 | 특징 |
+|---|---|---|
+| `mdesk-x.y.z.AppImage` | 대부분의 배포판 | 설치 없이 실행하며, 자동 업데이트를 지원합니다. |
+| `mdesk_x.y.z_amd64.deb` | Ubuntu, Debian 및 파생 배포판 | 시스템에 설치하며, 앱 메뉴에 등록됩니다. |
+
 **AppImage**
 
 ```bash
@@ -211,11 +218,37 @@ chmod u+x mdesk-x.y.z.AppImage
 ./mdesk-x.y.z.AppImage
 ```
 
+파일을 더블 클릭해도 실행되지만, 파일 관리자에서 실행 권한이 있어야 합니다. 실행 권한은 위의 `chmod` 명령이나 파일 속성에서 부여합니다.
+
+AppImage는 FUSE 2가 필요합니다. 실행할 때 `libfuse.so.2` 관련 오류가 나타나면 다음 명령으로 설치합니다.
+
+```bash
+sudo apt install libfuse2      # Ubuntu 22.04, Debian
+sudo apt install libfuse2t64   # Ubuntu 24.04 이상
+```
+
 **deb (Ubuntu, Debian)**
 
 ```bash
 sudo apt install ./mdesk_x.y.z_amd64.deb
 ```
+
+설치한 뒤에는 앱 메뉴에서 **Mdesk**를 실행하거나 터미널에서 `mdesk`를 입력합니다. 제거할 때는 다음 명령을 실행합니다.
+
+```bash
+sudo apt remove mdesk
+```
+
+**실행되지 않을 때**
+
+Ubuntu 24.04 이상은 보안 정책 때문에 Electron 앱이 `The SUID sandbox helper binary was found, but is not configured correctly` 오류로 시작되지 않을 수 있습니다. 이 경우 `--no-sandbox` 옵션을 붙여 실행합니다.
+
+```bash
+./mdesk-x.y.z.AppImage --no-sandbox
+mdesk --no-sandbox              # deb로 설치한 경우
+```
+
+이 옵션은 Chromium의 샌드박스를 끄므로, 가능하면 AppArmor 설정으로 사용자 네임스페이스를 허용하는 방법을 먼저 검토해 주십시오.
 
 #### 기타 다운로드 파일
 
