@@ -204,7 +204,7 @@ xattr -cr /Applications/Mdesk.app
 
 #### Linux
 
-Releases에서 배포판에 맞는 파일을 하나 받습니다. 64비트(x64) 기준입니다.
+Releases에서 배포판에 맞는 파일을 하나 받습니다. 64비트 Intel/AMD(x64) 기준이며, `amd64`와 `x86_64`는 같은 아키텍처를 가리키는 이름입니다. ARM(`arm64`, `aarch64`)용 파일은 제공하지 않습니다.
 
 | 파일 | 대상 | 특징 |
 |---|---|---|
