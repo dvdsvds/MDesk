@@ -26,7 +26,10 @@
 .cm-codebar {
   display: inline-block !important;
   width: 0 !important;
-  height: 0 !important;
+  /* 높이가 0이면 줄 끝에 커서가 놓일 때 위젯 좌표(글자 바닥선)가 기준이 되어 커서가 줄 아래로 밀린다.
+     줄 위에 맞춘 한 줄 높이를 주어 어느 좌표를 써도 같은 줄에 그려지게 한다 */
+  height: calc(var(--cm-line-hs, 20px) - 1px) !important;
+  vertical-align: top !important;
   float: none !important;
   position: static !important;
   margin: 0 !important;
