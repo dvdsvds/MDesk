@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useToastStore } from '../../stores/toastStore'
+import { useSettingsStore } from '../../stores/settingsStore'
+import { Toggle } from './SettingsParts'
 import type { CloudStatus } from '../../../../preload/index.d'
 
 const BTN =
@@ -11,14 +13,18 @@ export function CloudSetting(): React.JSX.Element {
   const pushToast = useToastStore((s) => s.push)
   const [status, setStatus] = useState<CloudStatus | null>(null)
   const [busy, setBusy] = useState(false)
+  const [platform, setPlatform] = useState<string | null>(null)
+  const privateLogin = useSettingsStore((s) => s.cloudPrivateLogin)
+  const setPrivateLogin = useSettingsStore((s) => s.setCloudPrivateLogin)
 
   useEffect(() => {
     void window.api.cloud.getStatus().then(setStatus)
+    void window.api.window.platform().then(setPlatform)
   }, [])
 
   const connect = async (): Promise<void> => {
     setBusy(true)
-    const result = await window.api.cloud.connectGoogle()
+    const result = await window.api.cloud.connectGoogle({ privateWindow: privateLogin })
     setBusy(false)
     if (result.ok) {
       setStatus(await window.api.cloud.getStatus())
@@ -64,6 +70,17 @@ export function CloudSetting(): React.JSX.Element {
           </button>
         )}
       </div>
+      {platform === 'linux' && !status.connected && (
+        <div className="mt-3 flex items-center justify-between gap-3">
+          <div>
+            <div className="text-[13px] text-text">로그인을 시크릿 창에서 열기</div>
+            <div className="mt-0.5 text-[12.5px] text-text-tertiary">
+              브라우저에 저장된 계정이나 확장 프로그램 때문에 로그인 오류가 나는 것을 막습니다
+            </div>
+          </div>
+          <Toggle checked={privateLogin} onChange={() => setPrivateLogin(!privateLogin)} />
+        </div>
+      )}
       {!status.configured && (
         <div className="mt-2 text-[12.5px] text-text-tertiary">
           이 빌드에는 Google 연결 정보가 들어 있지 않습니다

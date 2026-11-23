@@ -1,8 +1,9 @@
-import { app, safeStorage, shell } from 'electron'
+import { app, safeStorage } from 'electron'
 import { createHash, randomBytes } from 'crypto'
 import { createServer, type Server } from 'http'
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'fs'
 import { join } from 'path'
+import { openLoginUrl } from './privateBrowser'
 
 const AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth'
 const TOKEN_URL = 'https://oauth2.googleapis.com/token'
@@ -108,7 +109,8 @@ const DONE_PAGE = (title: string, body: string): string =>
 /** 브라우저에서 로그인을 마칠 때까지 기다렸다가 인증 코드를 돌려준다 */
 function waitForCode(
   state: string,
-  buildAuthUrl: (redirectUri: string) => string
+  buildAuthUrl: (redirectUri: string) => string,
+  privateWindow: boolean
 ): Promise<{ code: string; redirectUri: string }> {
   return new Promise((resolve, reject) => {
     pendingServer?.close()
@@ -160,7 +162,7 @@ function waitForCode(
     server.listen(0, '127.0.0.1', () => {
       const addr = server.address()
       redirectUri = `http://127.0.0.1:${typeof addr === 'object' && addr ? addr.port : 0}`
-      void shell.openExternal(buildAuthUrl(redirectUri))
+      void openLoginUrl(buildAuthUrl(redirectUri), privateWindow)
     })
   })
 }
@@ -182,7 +184,7 @@ async function revoke(token: string): Promise<void> {
   }
 }
 
-export async function connectGoogle(): Promise<ConnectResult> {
+export async function connectGoogle(options?: { privateWindow?: boolean }): Promise<ConnectResult> {
   if (!isConfigured()) return { ok: false, error: '이 빌드에는 Google 연결 정보가 들어 있지 않습니다.' }
   if (!(await safeStorage.isAsyncEncryptionAvailable())) {
     return {
@@ -210,7 +212,7 @@ export async function connectGoogle(): Promise<ConnectResult> {
         prompt: 'consent'
       }).toString()
       return url.toString()
-    })
+    }, options?.privateWindow ?? true)
 
     const token = await postToken({
       grant_type: 'authorization_code',

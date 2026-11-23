@@ -46,6 +46,8 @@ interface SettingsState {
   setFilesSectionOpen: (value: boolean) => void
   driveSectionOpen: boolean
   setDriveSectionOpen: (value: boolean) => void
+  cloudPrivateLogin: boolean
+  setCloudPrivateLogin: (value: boolean) => void
   tagsSectionOpen: boolean
   setTagsSectionOpen: (value: boolean) => void
   collapsedFolders: string[]
@@ -111,6 +113,8 @@ export const useSettingsStore = create<SettingsState>()(
       setFilesSectionOpen: (value) => set({ filesSectionOpen: value }),
       driveSectionOpen: false,
       setDriveSectionOpen: (value) => set({ driveSectionOpen: value }),
+      cloudPrivateLogin: true,
+      setCloudPrivateLogin: (value) => set({ cloudPrivateLogin: value }),
       tagsSectionOpen: true,
       setTagsSectionOpen: (value) => set({ tagsSectionOpen: value }),
       templates: DEFAULT_TEMPLATES,

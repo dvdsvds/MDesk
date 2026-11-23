@@ -122,7 +122,7 @@ export interface MdeskApi {
   }
   cloud: {
     getStatus: () => Promise<CloudStatus>
-    connectGoogle: () => Promise<CloudConnectResult>
+    connectGoogle: (options?: { privateWindow?: boolean }) => Promise<CloudConnectResult>
     disconnectGoogle: () => Promise<void>
   }
   app: {

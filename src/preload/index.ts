@@ -145,7 +145,8 @@ const api = {
   },
   cloud: {
     getStatus: (): Promise<CloudStatus> => ipcRenderer.invoke('cloud:getStatus'),
-    connectGoogle: (): Promise<CloudConnectResult> => ipcRenderer.invoke('cloud:connectGoogle'),
+    connectGoogle: (options?: { privateWindow?: boolean }): Promise<CloudConnectResult> =>
+      ipcRenderer.invoke('cloud:connectGoogle', options),
     disconnectGoogle: (): Promise<void> => ipcRenderer.invoke('cloud:disconnectGoogle')
   },
   app: {

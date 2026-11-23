@@ -13,7 +13,9 @@ import {
 
 export function registerCloudIpc(getWindow: () => BrowserWindow | null): void {
   ipcMain.handle('cloud:getStatus', () => cloudStatus())
-  ipcMain.handle('cloud:connectGoogle', () => connectGoogle())
+  ipcMain.handle('cloud:connectGoogle', (_e, options?: { privateWindow?: boolean }) =>
+    connectGoogle(options)
+  )
   ipcMain.handle('cloud:disconnectGoogle', () => disconnectGoogle())
 
   setUploadListener((event) => getWindow()?.webContents.send('drive:upload', event))
