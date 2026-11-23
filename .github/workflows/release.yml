@@ -9,7 +9,24 @@ permissions:
   contents: write
  
 jobs:
+  # 세 OS 작업이 동시에 릴리스를 만들면 같은 태그로 드래프트가 둘 생기고 파일이 나뉘어 올라간다.
+  # 그래서 드래프트를 여기서 한 번만 만들고, 아래 빌드 작업은 이 릴리스에 파일만 올린다
+  create-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create draft release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          existing=$(gh api "repos/$GITHUB_REPOSITORY/releases?per_page=100" --jq ".[] | select(.tag_name == \"$GITHUB_REF_NAME\") | .id" | head -n 1)
+          if [ -n "$existing" ]; then
+            echo "이미 있는 릴리스를 사용합니다: $existing"
+          else
+            gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --draft --title "${GITHUB_REF_NAME#v}" --notes ""
+          fi
+
   build:
+    needs: create-release
     strategy:
       fail-fast: false
       matrix:
