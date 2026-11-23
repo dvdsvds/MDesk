@@ -35,6 +35,10 @@ jobs:
  
       - name: Build
         run: npm run build
+        env:
+          # Google Drive 연결에 쓰는 OAuth 클라이언트. 저장소 Secrets에 등록해 두어야 배포본에서 연결이 된다
+          MAIN_VITE_GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          MAIN_VITE_GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
  
       - name: Package and upload
         run: npx electron-builder ${{ matrix.target }} --publish always
