@@ -86,7 +86,7 @@ export function HistoryDialog({
 
         {entries !== null && entries.length === 0 ? (
           <div className="flex flex-1 items-center justify-center text-[13px] text-text-tertiary">
-            아직 저장 기록이 없어요. 저장하면 덮어쓰기 전 내용이 기록돼요.
+            아직 저장 기록이 없습니다. 저장하면 덮어쓰기 전 내용이 기록됩니다.
           </div>
         ) : (
           <div className="grid min-h-0 flex-1 grid-cols-[200px_1fr]">

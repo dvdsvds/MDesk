@@ -103,9 +103,46 @@ interface CloudStatus {
   email: string | null
 }
 
+interface DriveItem {
+  id: string
+  name: string
+  folder: boolean
+}
+
+type DriveResult<T> = ({ ok: true } & T) | { ok: false; error: string; notConnected?: boolean }
+
+interface DriveUploadEvent {
+  path: string
+  state: 'uploading' | 'done' | 'conflict' | 'error'
+  message?: string
+}
+
 type CloudConnectResult = { ok: true; email: string | null } | { ok: false; error: string }
 
 const api = {
+  drive: {
+    list: (folderId: string | null): Promise<DriveResult<{ items: DriveItem[] }>> =>
+      ipcRenderer.invoke('drive:list', folderId),
+    createFolder: (parentId: string | null, name: string): Promise<DriveResult<{ item: DriveItem }>> =>
+      ipcRenderer.invoke('drive:createFolder', parentId, name),
+    createFile: (
+      parentId: string | null,
+      name: string
+    ): Promise<DriveResult<{ item: DriveItem; path: string }>> =>
+      ipcRenderer.invoke('drive:createFile', parentId, name),
+    rename: (id: string, name: string): Promise<DriveResult<object>> =>
+      ipcRenderer.invoke('drive:rename', id, name),
+    trash: (id: string): Promise<DriveResult<object>> => ipcRenderer.invoke('drive:trash', id),
+    localPath: (id: string, name: string): Promise<string> =>
+      ipcRenderer.invoke('drive:localPath', id, name),
+    download: (id: string, name: string): Promise<DriveResult<{ path: string }>> =>
+      ipcRenderer.invoke('drive:download', id, name),
+    onUpload: (callback: (event: DriveUploadEvent) => void): (() => void) => {
+      const listener = (_event: unknown, payload: DriveUploadEvent): void => callback(payload)
+      ipcRenderer.on('drive:upload', listener)
+      return () => ipcRenderer.removeListener('drive:upload', listener)
+    }
+  },
   cloud: {
     getStatus: (): Promise<CloudStatus> => ipcRenderer.invoke('cloud:getStatus'),
     connectGoogle: (): Promise<CloudConnectResult> => ipcRenderer.invoke('cloud:connectGoogle'),

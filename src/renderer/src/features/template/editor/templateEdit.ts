@@ -69,11 +69,11 @@ export function applyGridEdit(
   ) => { ok: true; from: number; to: number; lines: string[] } | { ok: false; error: string }
 ): string | null {
   const view = getCurrentView()
-  if (!view) return '편집기를 찾을 수 없어요'
+  if (!view) return '편집기를 찾을 수 없습니다'
   const doc = view.state.doc
   const r = compute((n) => (n >= 1 && n <= doc.lines ? doc.line(n).text : ''))
   if (!r.ok) return r.error
-  if (r.from < 1 || r.to > doc.lines || r.from > r.to) return '격자 위치가 맞지 않아요'
+  if (r.from < 1 || r.to > doc.lines || r.from > r.to) return '격자 위치가 맞지 않습니다'
   view.dispatch({
     changes: { from: doc.line(r.from).from, to: doc.line(r.to).to, insert: r.lines.join('\n') },
     userEvent: 'input.cell'

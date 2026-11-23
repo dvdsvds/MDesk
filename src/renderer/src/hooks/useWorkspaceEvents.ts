@@ -37,7 +37,7 @@ export function useWorkspaceEvents(): void {
       const newName = fileNameOf(newPath)
       pushToast({
         kind: 'info',
-        message: `사용할 수 없는 문자가 있어 파일 이름을 ${newName}"(으)로 변경했어요`
+        message: `사용할 수 없는 문자가 있어 파일 이름을 ${newName}"(으)로 변경했습니다`
       })
     })
   }, [renamePath, pushToast])
@@ -55,14 +55,14 @@ export function useWorkspaceEvents(): void {
     if (items.length >= 3) {
       pushToast({
         kind: 'external-change-batch',
-        message: `외부에서 변경된 파일 ${items.length}개를 다시 불러왔어요`,
+        message: `외부에서 변경된 파일 ${items.length}개를 다시 불러왔습니다`,
         items
       })
     } else {
       for (const item of items) {
         pushToast({
           kind: 'external-change',
-          message: `"${item.title}" 파일이 외부에서 변경되어 다시 불러왔어요`,
+          message: `"${item.title}" 파일이 외부에서 변경되어 다시 불러왔습니다`,
           filePath: item.filePath,
           oldContent: item.oldContent,
           newContent: item.newContent

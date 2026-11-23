@@ -94,7 +94,7 @@ export function BacklinksPanel({
         {links === null ? (
           <p className="px-1 py-2 text-xs text-text-tertiary">찾는 중…</p>
         ) : links.length === 0 ? (
-          <p className="px-1 py-2 text-xs text-text-tertiary">이 파일을 가리키는 링크가 없어요</p>
+          <p className="px-1 py-2 text-xs text-text-tertiary">이 파일을 가리키는 링크가 없습니다</p>
         ) : (
           <ul>
             {links.map((b) => (

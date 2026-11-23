@@ -18,7 +18,7 @@ export function OfficeViewerFrame({
   const pushToast = useToastStore((s) => s.push)
   const openExternally = (): void => {
     void window.api.workspace.openInDefaultApp(filePath).then((err) => {
-      if (err) pushToast({ kind: 'info', message: '이 파일을 열 수 있는 앱이 없어요.' })
+      if (err) pushToast({ kind: 'info', message: '이 파일을 열 수 있는 앱이 없습니다.' })
     })
   }
 
@@ -37,7 +37,7 @@ export function OfficeViewerFrame({
       </div>
       {error ? (
         <div className="flex flex-1 flex-col items-center justify-center gap-2 text-[13px] text-text-tertiary">
-          <p>미리보기를 만들 수 없어요.</p>
+          <p>미리보기를 만들 수 없습니다.</p>
           <p className="text-[12px]">{error}</p>
         </div>
       ) : (

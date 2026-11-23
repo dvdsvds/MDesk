@@ -32,7 +32,7 @@ function createSession(): Session {
   const worker = new Worker(new URL('py-worker.js', document.baseURI), { type: 'module' })
   const ready = new Promise<void>((resolve, reject) => {
     const timer = setTimeout(
-      () => reject(new Error('파이썬을 불러오는 데 너무 오래 걸려요.')),
+      () => reject(new Error('파이썬을 불러오는 데 너무 오래 걸립니다.')),
       LOAD_TIMEOUT_MS
     )
     const onMessage = (e: MessageEvent): void => {
@@ -52,7 +52,7 @@ function createSession(): Session {
       'error',
       (e) => {
         clearTimeout(timer)
-        reject(new Error(e.message || '파이썬 워커를 시작하지 못했어요.'))
+        reject(new Error(e.message || '파이썬 워커를 시작하지 못했습니다.'))
       },
       { once: true }
     )
@@ -89,7 +89,7 @@ async function doRun(code: string, baseDir: string): Promise<RunResult> {
   try {
     ;({ files, fileErrors } = await window.api.code.readFiles(code, baseDir))
   } catch {
-    return failure('파일을 미리 읽지 못했어요.')
+    return failure('파일을 미리 읽지 못했습니다.')
   }
 
   if (!session) session = createSession()
@@ -98,7 +98,7 @@ async function doRun(code: string, baseDir: string): Promise<RunResult> {
     await s.ready
   } catch (e) {
     dropSession(s)
-    return failure(`파이썬을 시작하지 못했어요: ${e instanceof Error ? e.message : String(e)}`)
+    return failure(`파이썬을 시작하지 못했습니다: ${e instanceof Error ? e.message : String(e)}`)
   }
 
   return new Promise<RunResult>((resolve) => {
@@ -112,7 +112,7 @@ async function doRun(code: string, baseDir: string): Promise<RunResult> {
     }
     const timer = setTimeout(
       () =>
-        finish(failure(`${RUN_TIMEOUT_MS / 1000}초 안에 끝나지 않아서 중단했어요.`, true), true),
+        finish(failure(`${RUN_TIMEOUT_MS / 1000}초 안에 끝나지 않아서 중단했습니다.`, true), true),
       RUN_TIMEOUT_MS
     )
     const onMessage = (e: MessageEvent): void => {
@@ -120,7 +120,7 @@ async function doRun(code: string, baseDir: string): Promise<RunResult> {
       if (d && d.type === 'result' && d.id === id) finish(normalize(d), false)
     }
     const onError = (): void => {
-      finish(failure('실행 중 오류가 났어요.'), true)
+      finish(failure('실행 중 오류가 났습니다.'), true)
     }
     s.worker.addEventListener('message', onMessage)
     s.worker.addEventListener('error', onError)
@@ -129,7 +129,7 @@ async function doRun(code: string, baseDir: string): Promise<RunResult> {
 }
 
 export function runPython(code: string, baseDir: string): Promise<RunResult> {
-  if (code.length > MAX_CODE_LENGTH) return Promise.resolve(failure('코드가 너무 길어요.'))
+  if (code.length > MAX_CODE_LENGTH) return Promise.resolve(failure('코드가 너무 깁니다.'))
   const p = queue.then(() => doRun(code, baseDir))
   queue = p.catch(() => undefined)
   return p

@@ -62,6 +62,6 @@ export async function exportPreviewPdf(
   title: string
 ): Promise<{ ok: boolean; canceled?: boolean; path?: string; error?: string }> {
   const root = document.querySelector<HTMLElement>('.prose-preview')
-  if (!root) return { ok: false, error: '미리보기를 찾을 수 없어요' }
+  if (!root) return { ok: false, error: '미리보기를 찾을 수 없습니다' }
   return window.api.export.pdf({ title, html: extractHtml(root), css: collectCss() })
 }

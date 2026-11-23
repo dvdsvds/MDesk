@@ -63,7 +63,7 @@ export function useSettingItems(): SettingItem[] {
       const result = await window.api.workspace.setHistoryDir(dir)
       if (result.ok) {
         setHistoryDir(result.path)
-        pushToast({ kind: 'info', message: '버전 기록을 새 위치로 옮겼어요.' })
+        pushToast({ kind: 'info', message: '버전 기록을 새 위치로 옮겼습니다.' })
       } else {
         pushToast({ kind: 'info', message: result.error })
       }

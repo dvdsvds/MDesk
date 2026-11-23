@@ -20,18 +20,18 @@ function collectFiles(
     const name = m[2]
     if (name in files || name in fileErrors) continue
     try {
-      if (!baseDir) throw new Error('이 파일이 있는 폴더를 알 수 없어요. 먼저 저장해 주세요.')
+      if (!baseDir) throw new Error('이 파일이 있는 폴더를 알 수 없습니다. 먼저 저장해 주십시오.')
       const full = assertInsideRoot(resolve(baseDir, name))
       if (!ALLOWED_EXT.has(extname(full).toLowerCase())) {
-        throw new Error('csv, tsv, json, txt, md 파일만 읽을 수 있어요.')
+        throw new Error('csv, tsv, json, txt, md 파일만 읽을 수 있습니다.')
       }
       if (statSync(full).size > MAX_FILE_BYTES)
-        throw new Error('파일이 너무 커요 (2MB 이하만 읽어요).')
+        throw new Error('파일이 너무 큽니다 (2MB 이하만 읽습니다).')
       files[name] = readFileSync(full, 'utf-8')
     } catch (e) {
       fileErrors[name] =
         e instanceof Error && 'code' in e && (e as NodeJS.ErrnoException).code === 'ENOENT'
-          ? `파일을 찾을 수 없어요: ${name}`
+          ? `파일을 찾을 수 없습니다: ${name}`
           : e instanceof Error
             ? e.message
             : String(e)

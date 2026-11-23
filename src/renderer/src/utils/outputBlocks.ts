@@ -299,7 +299,7 @@ export function renderBlocks(blocks: OutputBlock[]): HTMLElement[] {
       return h(
         'div',
         'code-run-out error',
-        '표/차트를 그릴 수 없어요. 데이터 모양을 확인해 주세요.'
+        '표/차트를 그릴 수 없습니다. 데이터 모양을 확인해 주십시오.'
       )
     }
   })

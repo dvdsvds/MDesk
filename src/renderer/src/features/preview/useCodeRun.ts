@@ -74,7 +74,7 @@ export function useCodeRun(
 
       const onClick = async (): Promise<void> => {
         button.disabled = true
-        setRunLabel(isPython ? '실행 중… (처음엔 몇 초 걸려요)' : '실행 중…')
+        setRunLabel(isPython ? '실행 중… (처음엔 몇 초 걸립니다)' : '실행 중…')
         if (saveBtn) saveBtn.disabled = true
         const r = isPython
           ? await runPython(codeText, baseDir ?? '')
@@ -112,7 +112,7 @@ export function useCodeRun(
         if (!saveBtn || !saved) return
         const next = applyResult(sourceRef.current, startLine, endLine, saved)
         if (next === null) {
-          saveBtn.textContent = '위치를 못 찾았어요'
+          saveBtn.textContent = '위치를 못 찾았습니다'
           return
         }
         onReplaceSourceRef.current?.(next)
@@ -121,7 +121,7 @@ export function useCodeRun(
       const onApplyValues = (): void => {
         const next = applyValues(sourceRef.current, pendingValues)
         if (next === null) {
-          valueBtn.textContent = 'template을 못 찾았어요'
+          valueBtn.textContent = 'template을 못 찾았습니다'
           return
         }
         onReplaceSourceRef.current?.(next)

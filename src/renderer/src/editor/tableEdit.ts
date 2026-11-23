@@ -564,6 +564,49 @@ const tableNormalize: Extension = EditorState.transactionFilter.of((tr) => {
   ]
 })
 
+let composing = false
+
+/**
+ * 커서를 다른 칸이나 표 밖으로 옮기기만 해도 방금 있던 표를 정리한다.
+ * 커서가 있던 칸은 스페이스를 연달아 칠 수 있게 늘어난 공백을 그대로 두는데, 글자를 더 치지 않고 커서만 옮기면
+ * 정리할 기회가 없어서 `| 파라미터    |`처럼 열이 어긋난 채로 남기 때문이다
+ */
+const tableNormalizeOnLeave: Extension = [
+  EditorView.domEventHandlers({
+    compositionstart: () => {
+      composing = true
+      return false
+    },
+    compositionend: () => {
+      composing = false
+      return false
+    }
+  }),
+  EditorState.transactionFilter.of((tr) => {
+    // 커서만 움직이는 경우만 다룬다. 글자를 고칠 때의 정리는 tableNormalize가 맡는다
+    if (tr.docChanged || !tr.selection || tr.annotation(normalizing) || composing) return tr
+    const doc = tr.startState.doc
+    const info = tableAtDoc(doc, tr.startState.selection.main.head)
+    if (!info) return tr
+    const edits = normalizeEdits(
+      doc,
+      doc.lineAt(info.from).number,
+      doc.lineAt(info.to).number,
+      tr.newSelection.main.head,
+      measureOf(document.querySelector('.cm-content'))
+    )
+    if (edits.length === 0) return tr
+    return [
+      tr,
+      {
+        changes: edits,
+        sequential: true,
+        annotations: [normalizing.of(true), Transaction.userEvent.of('input.table')]
+      }
+    ]
+  })
+]
+
 /**
  * 표의 칸 한가운데에 `|`를 쳐서 칸을 나누면 그 행만 칸이 늘어난다.
  * 헤더와 구분선의 칸 수가 다르면 표로 인식되지 않아 박스가 풀리므로, 나머지 행에도 같은 자리에 빈 칸을 넣어 맞춘다.
@@ -784,6 +827,7 @@ function deleteEmptyRow(view: EditorView, forward: boolean): boolean {
 export const tableEdit: Extension = [
   autoTable,
   tableNormalize,
+  tableNormalizeOnLeave,
   // 필터는 뒤에서부터 실행된다. 칸을 먼저 맞춘 다음 정렬이 그 결과를 이어받도록 정렬 필터 뒤에 둔다
   tableColumnSync,
   tableAutoClose,

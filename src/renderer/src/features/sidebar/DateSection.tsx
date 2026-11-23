@@ -86,7 +86,7 @@ export function DateSection({
         </button>
       </div>
       {notesOfDay.length === 0 ? (
-        <p className="px-4 py-1.5 text-[12px] text-text-tertiary">이날 만든 노트가 없어요</p>
+        <p className="px-4 py-1.5 text-[12px] text-text-tertiary">이날 만든 노트가 없습니다</p>
       ) : (
         <div className="px-2">
           {notesOfDay.map((path) => (

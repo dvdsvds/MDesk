@@ -11,15 +11,15 @@ export function TrashSetting(): React.JSX.Element {
   const empty = (): void => {
     void window.api.workspace.emptyTrash().then(() => {
       setConfirming(false)
-      pushToast({ kind: 'info', message: '휴지통을 비웠어요.' })
+      pushToast({ kind: 'info', message: '휴지통을 비웠습니다.' })
     })
   }
 
   return (
     <div className="px-3.5 py-3">
-      <div className="text-[13.5px] text-text">삭제한 파일은 30일 동안 보관돼요</div>
+      <div className="text-[13.5px] text-text">삭제한 파일은 30일 동안 보관됩니다</div>
       <div className="mt-1 text-[12.5px] text-text-tertiary">
-        사이드바에서 Ctrl+Z로 되돌릴 수 있어요
+        사이드바에서 Ctrl+Z로 되돌릴 수 있습니다
       </div>
       <div className="mt-2.5 flex items-center gap-2">
         <button type="button" onClick={() => void window.api.workspace.openTrash()} className={BTN}>

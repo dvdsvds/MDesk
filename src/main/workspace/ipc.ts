@@ -33,6 +33,7 @@ import {
   setNoteProps,
   type NoteProps
 } from './noteProps'
+import { onNoteSaved } from '../cloud/drive'
 import { emptyTrash, moveToTrash, purgeOldTrash, restoreFromTrash, trashFolderPath } from './trash'
 import { markRemovalByApp, markSavedByApp, markMoveByApp, startWatcher } from './watcher'
 import { checkExportLinks, exportFolder, listPdfNotes, type ExportOptions } from './exporter'
@@ -74,6 +75,7 @@ function saveNote({ filePath, content }: SaveNoteArgs): SaveNoteResult {
     }
   } catch {}
   writeFileAtomic(filePath, content)
+  onNoteSaved(filePath)
   return { filePath, renamed: false }
 }
 
@@ -186,7 +188,7 @@ export function registerWorkspaceIpc(getWindow: () => BrowserWindow | null): voi
     listPdfNotes(getRootDir(), folderPath)
   )
   ipcMain.handle('workspace:openPath', async (_event, targetPath: string) => {
-    if (!preparedExportDirs.has(targetPath)) return '허용되지 않은 경로예요.'
+    if (!preparedExportDirs.has(targetPath)) return '허용되지 않은 경로입니다.'
     return shell.openPath(targetPath)
   })
   ipcMain.handle(

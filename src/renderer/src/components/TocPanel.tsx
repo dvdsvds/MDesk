@@ -65,7 +65,7 @@ export function TocPanel({
         </button>
       </div>
       {entries.length === 0 ? (
-        <p className="px-1 py-2 text-xs text-text-tertiary">제목이 없어요</p>
+        <p className="px-1 py-2 text-xs text-text-tertiary">제목이 없습니다</p>
       ) : (
         <ul>
           {entries.map((entry, i) => (

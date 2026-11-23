@@ -75,7 +75,7 @@ export function createToolbarBridge(opts: {
     apply: (ch) => {
       const t = targetRect()
       if (!t) {
-        toast('칸을 먼저 선택해 주세요')
+        toast('칸을 먼저 선택해 주십시오')
         return
       }
       const box = ed.state.editing
@@ -109,7 +109,7 @@ export function createToolbarBridge(opts: {
       const box = ed.state.editing ?? tx.state.editing
       const s = window.getSelection()
       if (!box || !s || s.rangeCount === 0 || !box.contains(s.anchorNode)) {
-        toast('칸을 편집하는 중에 눌러 주세요')
+        toast('칸을 편집하는 중에 눌러 주십시오')
         return
       }
       const r = s.getRangeAt(0)
@@ -126,7 +126,7 @@ export function createToolbarBridge(opts: {
         } else {
           const picked = r.toString().replace(ZWRE, '')
           if (/\s/.test(picked)) {
-            toast('공백이 든 글자는 첨자가 안 돼요')
+            toast('공백이 든 글자는 첨자가 안 됩니다')
             return
           }
           if (picked === '') return
@@ -223,7 +223,7 @@ export function createToolbarBridge(opts: {
     if (!r) return
     const out = r.collapsed ? applyCaret(box, r, tc) : applyInline(box, r, tc)
     if (!out) {
-      if (r.collapsed) toast('첨자 안에서는 글자 모양을 바꿀 수 없어요')
+      if (r.collapsed) toast('첨자 안에서는 글자 모양을 바꿀 수 없습니다')
       return
     }
     box.focus()

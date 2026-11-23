@@ -414,7 +414,7 @@ export function GraphDialog({ activePath, onOpen, onClose }: GraphDialogProps): 
                   role="radio"
                   aria-checked={effectiveScope === o.value}
                   disabled={o.value === 'local' && !canLocal}
-                  title={o.value === 'local' && !canLocal ? '노트를 열면 쓸 수 있어요' : undefined}
+                  title={o.value === 'local' && !canLocal ? '노트를 열면 쓸 수 있습니다' : undefined}
                   onClick={() => setScope(o.value)}
                   className={`relative h-6 rounded-[7px] text-[12.5px] outline-none transition-colors disabled:opacity-40 ${
                     effectiveScope === o.value ? 'text-text' : 'text-text-secondary hover:text-text'
@@ -447,7 +447,7 @@ export function GraphDialog({ activePath, onOpen, onClose }: GraphDialogProps): 
         </div>
         <div ref={boxRef} className="relative min-h-0 flex-1 border-t border-border">
           {view && view.paths.length === 0 ? (
-            <p className="px-2 py-8 text-center text-[13px] text-text-tertiary">노트가 없어요.</p>
+            <p className="px-2 py-8 text-center text-[13px] text-text-tertiary">노트가 없습니다.</p>
           ) : (
             <canvas ref={canvasRef} className="absolute inset-0 touch-none" />
           )}

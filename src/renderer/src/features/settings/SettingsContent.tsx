@@ -27,7 +27,7 @@ export function SettingsContent({
     <div className="min-h-0 flex-1 overflow-y-auto pl-7 pr-4 pb-4 pt-1 [scrollbar-color:transparent_transparent] [scrollbar-width:thin] hover:[scrollbar-color:var(--color-border-strong)_transparent]">
       {showSearchResults ? (
         filtered.length === 0 ? (
-          <p className="py-6 text-center text-[13px] text-text-tertiary">검색 결과가 없어요</p>
+          <p className="py-6 text-center text-[13px] text-text-tertiary">검색 결과가 없습니다</p>
         ) : (
           filtered.map((item) => (
             <div key={item.id} className="mb-4">

@@ -18,7 +18,7 @@ export function useTemplateRender(
       try {
         parsed = JSON.parse(node.dataset.spec ?? '') as ParsedTemplate
       } catch {
-        parsed = { error: '양식을 읽을 수 없어요.' }
+        parsed = { error: '양식을 읽을 수 없습니다.' }
       }
       if ('error' in parsed) {
         const e = document.createElement('div')

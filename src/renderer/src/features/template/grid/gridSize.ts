@@ -36,8 +36,8 @@ export function dragColWidths(
 }
 
 export function setColWidths(info: GridInfo, widths: number[], getLine: GetLine): GridResult {
-  if (widths.length !== info.cols) return fail('열 수가 맞지 않아요.')
-  if (widths.some((w) => !(w >= MIN_COL_MM))) return fail('열이 너무 좁아요.')
+  if (widths.length !== info.cols) return fail('열 수가 맞지 않습니다.')
+  if (widths.some((w) => !(w >= MIN_COL_MM))) return fail('열이 너무 좁습니다.')
   const items: Out[] = []
   for (const cell of info.cells) {
     if (cell.def === null) continue
@@ -88,7 +88,7 @@ export function setRowHeight(
       )
     let col = 0
     while (col < info.cols && covered(col)) col++
-    if (col >= info.cols) return fail('합친 칸이 이 줄을 덮고 있어서 높이를 바꿀 수 없어요.')
+    if (col >= info.cols) return fail('합친 칸이 이 줄을 덮고 있어서 높이를 바꿀 수 없습니다.')
     items.push({
       key: NEW_KEY,
       seq: 0,

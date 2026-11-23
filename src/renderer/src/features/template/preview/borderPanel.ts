@@ -39,7 +39,7 @@ export function createBorderPanel(opts: { gs: GridSelection }): {
     const info = gs.gridInfo()
     const sel = gs.state.sel
     if (!info || !sel) {
-      toast('칸을 먼저 선택해 주세요')
+      toast('칸을 먼저 선택해 주십시오')
       return false
     }
     const rect: Rect = gs.normalize(sel)

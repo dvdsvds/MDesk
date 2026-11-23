@@ -121,7 +121,7 @@ export function SettingsPanel({ onClose }: SettingsPanelProps): React.JSX.Elemen
           <ConfirmDialog
             title="단축키 초기화"
             icon="reset"
-            message="모든 단축키를 기본값으로 되돌려요."
+            message="모든 단축키를 기본값으로 되돌립니다."
             confirmLabel="초기화"
             danger
             onConfirm={() => {

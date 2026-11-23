@@ -22,7 +22,7 @@ export function CloudSetting(): React.JSX.Element {
     setBusy(false)
     if (result.ok) {
       setStatus(await window.api.cloud.getStatus())
-      pushToast({ kind: 'info', message: 'Google Drive에 연결했어요.' })
+      pushToast({ kind: 'info', message: 'Google Drive에 연결했습니다.' })
     } else {
       pushToast({ kind: 'info', message: result.error })
     }
@@ -33,7 +33,7 @@ export function CloudSetting(): React.JSX.Element {
     await window.api.cloud.disconnectGoogle()
     setStatus(await window.api.cloud.getStatus())
     setBusy(false)
-    pushToast({ kind: 'info', message: 'Google Drive 연결을 해제했어요.' })
+    pushToast({ kind: 'info', message: 'Google Drive 연결을 해제했습니다.' })
   }
 
   if (!status) return <div className="px-3.5 py-3" />
@@ -41,12 +41,12 @@ export function CloudSetting(): React.JSX.Element {
   return (
     <div className="px-3.5 py-3">
       <div className="text-[13.5px] text-text">
-        {status.connected ? 'Google Drive에 연결되어 있어요' : 'Google Drive에 연결하지 않았어요'}
+        {status.connected ? 'Google Drive에 연결되어 있습니다' : 'Google Drive에 연결하지 않았습니다'}
       </div>
       <div className="mt-1 text-[12.5px] text-text-tertiary">
         {status.connected
           ? (status.email ?? '연결된 계정')
-          : 'Mdesk가 만든 파일에만 접근하고, 다른 Drive 파일은 볼 수 없어요'}
+          : 'Mdesk가 만든 파일에만 접근하고, 다른 Drive 파일은 볼 수 없습니다'}
       </div>
       <div className="mt-2.5 flex items-center gap-2">
         {status.connected ? (
@@ -66,7 +66,7 @@ export function CloudSetting(): React.JSX.Element {
       </div>
       {!status.configured && (
         <div className="mt-2 text-[12.5px] text-text-tertiary">
-          이 빌드에는 Google 연결 정보가 들어 있지 않아요
+          이 빌드에는 Google 연결 정보가 들어 있지 않습니다
         </div>
       )}
     </div>

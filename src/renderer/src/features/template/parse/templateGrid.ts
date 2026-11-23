@@ -65,20 +65,20 @@ export function parseGrid(
 ): TNode {
   let cols = colsIn
   if (cols < 1 || cols > 100) {
-    ctx.warn(`grid 열은 1~100개예요: ${colsIn}`)
+    ctx.warn(`grid 열은 1~100개입니다: ${colsIn}`)
     cols = clamp(cols, 1, 100)
   }
 
   const widths: (number | null)[] = Array<number | null>(cols).fill(null)
   if (widthsIn) {
     if (widthsIn.length > cols)
-      ctx.warn(`grid: widths= 값이 열 수(${cols})보다 많아서 넘친 값은 무시했어요.`)
+      ctx.warn(`grid: widths= 값이 열 수(${cols})보다 많아서 넘친 값은 무시했습니다.`)
     widthsIn.slice(0, cols).forEach((w, i) => {
       widths[i] = w
     })
     const sum = widths.reduce<number>((a, b) => a + (b ?? 0), 0)
     if (sum > PAPER_MM + 0.01)
-      ctx.warn(`grid: 열 폭 합이 ${sum.toFixed(1)}mm라서 종이 폭(${PAPER_MM}mm)을 넘어요.`)
+      ctx.warn(`grid: 열 폭 합이 ${sum.toFixed(1)}mm라서 종이 폭(${PAPER_MM}mm)을 넘습니다.`)
   }
 
   const defs: Def[] = []
@@ -103,7 +103,7 @@ export function parseGrid(
       }
       if (OPENER_RE.test(t)) {
         ctx.warn(
-          `grid 안에서 "${t}"는 쓰지 않아요. col= 칸 정의를 써 주세요. 이 블록은 건너뛰었어요.`
+          `grid 안에서 "${t}"는 쓰지 않습니다. col= 칸 정의를 써 주십시오. 이 블록은 건너뛰었습니다.`
         )
         skipBlock(lines, pos)
         cur = null
@@ -111,8 +111,8 @@ export function parseGrid(
       }
       ctx.warn(
         cur !== null
-          ? `글자는 칸 정의보다 한 단계 더 들여써 주세요: ${t}`
-          : `알 수 없는 줄을 건너뛰었어요: ${t}`
+          ? `글자는 칸 정의보다 한 단계 더 들여써 주십시오: ${t}`
+          : `알 수 없는 줄을 건너뛰었습니다: ${t}`
       )
       continue
     }
@@ -134,7 +134,7 @@ export function parseGrid(
         let a = Number(rm[2])
         let b = rm[3] === undefined ? a : Number(rm[3])
         if (b < a) {
-          ctx.warn(`${label}: 범위는 작은 수-큰 수 순서로 써 주세요. 바꿔서 읽었어요.`)
+          ctx.warn(`${label}: 범위는 작은 수-큰 수 순서로 써 주십시오. 바꿔서 읽었습니다.`)
           ;[a, b] = [b, a]
         }
         if (rm[1] === 'col') {
@@ -146,24 +146,24 @@ export function parseGrid(
           r2 = b
         }
       } else if (/^(?:col|row)=/.test(tok)) {
-        ctx.warn(`${label}: 범위 모양이 틀려요. 예: col=1-3 → ${tok}`)
+        ctx.warn(`${label}: 범위 모양이 틀립니다. 예: col=1-3 → ${tok}`)
         ok = false
       } else {
         optTokens.push(tok)
       }
     }
     if (!hasCol) {
-      ctx.warn(`${label}: col=이 없어서 이 칸은 그리지 않았어요.`)
+      ctx.warn(`${label}: col=이 없어서 이 칸은 그리지 않았습니다.`)
       ok = false
     } else if (c1 < 1 || c1 > cols) {
-      ctx.warn(`${label}: 열은 1~${cols}이에요. 이 칸은 그리지 않았어요.`)
+      ctx.warn(`${label}: 열은 1~${cols}입니다. 이 칸은 그리지 않았습니다.`)
       ok = false
     } else if (c2 > cols) {
-      ctx.warn(`${label}: 열 범위가 ${cols}를 넘어서 ${cols}까지로 줄였어요.`)
+      ctx.warn(`${label}: 열 범위가 ${cols}를 넘어서 ${cols}까지로 줄였습니다.`)
       c2 = cols
     }
     if (r1 !== null && (r1 < 1 || (r2 ?? r1) > MAX_ROWS)) {
-      ctx.warn(`${label}: row는 1~${MAX_ROWS}이에요. 이 칸은 그리지 않았어요.`)
+      ctx.warn(`${label}: row는 1~${MAX_ROWS}입니다. 이 칸은 그리지 않았습니다.`)
       ok = false
     }
 
@@ -194,7 +194,7 @@ export function parseGrid(
         if (/^text(?:\s|:|$)/.test(pt)) {
           const [ph, pv] = splitColon(pt)
           if (pv === null) {
-            ctx.warn(`text에는 : 가 필요해요. 예: text center : 글자 → ${pt}`)
+            ctx.warn(`text에는 : 가 필요합니다. 예: text center : 글자 → ${pt}`)
             continue
           }
           const hd = tokenize(ph).slice(1)
@@ -231,20 +231,20 @@ export function parseGrid(
     if (d.r1 !== null) {
       r = d.r1 - 1
       if (!isFree(r, c0, w)) {
-        ctx.warn(`${d.label}: 자리가 이미 차 있어서 그리지 않았어요.`)
+        ctx.warn(`${d.label}: 자리가 이미 차 있어서 그리지 않았습니다.`)
         continue
       }
     } else {
       r = curRow
       while (r < MAX_ROWS && !isFree(r, c0, w)) r++
       if (r >= MAX_ROWS) {
-        ctx.warn(`${d.label}: 줄이 ${MAX_ROWS}개를 넘어서 그리지 않았어요.`)
+        ctx.warn(`${d.label}: 줄이 ${MAX_ROWS}개를 넘어서 그리지 않았습니다.`)
         continue
       }
     }
     let rs = 1
     while (rs < want && r + rs < MAX_ROWS && isFree(r + rs, c0, w)) rs++
-    if (rs < want) ctx.warn(`${d.label}: 아래 줄이 이미 차 있어서 row 범위를 ${rs}줄로 줄였어요.`)
+    if (rs < want) ctx.warn(`${d.label}: 아래 줄이 이미 차 있어서 row 범위를 ${rs}줄로 줄였습니다.`)
     ensureRows(r + rs)
     const idx = cells.length
     for (let rr = r; rr < r + rs; rr++) for (let cc = c0; cc < c0 + w; cc++) occ[rr][cc] = idx
@@ -275,7 +275,7 @@ export function parseGrid(
   }
 
   if (rowsIn > 0 && occ.length > rowsIn)
-    ctx.warn(`table: row=${rowsIn}보다 칸이 많아서 ${occ.length}줄로 그렸어요.`)
+    ctx.warn(`table: row=${rowsIn}보다 칸이 많아서 ${occ.length}줄로 그렸습니다.`)
   ensureRows(Math.max(1, Math.min(rowsIn, MAX_ROWS)))
   const R = occ.length
   for (let r = 0; r < R; r++) {

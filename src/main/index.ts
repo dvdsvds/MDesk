@@ -156,7 +156,7 @@ app.whenReady().then(() => {
   registerWorkspaceIpc(() => mainWindowRef)
   registerCodeRunner()
   registerPdfExport(() => mainWindowRef)
-  registerCloudIpc()
+  registerCloudIpc(() => mainWindowRef)
 
   ipcMain.handle('window:minimize', () => mainWindowRef?.minimize())
   ipcMain.handle('window:toggleMaximize', () => {

@@ -14,7 +14,7 @@ export function useOutputBlocks(
       try {
         parsed = JSON.parse(node.dataset.spec ?? '') as ParsedBlock
       } catch {
-        parsed = { error: '블록을 읽을 수 없어요.' }
+        parsed = { error: '블록을 읽을 수 없습니다.' }
       }
       if ('error' in parsed) {
         const e = document.createElement('div')

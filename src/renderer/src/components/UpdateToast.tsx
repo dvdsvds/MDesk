@@ -24,7 +24,7 @@ export function UpdateToast(): React.JSX.Element | null {
       {status.state === 'downloading' ? (
         <>
           <div className="flex items-center justify-between">
-            <span>새 버전 {status.version}을(를) 받는 중이에요</span>
+            <span>새 버전 {status.version}을(를) 받는 중입니다</span>
             <span className="tabular-nums text-text-secondary">{status.percent}%</span>
           </div>
           <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-border">
@@ -36,7 +36,7 @@ export function UpdateToast(): React.JSX.Element | null {
         </>
       ) : (
         <div className="flex items-center justify-between gap-3">
-          <span>새 버전 {status.version}을(를) 받았어요</span>
+          <span>새 버전 {status.version}을(를) 받았습니다</span>
           <button
             type="button"
             onClick={() => void window.api.update.install()}

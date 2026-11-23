@@ -38,7 +38,7 @@ export function parseValues(lines: { text: string; no: number }[], env: Env): st
     if (text === '') continue
     const m = VAR_RE.exec(text)
     if (!m) {
-      errors.push(`value ${no}번째 줄: 이름: 값 모양으로 써 주세요 → ${text}`)
+      errors.push(`value ${no}번째 줄: 이름: 값 모양으로 써 주십시오 → ${text}`)
       continue
     }
     const list = found.get(m[1]) ?? []
@@ -48,7 +48,7 @@ export function parseValues(lines: { text: string; no: number }[], env: Env): st
   }
   for (const [name, nos] of found) {
     if (nos.length > 1) {
-      errors.push(`value: ${name} 이름이 겹쳐요 (${nos.map((n) => `${n}번째 줄`).join(', ')})`)
+      errors.push(`value: ${name} 이름이 겹칩니다 (${nos.map((n) => `${n}번째 줄`).join(', ')})`)
     } else {
       env.vars.set(name, vals.get(name) as string)
     }
@@ -72,15 +72,15 @@ function parsePage(t: string, ctx: Ctx, base: Style, index: number): Style {
   const toks = tokenize(t)
   const m = /^page(?:=(\d{1,3}))?$/.exec(toks[0])
   if (!m) {
-    ctx.warn(`page 모양이 틀려요. 예: page=1 A4 → ${toks[0]}`)
+    ctx.warn(`page 모양이 틀립니다. 예: page=1 A4 → ${toks[0]}`)
     return base
   }
   if (m[1] !== undefined && Number(m[1]) !== index) {
-    ctx.warn(`page=${m[1]}은 맞지 않아요. 이 template은 ${index}쪽이에요.`)
+    ctx.warn(`page=${m[1]}은 맞지 않습니다. 이 template은 ${index}쪽입니다.`)
   }
   let rest = toks.slice(1)
   if (rest.length > 0 && /^A\d$/i.test(rest[0])) {
-    if (rest[0].toUpperCase() !== 'A4') ctx.warn(`page는 A4만 지원해요: ${rest[0]}`)
+    if (rest[0].toUpperCase() !== 'A4') ctx.warn(`page는 A4만 지원합니다: ${rest[0]}`)
     rest = rest.slice(1)
   }
   return merge(base, parseOpts(rest, ctx, 'page', 'page'))
@@ -102,13 +102,13 @@ function parseNodes(
     const t = raw.trim()
     if (t === ']') {
       if (top) {
-        ctx.warn('짝이 없는 ]를 건너뛰었어요.')
+        ctx.warn('짝이 없는 ]를 건너뛰었습니다.')
         continue
       }
       return out
     }
     if (/^page(?:\s|=|$)/.test(t)) {
-      if (!top) ctx.warn('page는 template 맨 바깥에서만 쓸 수 있어요. 무시했어요.')
+      if (!top) ctx.warn('page는 template 맨 바깥에서만 쓸 수 있습니다. 무시했습니다.')
       continue
     }
     let m = /^line(?:(?:\s+|\s*=\s*)(solid|double|dashed|thick))?$/.exec(t)
@@ -125,7 +125,7 @@ function parseNodes(
     if (/^title(?:\s|:|$)/.test(t)) {
       const [head, tail] = splitColon(t)
       if (tail === null) {
-        ctx.warn(`title에는 : 가 필요해요. 예: title : 제목 → ${t}`)
+        ctx.warn(`title에는 : 가 필요합니다. 예: title : 제목 → ${t}`)
         continue
       }
       const base = parseOpts(['center', 'bold', 'fs=16'], ctx, 'title', 'text')
@@ -143,7 +143,7 @@ function parseNodes(
     if (/^text(?:\s|:|$)/.test(t)) {
       const [head, tail] = splitColon(t)
       if (tail === null) {
-        ctx.warn(`text에는 : 가 필요해요. 예: text center : 글자 → ${t}`)
+        ctx.warn(`text에는 : 가 필요합니다. 예: text center : 글자 → ${t}`)
         continue
       }
       const opt = parseOpts(tokenize(head).slice(1), ctx, 'text', 'text')
@@ -160,12 +160,12 @@ function parseNodes(
       const head = tokenize(t.replace(/\[$/, '').trim())
       const name = head[0] ?? ''
       if (name === 'value' || name === 'template') {
-        ctx.warn(`${name}는 template 안에서 쓸 수 없어요. 이 블록은 건너뛰었어요.`)
+        ctx.warn(`${name}는 template 안에서 쓸 수 없습니다. 이 블록은 건너뛰었습니다.`)
         skipBlock(lines, pos)
         continue
       }
       if (depth >= MAX_DEPTH) {
-        ctx.warn('중첩은 4단계까지예요. 이 블록은 건너뛰었어요.')
+        ctx.warn('중첩은 4단계까지입니다. 이 블록은 건너뛰었습니다.')
         skipBlock(lines, pos)
         continue
       }
@@ -209,10 +209,10 @@ function parseNodes(
               frameC = v.c
             }
           } else if (wm) widthsIn = parseWidths(wm[1], ctx)
-          else ctx.warn(`table: 모르는 옵션이에요 (col=, row=, frame=, widths=): ${tok}`)
+          else ctx.warn(`table: 모르는 옵션입니다 (col=, row=, frame=, widths=): ${tok}`)
         }
         if (cols === 0) {
-          ctx.warn('table: col=로 열 개수를 적어 주세요. 예: table col=3 row=2 [ 이 표는 건너뛰었어요.')
+          ctx.warn('table: col=로 열 개수를 적어 주십시오. 예: table col=3 row=2 [ 이 표는 건너뛰었습니다.')
           skipBlock(lines, pos)
           continue
         }
@@ -235,12 +235,12 @@ function parseNodes(
           )
         )
       } else {
-        ctx.warn(`옛 문법은 읽지 않아요. grid=12 [ 처럼 써 주세요. 이 블록은 건너뛰었어요: ${t}`)
+        ctx.warn(`옛 문법은 읽지 않습니다. grid=12 [ 처럼 써 주십시오. 이 블록은 건너뛰었습니다: ${t}`)
         skipBlock(lines, pos)
       }
       continue
     }
-    ctx.warn(`알 수 없는 줄을 건너뛰었어요: ${t}`)
+    ctx.warn(`알 수 없는 줄을 건너뛰었습니다: ${t}`)
   }
 }
 
@@ -260,6 +260,6 @@ export function parseTemplate(
     const nodes = parseNodes(lines, { i: 0 }, vars, ctx, page, true, 0)
     return { page, nodes, warnings: ctx.warnings, close: lineBase + lines.length }
   } catch {
-    return { error: 'template: 읽을 수 없어요.' }
+    return { error: 'template: 읽을 수 없습니다.' }
   }
 }

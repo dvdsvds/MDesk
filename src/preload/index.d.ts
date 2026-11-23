@@ -88,9 +88,38 @@ export interface CloudStatus {
   email: string | null
 }
 
+export interface DriveItem {
+  id: string
+  name: string
+  folder: boolean
+}
+
+export type DriveResult<T> =
+  | ({ ok: true } & T)
+  | { ok: false; error: string; notConnected?: boolean }
+
+export interface DriveUploadEvent {
+  path: string
+  state: 'uploading' | 'done' | 'conflict' | 'error'
+  message?: string
+}
+
 export type CloudConnectResult = { ok: true; email: string | null } | { ok: false; error: string }
 
 export interface MdeskApi {
+  drive: {
+    list: (folderId: string | null) => Promise<DriveResult<{ items: DriveItem[] }>>
+    createFolder: (parentId: string | null, name: string) => Promise<DriveResult<{ item: DriveItem }>>
+    createFile: (
+      parentId: string | null,
+      name: string
+    ) => Promise<DriveResult<{ item: DriveItem; path: string }>>
+    rename: (id: string, name: string) => Promise<DriveResult<object>>
+    trash: (id: string) => Promise<DriveResult<object>>
+    localPath: (id: string, name: string) => Promise<string>
+    download: (id: string, name: string) => Promise<DriveResult<{ path: string }>>
+    onUpload: (callback: (event: DriveUploadEvent) => void) => () => void
+  }
   cloud: {
     getStatus: () => Promise<CloudStatus>
     connectGoogle: () => Promise<CloudConnectResult>

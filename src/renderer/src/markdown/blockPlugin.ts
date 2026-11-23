@@ -60,17 +60,17 @@ function parseTable(lines: string[]): ParsedBlock {
     }
     rows.push(splitCells(line))
   }
-  if (rows.length === 0) return err('table: 내용이 없어요. 첫 줄은 머리글이에요.')
+  if (rows.length === 0) return err('table: 내용이 없습니다. 첫 줄은 머리글입니다.')
   const columns = rows[0]
-  if (columns.length > 50) return err('table: 열은 50개까지예요.')
+  if (columns.length > 50) return err('table: 열은 50개까지입니다.')
   const data = rows.slice(1)
-  if (data.length > 1000) return err('table: 데이터는 1000줄까지예요.')
+  if (data.length > 1000) return err('table: 데이터는 1000줄까지입니다.')
 
   const align: Align[] = columns.map(() => 'left')
   if (alignRaw !== null) {
     const parts = splitCells(alignRaw).map((p) => p.toLowerCase())
     for (const p of parts) {
-      if (!isAlign(p)) return err(`table: align은 "left", "center", "right" 중 하나예요: ${p}`)
+      if (!isAlign(p)) return err(`table: align은 "left", "center", "right" 중 하나입니다: ${p}`)
     }
     if (parts.length === 1) {
       align.fill(parts[0] as Align)
@@ -93,7 +93,7 @@ function parseChart(lines: string[]): ParsedBlock {
   for (const line of lines) {
     if (line === '') continue
     const idx = line.indexOf(':')
-    if (idx < 0) return err(`chart: "${line}" 줄에 ':'가 없어요.`)
+    if (idx < 0) return err(`chart: "${line}" 줄에 ':'가 없습니다.`)
     const key = line.slice(0, idx).trim()
     const value = line.slice(idx + 1).trim()
     const lower = key.toLowerCase()
@@ -103,9 +103,9 @@ function parseChart(lines: string[]): ParsedBlock {
     else entries.push({ name: key, raw: value })
   }
   if (type !== 'bar' && type !== 'line' && type !== 'pie') {
-    return err(`chart: type은 "bar", "line", "pie" 중 하나예요: ${type || '(없음)'}`)
+    return err(`chart: type은 "bar", "line", "pie" 중 하나입니다: ${type || '(없음)'}`)
   }
-  if (entries.length === 0) return err('chart: 데이터가 없어요.')
+  if (entries.length === 0) return err('chart: 데이터가 없습니다.')
 
   let labels: string[]
   let series: { name: string; values: number[] }[]
@@ -115,7 +115,7 @@ function parseChart(lines: string[]): ParsedBlock {
     for (const e of entries) {
       const cells = splitCells(e.raw)
       if (cells.length !== labels.length) {
-        return err(`chart: labels는 ${labels.length}개인데 ${e.name} 값은 ${cells.length}개예요.`)
+        return err(`chart: labels는 ${labels.length}개인데 ${e.name} 값은 ${cells.length}개입니다.`)
       }
       const values: number[] = []
       for (const c of cells) {
@@ -137,17 +137,17 @@ function parseChart(lines: string[]): ParsedBlock {
     series = [{ name: '', values }]
   }
 
-  if (labels.length > 200) return err('chart: 항목은 200개까지예요.')
-  if (series.length > 8) return err('chart: 계열은 8개까지예요.')
+  if (labels.length > 200) return err('chart: 항목은 200개까지입니다.')
+  if (series.length > 8) return err('chart: 계열은 8개까지입니다.')
   if (type === 'pie') {
-    if (series.length !== 1) return err('chart: pie는 값 하나만 받아요.')
-    if (labels.length > 12) return err('chart: pie는 항목 12개까지예요.')
+    if (series.length !== 1) return err('chart: pie는 값 하나만 받습니다.')
+    if (labels.length > 12) return err('chart: pie는 항목 12개까지입니다.')
     let sum = 0
     for (const v of series[0].values) {
-      if (v < 0) return err('chart: pie에는 음수를 쓸 수 없어요.')
+      if (v < 0) return err('chart: pie에는 음수를 쓸 수 없습니다.')
       sum += v
     }
-    if (sum <= 0) return err('chart: pie 값의 합이 0이에요.')
+    if (sum <= 0) return err('chart: pie 값의 합이 0입니다.')
   }
   return { block: { kind: 'chart', type, title, labels, series } }
 }

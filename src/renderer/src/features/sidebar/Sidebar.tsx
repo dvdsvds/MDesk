@@ -9,7 +9,7 @@ import { dirOf, fileNameOf, sepOf } from '@renderer/utils/path'
 import ExportIcon from '../../icons/export.svg?react'
 import NewFileIcon from '../../icons/new-file.svg?react'
 import NewFolderIcon from '../../icons/new-folder.svg?react'
-import ChevronIcon from '../../icons/chevron.svg?react'
+import { SectionHeader } from './SectionHeader'
 import { InlineNameInput, NewFileRow } from './InlineInputs'
 import { TreeRow, findNodeByPath, type RowContext } from './TreeRow'
 import { buildMenuItems } from './sidebarMenu'
@@ -18,6 +18,7 @@ import { useTreeActions, type DeleteTarget } from './useTreeActions'
 import { TagSection } from './TagSection'
 import { TemplateSection } from './TemplateSection'
 import { DateSection } from './DateSection'
+import { DriveSection } from './DriveSection'
 import type { NoteTemplate } from '../../utils/noteTemplate'
 import { useSettingsStore } from '@renderer/stores/settingsStore'
 
@@ -35,6 +36,7 @@ interface SidebarProps {
   onCompareChanges: (filePath: string) => void
   onOpenHistory: (filePath: string) => void
   onOpenAtLine: (filePath: string, line: number) => void
+  onOpenSettings: () => void
   selectedFolderPath: string | null
   onSelectFolder: (path: string | null) => void
   /** 열려 있는 데일리 노트의 날짜. 날짜 섹션을 그날로 맞춘다 */
@@ -57,32 +59,6 @@ const SECTION_TRANSITION = { duration: 0.2, ease: [0.4, 0, 0.2, 1] as const }
 /** 접힌 섹션의 높이: 머리 줄 36px + 위 테두리 1px */
 const SECTION_HEADER_BASIS = '37px'
 
-function SectionHeader({
-  label,
-  open,
-  onToggle
-}: {
-  label: string
-  open: boolean
-  onToggle: () => void
-}): React.JSX.Element {
-  return (
-    <button
-      type="button"
-      onClick={onToggle}
-      className="flex h-[26px] items-center gap-1 rounded-md pl-1 pr-2 text-[11px] font-medium tracking-wide text-text-tertiary transition-colors hover:text-text-secondary"
-    >
-      <ChevronIcon
-        width={12}
-        height={12}
-        className="shrink-0 transition-transform"
-        style={{ transform: open ? 'rotate(90deg)' : 'rotate(0deg)' }}
-      />
-      {label}
-    </button>
-  )
-}
-
 const ICON_BTN =
   'flex h-[26px] w-[26px] items-center justify-center rounded-md text-text-secondary transition-colors hover:bg-bg-mute hover:text-text disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-text-secondary'
 
@@ -96,21 +72,21 @@ function deleteMessage(target: DeleteTarget, dirtyCount: number): string {
   if (dirtyCount > 0) {
     parts.push(
       target.node.type === 'folder'
-        ? `저장 안 한 변경이 있는 파일이 ${dirtyCount}개 있어요. 되돌려도 이 변경은 돌아오지 않아요.`
-        : '저장 안 한 변경이 있어요. 되돌려도 이 변경은 돌아오지 않아요.'
+        ? `저장 안 한 변경이 있는 파일이 ${dirtyCount}개 있습니다. 되돌려도 이 변경은 돌아오지 않습니다.`
+        : '저장 안 한 변경이 있습니다. 되돌려도 이 변경은 돌아오지 않습니다.'
     )
   }
   if (target.node.type === 'folder') {
     if (dirtyCount === 0) {
-      parts.push('폴더 안의 모든 파일이 앱 휴지통으로 이동돼요. Ctrl+Z로 되돌릴 수 있어요')
+      parts.push('폴더 안의 모든 파일이 앱 휴지통으로 이동됩니다. Ctrl+Z로 되돌릴 수 있습니다')
     }
   } else if (target.loading) {
-    parts.push('링크를 확인하고 있어요…')
+    parts.push('링크를 확인하고 있습니다…')
   } else if (target.backlinks && target.backlinks.length > 0) {
     const count = target.backlinks.reduce((sum, b) => sum + b.count, 0)
-    parts.push(`이 파일을 가리키는 위키링크가 ${count}개 있어요. 삭제하면 링크가 끊겨요.`)
+    parts.push(`이 파일을 가리키는 위키링크가 ${count}개 있습니다. 삭제하면 링크가 끊깁니다.`)
   } else if (dirtyCount === 0) {
-    parts.push('앱 휴지통으로 이동돼요. Ctrl+Z로 되돌릴 수 있어요')
+    parts.push('앱 휴지통으로 이동됩니다. Ctrl+Z로 되돌릴 수 있습니다')
   }
   return parts.join(' ')
 }
@@ -130,6 +106,7 @@ export const Sidebar = forwardRef<SidebarHandle, SidebarProps>(function Sidebar(
     onCompareChanges,
     onOpenHistory,
     onOpenAtLine,
+    onOpenSettings,
     selectedFolderPath,
     onSelectFolder,
     onInsertTemplate,
@@ -152,6 +129,8 @@ export const Sidebar = forwardRef<SidebarHandle, SidebarProps>(function Sidebar(
   const shortcuts = useSettingsStore((s) => s.shortcuts)
   const tagsOpen = useSettingsStore((s) => s.tagsSectionOpen)
   const setTagsOpen = useSettingsStore((s) => s.setTagsSectionOpen)
+  const driveOpen = useSettingsStore((s) => s.driveSectionOpen)
+  const setDriveOpen = useSettingsStore((s) => s.setDriveSectionOpen)
   const datesOpen = useSettingsStore((s) => s.datesSectionOpen)
   const setDatesOpen = useSettingsStore((s) => s.setDatesSectionOpen)
   const templatesOpen = useSettingsStore((s) => s.templatesSectionOpen)
@@ -320,7 +299,7 @@ export const Sidebar = forwardRef<SidebarHandle, SidebarProps>(function Sidebar(
     >
       <div className={`flex min-h-0 flex-col ${filesOpen ? 'flex-1' : 'shrink-0'}`}>
         <div className="flex h-9 shrink-0 items-center justify-between pl-2 pr-2">
-          <SectionHeader label="파일" open={filesOpen} onToggle={() => setFilesOpen(!filesOpen)} />
+          <SectionHeader label="로컬 탐색기" open={filesOpen} onToggle={() => setFilesOpen(!filesOpen)} />
           <div className="flex items-center gap-0.5 opacity-0 transition-opacity duration-150 group-focus-within/sb:opacity-100 group-hover/sb:opacity-100">
             <button
               type="button"
@@ -403,6 +382,13 @@ export const Sidebar = forwardRef<SidebarHandle, SidebarProps>(function Sidebar(
           </div>
         )}
       </div>
+      <DriveSection
+        open={driveOpen}
+        onToggle={() => setDriveOpen(!driveOpen)}
+        activeFilePath={activeFilePath}
+        onOpenFile={onOpenFile}
+        onOpenSettings={onOpenSettings}
+      />
       {/* 날짜 섹션은 그날 노트 몇 개뿐이라 남은 높이를 나눠 갖지 않고 목록 길이만큼만 차지한다 */}
       <div className="flex shrink-0 flex-col border-t border-border">
         <div className="flex h-9 shrink-0 items-center pl-2 pr-2">
@@ -465,7 +451,7 @@ export const Sidebar = forwardRef<SidebarHandle, SidebarProps>(function Sidebar(
       )}
       {deleteTarget && (
         <ConfirmDialog
-          title="삭제할까요?"
+          title="삭제하시겠습니까?"
           subject={{ name: deleteTarget.node.name, kind: deleteTarget.node.type }}
           message={deleteMessage(deleteTarget, countDirtyUnder(dirtyFilePaths, deleteTarget.node))}
           items={deleteTarget.backlinks?.map((b) => fileNameOf(b.path))}

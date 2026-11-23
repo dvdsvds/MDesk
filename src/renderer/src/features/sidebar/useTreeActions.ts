@@ -71,7 +71,7 @@ export function useTreeActions({
         setEditingPath(null)
         useToastStore
           .getState()
-          .push({ kind: 'info', message: `'${newName}' 이름이 이미 있거나 바꿀 수 없어요.` })
+          .push({ kind: 'info', message: `'${newName}' 이름이 이미 있거나 바꿀 수 없습니다.` })
       })
       .finally(() => {
         renamingRef.current = false
@@ -163,7 +163,7 @@ export function useTreeActions({
         const restored = await window.api.workspace.restoreTrash(op.trashId)
         await syncTree()
         setFocusedPath(restored)
-        toast({ kind: 'info', message: `${fileNameOf(restored)}을(를) 되돌렸어요.` })
+        toast({ kind: 'info', message: `${fileNameOf(restored)}을(를) 되돌렸습니다.` })
       } else if (op.kind === 'rename') {
         const back = await window.api.workspace.renameEntry(op.newPath, fileNameOf(op.oldPath))
         onEntryRenamed(op.newPath, back)
@@ -185,7 +185,7 @@ export function useTreeActions({
     } catch {
       toast({
         kind: 'info',
-        message: '되돌릴 수 없어요. 같은 이름이 이미 있거나 파일이 바뀌었어요.'
+        message: '되돌릴 수 없습니다. 같은 이름이 이미 있거나 파일이 바뀌었습니다.'
       })
     }
   }

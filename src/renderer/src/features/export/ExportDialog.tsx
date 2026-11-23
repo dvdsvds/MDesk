@@ -90,14 +90,14 @@ export function ExportDialog({
       const prep = await window.api.workspace.prepareExport(parent, name.trim(), useMd, usePdf)
       if (!prep.ok) {
         if (prep.error === 'exists') {
-          setNameError('이미 있어요. 다른 이름을 입력해 주세요.')
+          setNameError('이미 있습니다. 다른 이름을 입력해 주십시오.')
           setPhase('form')
         } else if (prep.error === 'denied') {
           setError(
-            '폴더에 쓸 수 없어요. 문서, 사진, 바탕화면 같은 보호 폴더는 Windows 보안이 막을 수 있어요. 다른 폴더를 골라 주세요.'
+            '폴더에 쓸 수 없습니다. 문서, 사진, 바탕화면 같은 보호 폴더는 Windows 보안이 막을 수 있습니다. 다른 폴더를 골라 주십시오.'
           )
         } else {
-          setError('이름을 확인해 주세요.')
+          setError('이름을 확인해 주십시오.')
         }
         return
       }
@@ -125,7 +125,7 @@ export function ExportDialog({
       }
     } catch {
       setError(
-        '내보내기에 실패했어요. 보호 폴더(문서, 사진, 바탕화면)면 Windows 보안이 막을 수 있어요.'
+        '내보내기에 실패했습니다. 보호 폴더(문서, 사진, 바탕화면)면 Windows 보안이 막을 수 있습니다.'
       )
     }
   }
@@ -147,7 +147,7 @@ export function ExportDialog({
   if (error) {
     return (
       <Dialog onClose={onClose}>
-        <DialogHeader icon={HEAD_ICON} title="내보내지 못했어요" subtitle={folderLabel} danger />
+        <DialogHeader icon={HEAD_ICON} title="내보내지 못했습니다" subtitle={folderLabel} danger />
         <DialogBody>
           <p className="text-[13px] leading-relaxed text-text-secondary">{error}</p>
         </DialogBody>
@@ -184,7 +184,7 @@ export function ExportDialog({
       <Dialog onClose={onClose}>
         <DialogHeader
           icon={HEAD_ICON}
-          title="일부 PDF를 만들지 못했어요"
+          title="일부 PDF를 만들지 못했습니다"
           subtitle={folderLabel}
           danger
         />
@@ -204,7 +204,7 @@ export function ExportDialog({
         <DialogHeader icon={HEAD_ICON} title="대표 문서 이름" subtitle={folderLabel} />
         <DialogBody>
           <p className="text-[13px] leading-relaxed text-text-secondary">
-            루트의 main.md를 MD로 내보낼 때 쓸 이름을 골라주세요.
+            루트의 main.md를 MD로 내보낼 때 쓸 이름을 골라 주십시오.
           </p>
           <div className="mt-3 flex flex-col gap-1">
             {REPRESENTATIVE_OPTIONS.map((opt) => (

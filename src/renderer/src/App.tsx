@@ -181,6 +181,16 @@ function App(): React.JSX.Element {
   const [graphOpen, setGraphOpen] = useState(false)
   const [selectedFolderPath, setSelectedFolderPath] = useState<string | null>(null)
   const pushToast = useToastStore((s) => s.push)
+  // Drive 파일을 저장하면 백그라운드로 올린다. 실패하거나 충돌했을 때만 알린다
+  useEffect(
+    () =>
+      window.api.drive.onUpload((e) => {
+        if ((e.state === 'error' || e.state === 'conflict') && e.message) {
+          pushToast({ kind: 'info', message: e.message })
+        }
+      }),
+    [pushToast]
+  )
   const editorRef = useRef<MarkdownEditorHandle>(null)
   const previewRef = useRef<MarkdownPreviewHandle>(null)
   const scrollSourceRef = useRef<'editor' | 'preview' | 'jump' | null>(null)
@@ -322,7 +332,7 @@ function App(): React.JSX.Element {
       setSelectedFolderPath(null)
       const openExternally = (): void => {
         void window.api.workspace.openInDefaultApp(filePath).then((error) => {
-          if (error) pushToast({ kind: 'info', message: '이 파일을 열 수 있는 앱이 없어요.' })
+          if (error) pushToast({ kind: 'info', message: '이 파일을 열 수 있는 앱이 없습니다.' })
         })
       }
       const kind = fileKindOf(filePath)
@@ -347,8 +357,8 @@ function App(): React.JSX.Element {
           kind: 'info',
           message:
             result.reason === 'tooLarge'
-              ? '20MB가 넘는 파일이라 폴더에서 보여 드려요.'
-              : '텍스트로 열 수 없는 파일이라 폴더에서 보여 드려요.'
+              ? '20MB가 넘는 파일이라 폴더에서 보여 드립니다.'
+              : '텍스트로 열 수 없는 파일이라 폴더에서 보여 드립니다.'
         })
         void window.api.workspace.reveal(filePath)
       })
@@ -363,7 +373,7 @@ function App(): React.JSX.Element {
       const tab = allTabs.find((t) => t.id === activeId)
       const view = getCurrentView()
       if (!tab?.filePath || !isMarkdownPath(tab.filePath) || !view) {
-        pushToast({ kind: 'info', message: '템플릿을 넣을 노트를 먼저 열어 주세요.' })
+        pushToast({ kind: 'info', message: '템플릿을 넣을 노트를 먼저 열어 주십시오.' })
         return
       }
       const text = applyTemplate(template.content, {
@@ -399,7 +409,7 @@ function App(): React.JSX.Element {
         await window.api.workspace.saveNote({ filePath: created, content })
         openFile(created, content)
       } catch {
-        pushToast({ kind: 'info', message: '템플릿으로 노트를 만들지 못했어요.' })
+        pushToast({ kind: 'info', message: '템플릿으로 노트를 만들지 못했습니다.' })
       }
     },
     [resolveNewNoteDir, openFile, pushToast, setTree]
@@ -426,7 +436,7 @@ function App(): React.JSX.Element {
   const handleMissingTabClick = useCallback(
     (tab: Tab): void => {
       setActiveTab(tab.id)
-      pushToast({ kind: 'info', message: '파일이 삭제되었거나 이동되었어요.' })
+      pushToast({ kind: 'info', message: '파일이 삭제되었거나 이동되었습니다.' })
     },
     [setActiveTab, pushToast]
   )
@@ -541,7 +551,7 @@ function App(): React.JSX.Element {
       setHistoryTarget(null)
       pushToast({
         kind: 'info',
-        message: '이전 버전으로 되돌렸어요.'
+        message: '이전 버전으로 되돌렸습니다.'
       })
     },
     [historyTarget, openFile, setContent, pushToast]
@@ -596,7 +606,7 @@ function App(): React.JSX.Element {
         : (useTabsStore.getState().tabs.find((t) => t.id === useTabsStore.getState().activeTabId)
             ?.filePath ?? undefined)
       if (!targetPath) {
-        pushToast({ kind: 'info', message: `"${title}" 파일을 찾을 수 없어요.` })
+        pushToast({ kind: 'info', message: `"${title}" 파일을 찾을 수 없습니다.` })
         return
       }
       if (!heading) {
@@ -611,7 +621,7 @@ function App(): React.JSX.Element {
         const line = findHeadingLine(content, heading)
         if (line === null) {
           handleOpenFile(targetPath)
-          pushToast({ kind: 'info', message: `'${heading}' 제목을 찾을 수 없어요.` })
+          pushToast({ kind: 'info', message: `'${heading}' 제목을 찾을 수 없습니다.` })
           return
         }
         handleOpenTodo(targetPath, line)
@@ -793,6 +803,7 @@ function App(): React.JSX.Element {
                 onCompareChanges={handleCompareChanges}
                 onOpenHistory={handleOpenHistory}
                 onOpenAtLine={handleOpenTodo}
+                onOpenSettings={() => setSettingsOpen(true)}
                 selectedFolderPath={selectedFolderPath}
                 onSelectFolder={setSelectedFolderPath}
                 onInsertTemplate={handleInsertTemplate}

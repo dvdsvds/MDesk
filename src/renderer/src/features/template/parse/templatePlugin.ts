@@ -50,12 +50,12 @@ export function templatePlugin(md: MD): void {
       const at = startLine + 1
       let errors: string[]
       if (env.valueSeen) {
-        errors = [`value 블록은 하나만 쓸 수 있어요 (${at}번째 줄). 첫 번째 value만 읽어요.`]
+        errors = [`value 블록은 하나만 쓸 수 있습니다 (${at}번째 줄). 첫 번째 value만 읽습니다.`]
       } else {
         env.valueSeen = true
         errors =
           env.templates > 0
-            ? [`value는 template보다 앞에 써 주세요 (${at}번째 줄). 이 value는 읽지 않아요.`]
+            ? [`value는 template보다 앞에 써 주십시오 (${at}번째 줄). 이 value는 읽지 않습니다.`]
             : parseValues(lines, env)
       }
 

@@ -177,7 +177,7 @@ function SheetTable({ sheet }: { sheet: SheetView }): React.JSX.Element {
     [sheet.colCount]
   )
   if (sheet.rowCount === 0 || sheet.colCount === 0) {
-    return <p className="p-6 text-[13px] text-text-tertiary">빈 시트예요.</p>
+    return <p className="p-6 text-[13px] text-text-tertiary">빈 시트입니다.</p>
   }
   return (
     <table className="xlsx-table border-separate border-spacing-0 text-[12.5px] text-text">
@@ -272,7 +272,7 @@ export function XlsxViewer({ filePath }: { filePath: string }): React.JSX.Elemen
         ))}
         {sheet?.truncated && (
           <span className="ml-auto shrink-0 px-2 text-[11px] text-text-tertiary">
-            {MAX_ROWS.toLocaleString()}행·{MAX_COLS}열까지만 보여요
+            {MAX_ROWS.toLocaleString()}행·{MAX_COLS}열까지만 보입니다
           </span>
         )}
       </div>

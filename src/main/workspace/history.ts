@@ -102,10 +102,10 @@ export function changeHistoryDir(newDir: string | null): string {
 
   const rootDir = resolve(getRootDir())
   if (isInside(target, rootDir) || isInside(rootDir, target)) {
-    throw new Error('작업 폴더의 하위 폴더나 상위 폴더는 고를 수 없어요.')
+    throw new Error('작업 폴더의 하위 폴더나 상위 폴더는 고를 수 없습니다.')
   }
   if (isInside(target, oldDir) || isInside(oldDir, target)) {
-    throw new Error('현재 기록 폴더의 하위 폴더나 상위 디렉토리는 고를 수 없어요.')
+    throw new Error('현재 기록 폴더의 하위 폴더나 상위 디렉토리는 고를 수 없습니다.')
   }
 
   mkdirSync(target, { recursive: true })

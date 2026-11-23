@@ -215,18 +215,18 @@ export function TodoDialog({
                     strokeLinejoin="round"
                   />
                 </svg>
-                <p className="mt-2 text-sm text-text">할 일이 없어요</p>
+                <p className="mt-2 text-sm text-text">할 일이 없습니다</p>
                 <p className="text-[12.5px] text-text-tertiary">
                   파일에{' '}
                   <code className="rounded bg-text/[0.07] px-1.5 py-px font-editor text-xs text-text-secondary">
                     - [ ] 할 일
                   </code>
-                  을 작성하면 여기에 모여요
+                  을 작성하면 여기에 모입니다
                 </p>
               </div>
             ) : (
               <p className="px-2 py-8 text-center text-[13px] text-text-tertiary">
-                미완료 할 일이 없어요
+                미완료 할 일이 없습니다
               </p>
             )
           ) : (

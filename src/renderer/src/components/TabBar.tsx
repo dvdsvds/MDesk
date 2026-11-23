@@ -179,7 +179,7 @@ export function TabBar({
                 세로는 자르지 않도록 overflow-x만 clip */}
             <span
               className={`relative min-w-0 flex-1 overflow-x-clip text-ellipsis whitespace-nowrap [text-box:trim-both_cap_alphabetic] ${TALL_CHARS.test(label) ? '' : '-top-px'} ${tab.missing ? 'text-danger line-through' : ''}`}
-              title={tab.missing ? '파일이 없어요' : undefined}
+              title={tab.missing ? '파일이 없습니다' : undefined}
             >
               {label}
             </span>

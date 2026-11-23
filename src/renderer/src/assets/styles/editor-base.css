@@ -265,10 +265,12 @@
 }
 
 /* ───────── 마크다운 글자 모양 ───────── */
-/* 인라인 코드: 백틱 안쪽 글자에만 테두리와 옅은 배경 */
+/* 인라인 코드: 백틱 안쪽 글자에만 테두리와 옅은 배경.
+   테두리는 border가 아니라 안쪽 그림자로 긋는다. border는 줄 폭을 좌우 1px씩 늘려서,
+   표에서 백틱이 있는 줄만 `|`가 밀려 열이 어긋난다 */
 .cm-inline-code {
   background: color-mix(in srgb, var(--color-syntax-code) 9%, transparent);
-  border: 1px solid color-mix(in srgb, var(--color-syntax-code) 28%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-syntax-code) 28%, transparent);
   border-radius: 5px;
   box-decoration-break: clone;
   -webkit-box-decoration-break: clone;

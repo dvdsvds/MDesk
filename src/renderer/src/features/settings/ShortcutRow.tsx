@@ -33,7 +33,7 @@ export function ShortcutRow({ action }: ShortcutRowProps): React.JSX.Element {
       if (!newCombo) return
       const conflictWith = findConflict(shortcuts, action, newCombo)
       if (conflictWith) {
-        setConflictMessage(`이미 "${SHORTCUT_LABELS[conflictWith]}"에서 쓰고 있어요.`)
+        setConflictMessage(`이미 "${SHORTCUT_LABELS[conflictWith]}"에서 쓰고 있습니다.`)
         return
       }
       setShortcut(action, newCombo)
@@ -61,7 +61,7 @@ export function ShortcutRow({ action }: ShortcutRowProps): React.JSX.Element {
               : 'border-border text-text-secondary hover:border-border-strong'
           }`}
         >
-          {capturing ? '키를 눌러주세요…' : combo}
+          {capturing ? '키를 눌러 주십시오…' : combo}
         </button>
         {combo !== DEFAULT_SHORTCUTS[action] && (
           <button

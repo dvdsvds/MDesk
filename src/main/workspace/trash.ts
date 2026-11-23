@@ -65,7 +65,7 @@ export function restoreFromTrash(id: string, beforeMove?: (destination: string) 
   const entries = loadIndex()
   const entry = entries.find((e) => e.id === id)
   const stored = entry ? join(trashDir(), id, entry.name) : ''
-  if (!entry || !existsSync(stored)) throw new Error('휴지통에서 찾을 수 없어요.')
+  if (!entry || !existsSync(stored)) throw new Error('휴지통에서 찾을 수 없습니다.')
   const dir = dirname(join(getRootDir(), ...entry.from.split('/')))
   mkdirSync(dir, { recursive: true })
   const destination = join(dir, uniqueEntryName(dir, entry.name))

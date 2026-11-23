@@ -51,7 +51,7 @@ export const useToastStore = create<ToastState>((set, get) => ({
     const expanded: ToastItem[] = target.items.map((item) => ({
       id: makeId(),
       kind: 'external-change',
-      message: `${item.title}이(가) 외부에서 변경되어 다시 불러왔어요. Ctrl+Z로 되돌릴 수 있어요`,
+      message: `${item.title}이(가) 외부에서 변경되어 다시 불러왔습니다. Ctrl+Z로 되돌릴 수 있습니다`,
       filePath: item.filePath,
       oldContent: item.oldContent,
       newContent: item.newContent

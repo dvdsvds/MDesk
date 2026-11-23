@@ -66,7 +66,7 @@ async function renderNote(note: PdfNote, css: string, pdfDir: string): Promise<s
     await settle(host)
     transformLinks(host, note)
     const preview = host.querySelector<HTMLElement>('.prose-preview')
-    if (!preview) return '미리보기를 만들지 못했어요'
+    if (!preview) return '미리보기를 만들지 못했습니다'
     const res = await window.api.export.pdfFile({
       html: extractHtml(preview),
       css,

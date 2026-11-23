@@ -118,8 +118,8 @@ export function TemplateSection({
       )}
       {deleting && (
         <ConfirmDialog
-          title="템플릿을 삭제할까요?"
-          message={`'${deleting.name}' 템플릿이 지워져요. 이 템플릿으로 만든 노트는 그대로 남아요.`}
+          title="템플릿을 삭제하시겠습니까?"
+          message={`'${deleting.name}' 템플릿이 지워집니다. 이 템플릿으로 만든 노트는 그대로 남습니다.`}
           confirmLabel="삭제"
           danger
           onConfirm={() => {

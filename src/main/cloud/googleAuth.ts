@@ -127,7 +127,7 @@ function waitForCode(
       fn()
     }
     const timer = setTimeout(
-      () => finish(() => reject(new Error('로그인 시간이 지났어요. 다시 시도해 주세요.'))),
+      () => finish(() => reject(new Error('로그인 시간이 지났습니다. 다시 시도해 주십시오.'))),
       LOGIN_TIMEOUT_MS
     )
 
@@ -141,22 +141,22 @@ function waitForCode(
       }
       res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', Connection: 'close' })
       if (url.searchParams.get('state') !== state) {
-        res.end(DONE_PAGE('연결하지 못했어요', '요청이 올바르지 않아요. Mdesk에서 다시 시도해 주세요.'))
-        finish(() => reject(new Error('로그인 요청이 올바르지 않아요. 다시 시도해 주세요.')))
+        res.end(DONE_PAGE('연결하지 못했습니다', '요청이 올바르지 않습니다. Mdesk에서 다시 시도해 주십시오.'))
+        finish(() => reject(new Error('로그인 요청이 올바르지 않습니다. 다시 시도해 주십시오.')))
         return
       }
       if (error || !code) {
-        res.end(DONE_PAGE('연결하지 못했어요', 'Mdesk로 돌아가서 다시 시도해 주세요.'))
+        res.end(DONE_PAGE('연결하지 못했습니다', 'Mdesk로 돌아가서 다시 시도해 주십시오.'))
         finish(() =>
-          reject(new Error(error === 'access_denied' ? '로그인을 취소했어요.' : '로그인에 실패했어요.'))
+          reject(new Error(error === 'access_denied' ? '로그인을 취소했습니다.' : '로그인에 실패했습니다.'))
         )
         return
       }
-      res.end(DONE_PAGE('연결되었어요', '이 창을 닫고 Mdesk로 돌아가세요.'))
+      res.end(DONE_PAGE('연결되었습니다', '이 창을 닫고 Mdesk로 돌아가십시오.'))
       finish(() => resolve({ code, redirectUri }))
     })
 
-    server.on('error', () => finish(() => reject(new Error('로그인을 시작하지 못했어요.'))))
+    server.on('error', () => finish(() => reject(new Error('로그인을 시작하지 못했습니다.'))))
     server.listen(0, '127.0.0.1', () => {
       const addr = server.address()
       redirectUri = `http://127.0.0.1:${typeof addr === 'object' && addr ? addr.port : 0}`
@@ -183,12 +183,12 @@ async function revoke(token: string): Promise<void> {
 }
 
 export async function connectGoogle(): Promise<ConnectResult> {
-  if (!isConfigured()) return { ok: false, error: '이 빌드에는 Google 연결 정보가 들어 있지 않아요.' }
+  if (!isConfigured()) return { ok: false, error: '이 빌드에는 Google 연결 정보가 들어 있지 않습니다.' }
   if (!(await safeStorage.isAsyncEncryptionAvailable())) {
     return {
       ok: false,
       error:
-        '로그인 정보를 안전하게 보관할 수 없어요. Linux에서는 GNOME Keyring이나 KWallet 같은 비밀번호 저장소가 필요해요.'
+        '로그인 정보를 안전하게 보관할 수 없습니다. Linux에서는 GNOME Keyring이나 KWallet 같은 비밀번호 저장소가 필요합니다.'
     }
   }
   try {
@@ -225,7 +225,7 @@ export async function connectGoogle(): Promise<ConnectResult> {
       })
       return {
         ok: false,
-        error: `로그인 정보를 받지 못했어요${token.error ? ` (${token.error})` : ''}. 다시 시도해 주세요.`
+        error: `로그인 정보를 받지 못했습니다${token.error ? ` (${token.error})` : ''}. 다시 시도해 주십시오.`
       }
     }
     // 동의 화면에서 Drive 항목을 끄면 로그인은 되지만 파일에 접근할 수 없다
@@ -233,7 +233,7 @@ export async function connectGoogle(): Promise<ConnectResult> {
       await revoke(token.refresh_token)
       return {
         ok: false,
-        error: 'Google Drive 접근을 허용해야 연결할 수 있어요. 다시 시도해서 모든 항목을 허용해 주세요.'
+        error: 'Google Drive 접근을 허용해야 연결할 수 있습니다. 다시 시도해서 모든 항목을 허용해 주십시오.'
       }
     }
     const email = emailFromIdToken(token.id_token)
@@ -245,7 +245,7 @@ export async function connectGoogle(): Promise<ConnectResult> {
     return { ok: true, email }
   } catch (e) {
     console.error('[cloud] 연결 실패:', e)
-    return { ok: false, error: e instanceof Error ? e.message : '연결하지 못했어요.' }
+    return { ok: false, error: e instanceof Error ? e.message : '연결하지 못했습니다.' }
   }
 }
 
@@ -253,6 +253,11 @@ export async function disconnectGoogle(): Promise<void> {
   const login = await readLogin()
   clearLogin()
   if (login) await revoke(login.refreshToken)
+}
+
+/** 접근 토큰이 서버에서 거절됐을 때 캐시를 버려 다음 호출에서 새로 받게 한다 */
+export function resetGoogleAccessToken(): void {
+  accessToken = null
 }
 
 /** Drive API 호출에 쓸 접근 토큰. 만료됐으면 새로 받고, 연결이 끊긴 상태면 null */

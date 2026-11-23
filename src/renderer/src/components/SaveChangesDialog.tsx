@@ -20,9 +20,9 @@ export function SaveChangesDialog({
         onClick={(e) => e.stopPropagation()}
         className="w-80 rounded-xl border border-border bg-bg-elevated p-5 shadow-2xl"
       >
-        <h2 className="text-sm font-semibold text-text">변경 내용을 저장할까요?</h2>
+        <h2 className="text-sm font-semibold text-text">변경 내용을 저장하시겠습니까?</h2>
         <p className="mt-2 text-[13px] leading-relaxed text-text-secondary">
-          &quot;{title}&quot; 파일을 닫기 전에 저장하지 않으면 변경 내용이 사라져요.
+          &quot;{title}&quot; 파일을 닫기 전에 저장하지 않으면 변경 내용이 사라집니다.
         </p>
         <div className="mt-5 flex justify-end gap-2">
           <button

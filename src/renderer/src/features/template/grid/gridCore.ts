@@ -183,10 +183,10 @@ export function cellsIn(info: GridInfo, rect: Rect): CellInfo[] | string {
     if (!hit) continue
     const inside =
       c.r >= rect.r1 && c.r + c.rs - 1 <= rect.r2 && c.c >= rect.c1 && c.c + c.cs - 1 <= rect.c2
-    if (!inside) return '선택한 범위가 칸 경계와 맞지 않아요.'
+    if (!inside) return '선택한 범위가 칸 경계와 맞지 않습니다.'
     out.push(c)
   }
-  return out.length === 0 ? '선택한 칸이 없어요.' : out
+  return out.length === 0 ? '선택한 칸이 없습니다.' : out
 }
 
 export interface Out {

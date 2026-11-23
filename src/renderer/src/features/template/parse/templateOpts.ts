@@ -31,7 +31,7 @@ export class Ctx {
   lineBase = 1
   warn(msg: string): void {
     if (this.warnings.length < MAX_WARN) this.warnings.push(msg)
-    else if (this.warnings.length === MAX_WARN) this.warnings.push('…경고가 더 있어요.')
+    else if (this.warnings.length === MAX_WARN) this.warnings.push('…경고가 더 있습니다.')
   }
 }
 
@@ -53,11 +53,11 @@ export function parseEdgeValue(
   kinds: readonly string[]
 ): { kind: string; w: number | null; c: string | null } | string {
   const parts = val.split(',').map((x) => x.trim())
-  if (parts.length > 3 || !kinds.includes(parts[0])) return `종류는 ${kinds.join(', ')} 중 하나예요`
+  if (parts.length > 3 || !kinds.includes(parts[0])) return `종류는 ${kinds.join(', ')} 중 하나입니다`
   let w: number | null = null
   if (parts[1] !== undefined && parts[1] !== '' && parts[1] !== '-') {
     w = num(parts[1], 0.05, 5)
-    if (w === null) return '굵기는 0.05~5mm 범위의 숫자예요'
+    if (w === null) return '굵기는 0.05~5mm 범위의 숫자입니다'
   }
   let c: string | null = null
   if (parts[2] !== undefined && parts[2] !== '' && parts[2] !== '-') {
@@ -71,11 +71,11 @@ export function parseOpts(tokens: string[], ctx: Ctx, where: string, scope: Scop
   const o: Opt = {}
   const deny = (name: string): boolean => {
     if (scope === 'text' && TEXT_DENY.has(name)) {
-      ctx.warn(`${where}: text에서는 쓰지 않는 옵션이에요: ${name}`)
+      ctx.warn(`${where}: text에서는 쓰지 않는 옵션입니다: ${name}`)
       return true
     }
     if (scope === 'page' && name === 'h') {
-      ctx.warn('page에서는 h=를 쓸 수 없어요. 무시했어요.')
+      ctx.warn('page에서는 h=를 쓸 수 없습니다. 무시했습니다.')
       return true
     }
     return false
@@ -91,14 +91,14 @@ export function parseOpts(tokens: string[], ctx: Ctx, where: string, scope: Scop
       } else if (w === 'vertical') {
         if (!deny('vertical')) o.vertical = true
       } else {
-        ctx.warn(`${where}: 모르는 옵션이에요: ${w}`)
+        ctx.warn(`${where}: 모르는 옵션입니다: ${w}`)
       }
       continue
     }
     const key = w.slice(0, eq)
     const val = unquote(w.slice(eq + 1))
     if (key === 'col' || key === 'row') {
-      ctx.warn(`${where}: ${key}=는 여기서 쓸 수 없어요. 무시했어요.`)
+      ctx.warn(`${where}: ${key}=는 여기서 쓸 수 없습니다. 무시했습니다.`)
       continue
     }
     if (key === 'ff') {
@@ -106,7 +106,7 @@ export function parseOpts(tokens: string[], ctx: Ctx, where: string, scope: Scop
         .replace(/["\\;{}<>\r\n]/g, '')
         .trim()
         .slice(0, 60)
-      if (name === '') ctx.warn(`${where}: ff= 글꼴 이름이 비어 있어요.`)
+      if (name === '') ctx.warn(`${where}: ff= 글꼴 이름이 비어 있습니다.`)
       else o.ff = name
     } else if (key === 'fs' || key === 'ls' || key === 'lh' || key === 'p' || key === 'h') {
       if (deny(key)) continue
@@ -119,7 +119,7 @@ export function parseOpts(tokens: string[], ctx: Ctx, where: string, scope: Scop
       }
       const [lo, hi, label] = range[key]
       const n = num(val, lo, hi)
-      if (n === null) ctx.warn(`${where}: ${key}= 값은 ${label} 범위의 숫자예요: ${val}`)
+      if (n === null) ctx.warn(`${where}: ${key}= 값은 ${label} 범위의 숫자입니다: ${val}`)
       else if (key === 'fs') o.fs = n
       else if (key === 'ls') o.ls = n
       else if (key === 'lh') o.lh = n
@@ -133,7 +133,7 @@ export function parseOpts(tokens: string[], ctx: Ctx, where: string, scope: Scop
       if (deny('border')) continue
       const b = parseBorder(val)
       if (b === null)
-        ctx.warn(`${where}: border= 값이 틀려요. none, all, -left,-top 처럼 써 주세요: ${val}`)
+        ctx.warn(`${where}: border= 값이 틀립니다. none, all, -left,-top 처럼 써 주십시오: ${val}`)
       else o.border = b
     } else if (/^border-(top|right|bottom|left)$/.test(key)) {
       if (deny('border')) continue
@@ -163,10 +163,10 @@ export function parseOpts(tokens: string[], ctx: Ctx, where: string, scope: Scop
     } else if (key === 'line') {
       if (deny('line')) continue
       if (!LINE_KINDS.includes(val))
-        ctx.warn(`${where}: line= 값은 solid, thick, double, dashed 중 하나예요: ${val}`)
+        ctx.warn(`${where}: line= 값은 solid, thick, double, dashed 중 하나입니다: ${val}`)
       else o.line = val as LineKind
     } else {
-      ctx.warn(`${where}: 모르는 옵션이에요: ${w}`)
+      ctx.warn(`${where}: 모르는 옵션입니다: ${w}`)
     }
   }
   return o

@@ -47,7 +47,7 @@ function fillFile(span: HTMLElement, noteDir: string, ctx: FillContext): void {
   const path = resolveEmbedFile(target, noteDir, ctx.files)
   span.replaceChildren()
   if (!path) {
-    span.append(message(`'${target}' 파일을 찾을 수 없어요.`))
+    span.append(message(`'${target}' 파일을 찾을 수 없습니다.`))
     return
   }
   if (isImageTarget(target)) {
@@ -88,18 +88,18 @@ async function fillNote(
   box.replaceChildren(header, body)
 
   const path = ctx.notes.find((n) => n.title === title)?.path
-  if (!path) return void body.append(message(`'${title}' 노트를 찾을 수 없어요.`))
-  if (chain.includes(path)) return void body.append(message('순환 임베드라 펼치지 않았어요.'))
-  if (depth >= MAX_DEPTH) return void body.append(message('임베드가 너무 깊어서 펼치지 않았어요.'))
+  if (!path) return void body.append(message(`'${title}' 노트를 찾을 수 없습니다.`))
+  if (chain.includes(path)) return void body.append(message('순환 임베드라 펼치지 않았습니다.'))
+  if (depth >= MAX_DEPTH) return void body.append(message('임베드가 너무 깊어서 펼치지 않았습니다.'))
   ctx.watched.add(path)
 
   const content = await readNote(path)
   if (ctx.cancelled()) return
-  if (content === null) return void body.append(message(`'${title}' 노트를 읽을 수 없어요.`))
+  if (content === null) return void body.append(message(`'${title}' 노트를 읽을 수 없습니다.`))
   let section = content
   if (heading) {
     const line = findHeadingLine(content, heading)
-    if (line === null) return void body.append(message(`'${heading}' 제목을 찾을 수 없어요.`))
+    if (line === null) return void body.append(message(`'${heading}' 제목을 찾을 수 없습니다.`))
     section = sliceHeadingSection(content, line)
   }
   body.innerHTML = markdownRenderer.render(section, dirOf(path))

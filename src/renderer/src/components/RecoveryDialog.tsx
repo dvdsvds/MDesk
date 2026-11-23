@@ -87,9 +87,9 @@ export function RecoveryDialog({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="flex h-[80vh] w-[860px] max-w-[95vw] flex-col overflow-hidden rounded-xl border border-border bg-bg-elevated shadow-2xl">
         <div className="shrink-0 border-b border-border px-5 py-3.5">
-          <h2 className="text-[15px] font-semibold text-text">복구할 파일이 있어요</h2>
+          <h2 className="text-[15px] font-semibold text-text">복구할 파일이 있습니다</h2>
           <p className="mt-0.5 text-[13px] leading-relaxed text-text-secondary">
-            앱이 비정상 종료되어 저장되지 않은 파일이에요.
+            앱이 비정상 종료되어 저장되지 않은 파일입니다.
           </p>
         </div>
 

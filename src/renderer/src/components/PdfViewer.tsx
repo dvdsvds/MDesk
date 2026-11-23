@@ -216,7 +216,7 @@ export function PdfViewer({ filePath }: { filePath: string }): React.JSX.Element
   if (failed) {
     return (
       <div className="flex flex-1 items-center justify-center text-[13px] text-text-tertiary">
-        PDF를 열 수 없어요
+        PDF를 열 수 없습니다
       </div>
     )
   }

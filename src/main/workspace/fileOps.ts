@@ -87,7 +87,7 @@ export function renameEntry(oldPath: string, newPath: string): void {
   const safeOld = assertInsideRoot(oldPath)
   const safeNew = assertInsideRoot(newPath)
   if (existsSync(safeNew) && !isSameEntry(safeOld, safeNew)) {
-    throw new Error('같은 이름의 파일이 존재해요.')
+    throw new Error('같은 이름의 파일이 존재합니다.')
   }
   renameSync(safeOld, safeNew)
 }

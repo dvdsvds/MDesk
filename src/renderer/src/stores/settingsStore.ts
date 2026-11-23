@@ -44,6 +44,8 @@ interface SettingsState {
   setSidebarCollapsed: (value: boolean) => void
   filesSectionOpen: boolean
   setFilesSectionOpen: (value: boolean) => void
+  driveSectionOpen: boolean
+  setDriveSectionOpen: (value: boolean) => void
   tagsSectionOpen: boolean
   setTagsSectionOpen: (value: boolean) => void
   collapsedFolders: string[]
@@ -107,6 +109,8 @@ export const useSettingsStore = create<SettingsState>()(
       setSidebarCollapsed: (value) => set({ sidebarCollapsed: value }),
       filesSectionOpen: true,
       setFilesSectionOpen: (value) => set({ filesSectionOpen: value }),
+      driveSectionOpen: false,
+      setDriveSectionOpen: (value) => set({ driveSectionOpen: value }),
       tagsSectionOpen: true,
       setTagsSectionOpen: (value) => set({ tagsSectionOpen: value }),
       templates: DEFAULT_TEMPLATES,

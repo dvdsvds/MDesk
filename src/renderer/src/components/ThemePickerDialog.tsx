@@ -22,9 +22,9 @@ export function ThemePickerDialog({ onConfirm }: ThemePickerDialogProps): React.
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50">
       <div className="w-[30rem] max-w-[92vw] rounded-xl border border-border bg-bg-elevated p-5 shadow-2xl">
-        <h2 className="text-[15px] font-semibold text-text">테마를 골라 주세요</h2>
+        <h2 className="text-[15px] font-semibold text-text">테마를 골라 주십시오</h2>
         <p className="mt-1 text-[12.5px] text-text-secondary">
-          Gruvbox, Tokyo Night 같은 다른 테마는 설정에서 고를 수 있어요.
+          Gruvbox, Tokyo Night 같은 다른 테마는 설정에서 고를 수 있습니다.
         </p>
         <div role="radiogroup" className="mt-4 grid grid-cols-2 gap-3">
           {THEMES.filter((t) => t.builtin).map((t) => {

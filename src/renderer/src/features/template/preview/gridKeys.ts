@@ -43,7 +43,7 @@ export function createGridKeys(opts: {
     if (getLine && mergeDropsText(first, rect, getLine)) {
       openConfirmPanel({
         title: '칸 합치기',
-        message: '왼쪽 위 칸의 글자만 남고, 다른 칸의 글자는 지워져요.',
+        message: '왼쪽 위 칸의 글자만 남고, 다른 칸의 글자는 지워집니다.',
         okLabel: '합치기',
         onOk: run
       })
@@ -60,7 +60,7 @@ export function createGridKeys(opts: {
     openSplitPanel({
       onOk: (n, m) => {
         if (!(n >= 1) || !(m >= 1) || n * m < 2) {
-          toast('나눌 칸 수와 줄 수를 확인해 주세요')
+          toast('나눌 칸 수와 줄 수를 확인해 주십시오')
           return false
         }
         const err = applyGridEdit((getLine) => splitGrid(info, rect, n, m, getLine))

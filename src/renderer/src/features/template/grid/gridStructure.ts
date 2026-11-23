@@ -40,7 +40,7 @@ export function mergeDropsText(info: GridInfo, rect: Rect, getLine: GetLine): bo
 export function mergeGrid(info: GridInfo, rect: Rect, getLine: GetLine): GridResult {
   const inside = cellsIn(info, rect)
   if (typeof inside === 'string') return fail(inside)
-  if (inside.length < 2) return fail('합칠 칸을 둘 이상 선택해 주세요.')
+  if (inside.length < 2) return fail('합칠 칸을 둘 이상 선택해 주십시오.')
   const set = new Set(inside)
   const real = inside.filter((c) => c.def !== null).sort((a, b) => a.r - b.r || a.c - b.c)
   const rs = rect.r2 - rect.r1 + 1
@@ -130,9 +130,9 @@ export function splitGrid(
   getLine: GetLine
 ): GridResult {
   if (!Number.isInteger(nCols) || !Number.isInteger(nRows) || nCols < 1 || nRows < 1) {
-    return fail('칸 수와 줄 수는 1 이상의 정수예요.')
+    return fail('칸 수와 줄 수는 1 이상의 정수입니다.')
   }
-  if (nCols === 1 && nRows === 1) return fail('나눌 칸 수나 줄 수가 1보다 커야 해요.')
+  if (nCols === 1 && nRows === 1) return fail('나눌 칸 수나 줄 수가 1보다 커야 합니다.')
   const inside = cellsIn(info, rect)
   if (typeof inside === 'string') return fail(inside)
 
@@ -182,14 +182,14 @@ export function splitGrid(
     }
     newW = splitSizes(eff, colN)
   }
-  if (newW === null) return fail('칸이 너무 좁아져서 더 나눌 수 없어요.')
+  if (newW === null) return fail('칸이 너무 좁아져서 더 나눌 수 없습니다.')
   const newCols = newW.length
   const newRows = rowN.reduce((a, b) => a + b, 0)
-  if (newCols > MAX_COLS) return fail(`열은 ${MAX_COLS}개까지예요.`)
-  if (newRows > MAX_ROWS) return fail(`줄은 ${MAX_ROWS}개까지예요.`)
+  if (newCols > MAX_COLS) return fail(`열은 ${MAX_COLS}개까지입니다.`)
+  if (newRows > MAX_ROWS) return fail(`줄은 ${MAX_ROWS}개까지입니다.`)
   const addCols = newCols !== info.cols
   const newH = splitSizes(info.heights, rowN)
-  if (newH === null) return fail('줄이 너무 낮아져서 더 나눌 수 없어요.')
+  if (newH === null) return fail('줄이 너무 낮아져서 더 나눌 수 없습니다.')
 
   const rStart = starts(rowN)
   const moved = new Set(inside)
@@ -285,7 +285,7 @@ export function insertRows(
 ): GridResult {
   const n = rect.r2 - rect.r1 + 1
   const rows = info.heights.length
-  if (rows + n > MAX_ROWS) return fail(`줄은 ${MAX_ROWS}개까지예요.`)
+  if (rows + n > MAX_ROWS) return fail(`줄은 ${MAX_ROWS}개까지입니다.`)
   const p = after ? rect.r2 + 1 : rect.r1
   const items: Out[] = []
   const straddle: CellInfo[] = []
@@ -372,11 +372,11 @@ export function planColSegment(
   const inSeg = (x: { r: number; rs: number }): boolean => x.r >= s1 && x.r + x.rs - 1 <= s2
   const L = cells.filter((x) => inSeg(x) && x.c + x.cs - 1 === k)
   const R = cells.filter((x) => inSeg(x) && x.c === k + 1)
-  if (L.length === 0 || R.length === 0) return '경계를 찾을 수 없어요.'
+  if (L.length === 0 || R.length === 0) return '경계를 찾을 수 없습니다.'
 
   const lo = Math.max(...L.map((x) => pos[x.c])) + MIN
   const hi = Math.min(...R.map((x) => pos[x.c + x.cs])) - MIN
-  if (lo > hi) return '칸이 너무 좁아서 옮길 수 없어요.'
+  if (lo > hi) return '칸이 너무 좁아서 옮길 수 없습니다.'
   let x = Math.min(hi, Math.max(lo, Math.round((pos[k + 1] + deltaMm) * 2) / 2))
 
   let j = pos.findIndex((p, i) => i < pos.length - 1 && p < x && x < pos[i + 1])
@@ -391,7 +391,7 @@ export function planColSegment(
   if (j < 0) {
     B = pos.indexOf(x) - 1
   } else {
-    if (widths.length + 1 > MAX_COLS) return `열은 ${MAX_COLS}개까지예요.`
+    if (widths.length + 1 > MAX_COLS) return `열은 ${MAX_COLS}개까지입니다.`
     widths.splice(j, 1, r2(x - pos[j]), r2(pos[j + 1] - x))
     for (const cl of cells) {
       if (cl.c > j) cl.c++
@@ -470,7 +470,7 @@ export function insertCols(
   getLine: GetLine
 ): GridResult {
   const n = rect.c2 - rect.c1 + 1
-  if (info.cols + n > MAX_COLS) return fail(`열은 ${MAX_COLS}개까지예요.`)
+  if (info.cols + n > MAX_COLS) return fail(`열은 ${MAX_COLS}개까지입니다.`)
   const p = after ? rect.c2 + 1 : rect.c1
   const items: Out[] = []
   for (const cell of info.cells) {
@@ -497,7 +497,7 @@ export function insertCols(
     const list = [...eff]
     list.splice(p, 0, ...Array.from({ length: n }, (_, i) => eff[rect.c1 + i]))
     widths = fitWidths(list, total)
-    if (widths === null) return fail('열이 너무 좁아져서 더 추가할 수 없어요.')
+    if (widths === null) return fail('열이 너무 좁아져서 더 추가할 수 없습니다.')
   }
   ensureLastRow(info, getLine, items, info.heights.length, info.heights[info.heights.length - 1])
   return assemble(info, getLine, items, { n: info.cols + n, widths })
@@ -506,13 +506,13 @@ export function insertCols(
 export function deleteRows(info: GridInfo, rect: Rect, getLine: GetLine): GridResult {
   const n = rect.r2 - rect.r1 + 1
   const rows = info.heights.length
-  if (n >= rows) return fail('줄이 하나는 남아야 해요.')
+  if (n >= rows) return fail('줄이 하나는 남아야 합니다.')
   const items: Out[] = []
   for (const cell of info.cells) {
     const hit = cell.r + cell.rs > rect.r1 && cell.r <= rect.r2
     if (hit) {
       if (cell.r < rect.r1 || cell.r + cell.rs - 1 > rect.r2) {
-        return fail('합친 칸이 걸쳐 있어서 지울 수 없어요. 먼저 칸을 나눠 주세요.')
+        return fail('합친 칸이 걸쳐 있어서 지울 수 없습니다. 먼저 칸을 나눠 주십시오.')
       }
       continue
     }
@@ -535,13 +535,13 @@ export function deleteRows(info: GridInfo, rect: Rect, getLine: GetLine): GridRe
 
 export function deleteCols(info: GridInfo, rect: Rect, getLine: GetLine): GridResult {
   const n = rect.c2 - rect.c1 + 1
-  if (n >= info.cols) return fail('열이 하나는 남아야 해요.')
+  if (n >= info.cols) return fail('열이 하나는 남아야 합니다.')
   const items: Out[] = []
   for (const cell of info.cells) {
     const hit = cell.c + cell.cs > rect.c1 && cell.c <= rect.c2
     if (hit) {
       if (cell.c < rect.c1 || cell.c + cell.cs - 1 > rect.c2) {
-        return fail('합친 칸이 걸쳐 있어서 지울 수 없어요. 먼저 칸을 나눠 주세요.')
+        return fail('합친 칸이 걸쳐 있어서 지울 수 없습니다. 먼저 칸을 나눠 주십시오.')
       }
       continue
     }
@@ -565,7 +565,7 @@ export function deleteCols(info: GridInfo, rect: Rect, getLine: GetLine): GridRe
       eff.filter((_, i) => i < rect.c1 || i > rect.c2),
       total
     )
-    if (widths === null) return fail('열이 너무 좁아져서 지울 수 없어요.')
+    if (widths === null) return fail('열이 너무 좁아져서 지울 수 없습니다.')
   }
   ensureLastRow(info, getLine, items, info.heights.length, info.heights[info.heights.length - 1])
   return assemble(info, getLine, items, { n: info.cols - n, widths })

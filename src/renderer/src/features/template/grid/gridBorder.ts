@@ -138,7 +138,7 @@ export function setBorders(
   }
   const wipe = where === 'all' && st.kind === 'none'
   if (edits.size === 0 && !frame && !wipe) {
-    return fail('이 위치에는 바꿀 선이 없어요. 안쪽 선은 칸을 둘 이상 선택해야 해요.')
+    return fail('이 위치에는 바꿀 선이 없습니다. 안쪽 선은 칸을 둘 이상 선택해야 합니다.')
   }
   const items: Out[] = []
   for (const cell of info.cells) {

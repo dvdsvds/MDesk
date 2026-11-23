@@ -49,10 +49,10 @@ export function registerPdfExport(getWindow: () => BrowserWindow | null): void {
     async (_e, payload: { title: string; html: string; css: string }) => {
       const parent = getWindow()
       if (!payload || typeof payload.html !== 'string' || typeof payload.css !== 'string') {
-        return { ok: false, error: '잘못된 요청이에요' }
+        return { ok: false, error: '잘못된 요청입니다' }
       }
       if (payload.html.length + payload.css.length > MAX_BYTES) {
-        return { ok: false, error: '문서가 너무 커요' }
+        return { ok: false, error: '문서가 너무 큽니다' }
       }
 
       const safeTitle = String(payload.title || '문서').replace(/[\\/:*?"<>|]/g, '_')
@@ -85,14 +85,14 @@ export function registerPdfExport(getWindow: () => BrowserWindow | null): void {
         typeof payload.pdfDir !== 'string' ||
         typeof payload.relPath !== 'string'
       ) {
-        return { ok: false, error: '잘못된 요청이에요' }
+        return { ok: false, error: '잘못된 요청입니다' }
       }
       if (payload.html.length + payload.css.length > MAX_BYTES) {
-        return { ok: false, error: '문서가 너무 커요' }
+        return { ok: false, error: '문서가 너무 큽니다' }
       }
       const root = resolve(payload.pdfDir)
       const destPath = resolve(root, payload.relPath)
-      if (!destPath.startsWith(root + sep)) return { ok: false, error: '잘못된 경로예요' }
+      if (!destPath.startsWith(root + sep)) return { ok: false, error: '잘못된 경로입니다' }
 
       try {
         await fs.mkdir(dirname(destPath), { recursive: true })
