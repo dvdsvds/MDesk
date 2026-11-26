@@ -137,6 +137,11 @@ const api = {
       ipcRenderer.invoke('drive:localPath', id, name),
     download: (id: string, name: string): Promise<DriveResult<{ path: string }>> =>
       ipcRenderer.invoke('drive:download', id, name),
+    uploadLocal: (
+      sourcePath: string,
+      parentId: string | null
+    ): Promise<DriveResult<{ item: DriveItem; moved: { from: string; to: string }[] }>> =>
+      ipcRenderer.invoke('drive:uploadLocal', sourcePath, parentId),
     onUpload: (callback: (event: DriveUploadEvent) => void): (() => void) => {
       const listener = (_event: unknown, payload: DriveUploadEvent): void => callback(payload)
       ipcRenderer.on('drive:upload', listener)

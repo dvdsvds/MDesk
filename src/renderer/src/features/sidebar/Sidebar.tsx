@@ -179,6 +179,7 @@ export const Sidebar = forwardRef<SidebarHandle, SidebarProps>(function Sidebar(
     openDeleteConfirm,
     confirmDelete,
     handleDrop,
+    finishMoveToDrive,
     undoLast
   } = useTreeActions({
     visibleNodes,
@@ -388,6 +389,9 @@ export const Sidebar = forwardRef<SidebarHandle, SidebarProps>(function Sidebar(
         activeFilePath={activeFilePath}
         onOpenFile={onOpenFile}
         onOpenSettings={onOpenSettings}
+        draggingLocalPath={draggingPath}
+        dirtyFilePaths={dirtyFilePaths}
+        onLocalMoved={finishMoveToDrive}
       />
       {/* 날짜 섹션은 그날 노트 몇 개뿐이라 남은 높이를 나눠 갖지 않고 목록 길이만큼만 차지한다 */}
       <div className="flex shrink-0 flex-col border-t border-border">

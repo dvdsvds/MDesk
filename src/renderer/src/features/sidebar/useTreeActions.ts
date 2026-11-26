@@ -154,6 +154,20 @@ export function useTreeActions({
     })
   }
 
+  /**
+   * 드라이브 탐색기로 올린 항목의 뒷정리: 열린 탭을 Drive 복사본으로 옮기고 로컬 원본은 휴지통으로 보낸다.
+   * Ctrl+Z로 되살리면 Drive에도 같은 파일이 남아 둘이 되므로 되돌리기 목록에는 넣지 않는다
+   */
+  const finishMoveToDrive = async (
+    sourcePath: string,
+    moved: { from: string; to: string }[]
+  ): Promise<void> => {
+    for (const { from, to } of moved) onEntryMoved(from, to)
+    await window.api.workspace.trash(sourcePath)
+    onEntryDeleted(sourcePath)
+    await syncTree()
+  }
+
   const undoLast = async (): Promise<void> => {
     const op = popUndo()
     if (!op) return
@@ -207,6 +221,7 @@ export function useTreeActions({
     openDeleteConfirm,
     confirmDelete,
     handleDrop,
+    finishMoveToDrive,
     undoLast
   }
 }

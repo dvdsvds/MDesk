@@ -1,6 +1,6 @@
 import { app } from 'electron'
-import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'fs'
-import { basename, extname, join, relative, sep } from 'path'
+import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'fs'
+import { basename, extname, isAbsolute, join, relative, sep } from 'path'
 import { getRootDir } from '../workspace/paths'
 import { sanitizeFileName } from '../workspace/fileOps'
 import { getGoogleAccessToken, resetGoogleAccessToken } from './googleAuth'
@@ -207,20 +207,49 @@ function multipartBody(
   return { body: Buffer.concat([head, content, tail]), boundary }
 }
 
+/** multipart 업로드는 5MB까지라, 그보다 큰 파일은 resumable 업로드로 올린다 */
+const MULTIPART_LIMIT = 4 * 1024 * 1024
+
 async function createFileRaw(
   name: string,
   parentId: string,
-  content: Buffer
+  content: Buffer,
+  mime = 'text/plain'
 ): Promise<{ item: DriveItem; md5: string }> {
-  const { body, boundary } = multipartBody({ name, parents: [parentId] }, content, 'text/plain')
-  const created = await driveJson<{ id: string; name: string; md5Checksum?: string }>(
-    `${UPLOAD_API}/files?uploadType=multipart&fields=id,name,md5Checksum`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': `multipart/related; boundary=${boundary}` },
-      body: new Uint8Array(body)
-    }
-  )
+  type Created = { id: string; name: string; md5Checksum?: string }
+  let created: Created
+  if (content.length <= MULTIPART_LIMIT) {
+    const { body, boundary } = multipartBody({ name, parents: [parentId] }, content, mime)
+    created = await driveJson<Created>(
+      `${UPLOAD_API}/files?uploadType=multipart&fields=id,name,md5Checksum`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': `multipart/related; boundary=${boundary}` },
+        body: new Uint8Array(body)
+      }
+    )
+  } else {
+    const session = await driveFetch(
+      `${UPLOAD_API}/files?uploadType=resumable&fields=id,name,md5Checksum`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json; charset=UTF-8',
+          'X-Upload-Content-Type': mime,
+          'X-Upload-Content-Length': String(content.length)
+        },
+        body: JSON.stringify({ name, parents: [parentId] })
+      }
+    )
+    const location = session.headers.get('Location')
+    if (!location?.startsWith(`${UPLOAD_API}/`))
+      throw new Error('Drive 업로드를 시작하지 못했습니다.')
+    created = await driveJson<Created>(location, {
+      method: 'PUT',
+      headers: { 'Content-Type': mime },
+      body: new Uint8Array(content)
+    })
+  }
   return {
     item: { id: created.id, name: created.name, folder: false },
     md5: created.md5Checksum ?? ''
@@ -267,6 +296,110 @@ export async function trashDriveItem(id: string): Promise<DriveResult<object>> {
     })
     discardCache(id)
     return { ok: true }
+  } catch (e) {
+    return failure(e)
+  }
+}
+
+// ---- 로컬 탐색기에서 끌어 온 항목 올리기 ----
+
+const MIME_BY_EXT: Record<string, string> = {
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.gif': 'image/gif',
+  '.webp': 'image/webp',
+  '.svg': 'image/svg+xml',
+  '.bmp': 'image/bmp',
+  '.pdf': 'application/pdf'
+}
+const TEXT_EXTS = new Set(['.md', '.markdown', '.txt', '.csv', '.tsv', '.json', '.yaml', '.yml'])
+
+function mimeOf(name: string): string {
+  const ext = extname(name).toLowerCase()
+  if (TEXT_EXTS.has(ext)) return 'text/plain'
+  return MIME_BY_EXT[ext] ?? 'application/octet-stream'
+}
+
+/** 로컬 탐색기의 `이름 2.md`와 같은 규칙으로 겹치지 않는 이름을 고른다 */
+function uniqueDriveName(taken: Set<string>, name: string): string {
+  const ext = extname(name)
+  const stem = ext ? name.slice(0, -ext.length) : name
+  let candidate = name
+  for (let n = 2; taken.has(candidate.toLowerCase()); n++) candidate = `${stem} ${n}${ext}`
+  return candidate
+}
+
+async function childNames(parentId: string): Promise<Set<string>> {
+  const names = new Set<string>()
+  let pageToken: string | undefined
+  do {
+    const params = new URLSearchParams({
+      q: `'${parentId}' in parents and trashed=false`,
+      fields: 'nextPageToken,files(name)',
+      pageSize: '1000'
+    })
+    if (pageToken) params.set('pageToken', pageToken)
+    const page = await driveJson<{ nextPageToken?: string; files: { name: string }[] }>(
+      `${API}/files?${params}`
+    )
+    for (const f of page.files) names.add(f.name.toLowerCase())
+    pageToken = page.nextPageToken
+  } while (pageToken)
+  return names
+}
+
+export interface MovedFile {
+  from: string
+  to: string
+}
+
+/**
+ * 작업 공간의 파일이나 폴더를 Drive 폴더로 올린다. 폴더는 안의 구조 그대로 올린다(`.`으로 시작하는 항목은 뺀다).
+ * 올린 파일마다 열어 볼 임시 복사본도 바로 만들어, 열려 있던 탭을 그 복사본으로 옮길 수 있게 한다.
+ * 로컬 원본은 지우지 않는다. 다 올라간 뒤 화면 쪽에서 휴지통으로 보낸다
+ */
+export async function uploadLocalEntry(
+  sourcePath: string,
+  parentId: string | null
+): Promise<DriveResult<{ item: DriveItem; moved: MovedFile[] }>> {
+  try {
+    const root = getRootDir()
+    const rel = relative(root, sourcePath)
+    if (
+      !rel ||
+      rel.startsWith('..') ||
+      isAbsolute(rel) ||
+      rel.split(sep).some((p) => p.startsWith('.'))
+    ) {
+      throw new Error('작업 공간 안의 파일만 Drive로 옮길 수 있습니다.')
+    }
+    if (!existsSync(sourcePath)) throw new Error('옮길 파일을 찾을 수 없습니다.')
+    const parent = await parentOrRoot(parentId)
+    const name = uniqueDriveName(await childNames(parent), basename(sourcePath))
+    const moved: MovedFile[] = []
+
+    const put = async (path: string, entryName: string, into: string): Promise<DriveItem> => {
+      if (statSync(path).isDirectory()) {
+        const folder = await createFolderRaw(entryName, into)
+        for (const child of readdirSync(path)) {
+          if (child.startsWith('.')) continue
+          await put(join(path, child), child, folder.id)
+        }
+        return folder
+      }
+      const content = readFileSync(path)
+      const { item, md5 } = await createFileRaw(entryName, into, content, mimeOf(entryName))
+      const copy = driveLocalPath(item.id, item.name)
+      mkdirSync(cacheDirOf(item.id), { recursive: true })
+      writeFileSync(copy, content)
+      writeMeta(item.id, { md5 })
+      moved.push({ from: path, to: copy })
+      return item
+    }
+
+    const item = await put(sourcePath, name, parent)
+    return { ok: true, item, moved }
   } catch (e) {
     return failure(e)
   }

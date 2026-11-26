@@ -118,6 +118,10 @@ export interface MdeskApi {
     trash: (id: string) => Promise<DriveResult<object>>
     localPath: (id: string, name: string) => Promise<string>
     download: (id: string, name: string) => Promise<DriveResult<{ path: string }>>
+    uploadLocal: (
+      sourcePath: string,
+      parentId: string | null
+    ) => Promise<DriveResult<{ item: DriveItem; moved: { from: string; to: string }[] }>>
     onUpload: (callback: (event: DriveUploadEvent) => void) => () => void
   }
   cloud: {

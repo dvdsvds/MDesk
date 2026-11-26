@@ -5,7 +5,7 @@ import { ContextMenu, type ContextMenuItem } from '../../components/ContextMenu'
 import { FileTypeIcon } from '../../components/FileTypeIcon'
 import { useTabsStore } from '../../stores/tabsStore'
 import { useToastStore } from '../../stores/toastStore'
-import { newFileNameFor } from '@renderer/utils/path'
+import { fileNameOf, newFileNameFor, sepOf } from '@renderer/utils/path'
 import RenameIcon from '../../icons/ctx-rename.svg?react'
 import TrashIcon from '../../icons/ctx-trash.svg?react'
 import NewFileIcon from '../../icons/new-file.svg?react'
@@ -34,6 +34,11 @@ interface Props {
   activeFilePath: string | null
   onOpenFile: (filePath: string) => void
   onOpenSettings: () => void
+  /** 로컬 탐색기에서 끌고 있는 항목의 경로 */
+  draggingLocalPath: string | null
+  dirtyFilePaths: string[]
+  /** Drive에 다 올라간 뒤 로컬 쪽 뒷정리(탭 옮기기, 원본 지우기) */
+  onLocalMoved: (sourcePath: string, moved: { from: string; to: string }[]) => Promise<void>
 }
 
 const keyOf = (id: string | null): string => id ?? ROOT
@@ -43,7 +48,10 @@ export function DriveSection({
   onToggle,
   activeFilePath,
   onOpenFile,
-  onOpenSettings
+  onOpenSettings,
+  draggingLocalPath,
+  dirtyFilePaths,
+  onLocalMoved
 }: Props): React.JSX.Element {
   const pushToast = useToastStore((s) => s.push)
   const [connected, setConnected] = useState<boolean | null>(null)
@@ -55,6 +63,9 @@ export function DriveSection({
   const [renaming, setRenaming] = useState<string | null>(null)
   const [menu, setMenu] = useState<{ x: number; y: number; item: DriveItem } | null>(null)
   const [deleting, setDeleting] = useState<DriveItem | null>(null)
+  /** 끌어 온 항목을 놓을 Drive 폴더(최상위는 ROOT) */
+  const [dropTarget, setDropTarget] = useState<string | null>(null)
+  const [movingIn, setMovingIn] = useState<string | null>(null)
   const expandedRef = useRef(expanded)
   useEffect(() => {
     expandedRef.current = expanded
@@ -176,6 +187,52 @@ export function DriveSection({
     patchListing(parent, (items) => items.filter((i) => i.id !== item.id))
   }
 
+  const canDrop = !!draggingLocalPath && connected === true && !movingIn
+
+  const dropHandlers = (folderId: string | null): React.HTMLAttributes<HTMLElement> => ({
+    onDragOver: (e) => {
+      if (!canDrop) return
+      e.preventDefault()
+      e.stopPropagation()
+      e.dataTransfer.dropEffect = 'move'
+      if (dropTarget !== keyOf(folderId)) setDropTarget(keyOf(folderId))
+    },
+    onDragLeave: (e) => {
+      if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setDropTarget(null)
+    },
+    onDrop: (e) => {
+      if (!canDrop) return
+      e.preventDefault()
+      e.stopPropagation()
+      setDropTarget(null)
+      const sourcePath = e.dataTransfer.getData('text/plain') || draggingLocalPath
+      if (sourcePath) void moveLocalIn(sourcePath, folderId)
+    }
+  })
+
+  const moveLocalIn = async (sourcePath: string, folderId: string | null): Promise<void> => {
+    const sep = sepOf(sourcePath)
+    if (dirtyFilePaths.some((p) => p === sourcePath || p.startsWith(sourcePath + sep))) {
+      pushToast({
+        kind: 'info',
+        message: '저장하지 않은 내용이 있습니다. 저장한 뒤 옮겨 주십시오.'
+      })
+      return
+    }
+    const name = fileNameOf(sourcePath)
+    setMovingIn(keyOf(folderId))
+    if (folderId) setExpanded((prev) => new Set(prev).add(folderId))
+    try {
+      const result = await window.api.drive.uploadLocal(sourcePath, folderId)
+      if (!result.ok) return report(result)
+      patchListing(folderId, (items) => [...items, result.item])
+      await onLocalMoved(sourcePath, result.moved)
+      pushToast({ kind: 'info', message: `${name}을(를) Drive로 옮겼습니다.` })
+    } finally {
+      setMovingIn(null)
+    }
+  }
+
   const startCreate = (kind: 'file' | 'folder', parent: string | null = selectedFolder): void => {
     if (parent) setExpanded((prev) => new Set(prev).add(parent))
     setCreating({ parent, kind })
@@ -261,6 +318,7 @@ export function DriveSection({
             <div key={item.id}>
               <button
                 type="button"
+                {...dropHandlers(item.folder ? item.id : parent)}
                 onClick={() => (item.folder ? toggleFolder(item) : void openItem(item))}
                 onContextMenu={(e) => {
                   e.preventDefault()
@@ -268,7 +326,7 @@ export function DriveSection({
                 }}
                 className={`${ROW_BASE} ${
                   isActive(item) || (item.folder && selectedFolder === item.id) ? 'bg-bg-mute' : ''
-                }`}
+                } ${item.folder && dropTarget === item.id ? 'bg-accent-soft ring-1 ring-inset ring-accent' : ''}`}
                 style={{ paddingLeft }}
               >
                 <FileTypeIcon
@@ -278,6 +336,14 @@ export function DriveSection({
                 />
                 <span className={`truncate ${item.folder ? 'font-medium' : ''}`}>{item.name}</span>
               </button>
+              {item.folder && movingIn === item.id && (
+                <div
+                  className="flex h-7 items-center text-[12.5px] text-text-tertiary"
+                  style={{ paddingLeft: paddingLeft + 14 }}
+                >
+                  Drive로 옮기는 중…
+                </div>
+              )}
               {item.folder && expanded.has(item.id) && !listings[item.id] && (
                 <div
                   className="flex h-7 items-center text-[12.5px] text-text-tertiary"
@@ -333,8 +399,9 @@ export function DriveSection({
         </div>
       </div>
       <div
-        className="min-h-0 flex-1 overflow-auto px-2 pb-2"
+        className={`min-h-0 flex-1 overflow-auto px-2 pb-2 ${dropTarget === ROOT ? 'bg-accent-soft/40' : ''}`}
         inert={!open}
+        {...dropHandlers(null)}
         onMouseDown={(e) => {
           if (e.target === e.currentTarget) setSelectedFolder(null)
         }}
@@ -369,6 +436,9 @@ export function DriveSection({
           </div>
         ) : (
           renderItems(null, 0)
+        )}
+        {movingIn === ROOT && (
+          <div className="px-2 py-1 text-[12.5px] text-text-tertiary">Drive로 옮기는 중…</div>
         )}
       </div>
       {menu && (

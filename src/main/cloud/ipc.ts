@@ -8,7 +8,8 @@ import {
   listDrive,
   renameDriveItem,
   setUploadListener,
-  trashDriveItem
+  trashDriveItem,
+  uploadLocalEntry
 } from './drive'
 
 export function registerCloudIpc(getWindow: () => BrowserWindow | null): void {
@@ -29,5 +30,8 @@ export function registerCloudIpc(getWindow: () => BrowserWindow | null): void {
   ipcMain.handle('drive:rename', (_e, id: string, name: string) => renameDriveItem(id, name))
   ipcMain.handle('drive:trash', (_e, id: string) => trashDriveItem(id))
   ipcMain.handle('drive:localPath', (_e, id: string, name: string) => driveLocalPath(id, name))
+  ipcMain.handle('drive:uploadLocal', (_e, sourcePath: string, parentId: string | null) =>
+    uploadLocalEntry(sourcePath, parentId)
+  )
   ipcMain.handle('drive:download', (_e, id: string, name: string) => downloadDriveFile(id, name))
 }
