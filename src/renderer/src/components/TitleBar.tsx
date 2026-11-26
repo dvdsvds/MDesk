@@ -15,7 +15,7 @@ interface TitleBarProps {
   center?: React.ReactNode
 }
 
-function WindowControls(): React.JSX.Element {
+export function WindowControls(): React.JSX.Element {
   const [isMaximized, setIsMaximized] = useState(false)
 
   useEffect(() => {

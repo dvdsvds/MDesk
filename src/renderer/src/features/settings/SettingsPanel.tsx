@@ -11,11 +11,10 @@ interface SettingsPanelProps {
 }
 
 export function SettingsPanel({ onClose }: SettingsPanelProps): React.JSX.Element {
-  const resetEditorFont = useSettingsStore((s) => s.resetEditorFont)
   const resetAllShortcuts = useSettingsStore((s) => s.resetAllShortcuts)
 
   const [query, setQuery] = useState('')
-  const [activeCategory, setActiveCategory] = useState<Category>('일반')
+  const [activeCategory, setActiveCategory] = useState<Category>('저장')
   const [viewMode, setViewMode] = useState<'search' | 'category'>('category')
   const [confirmResetShortcuts, setConfirmResetShortcuts] = useState(false)
 
@@ -59,7 +58,7 @@ export function SettingsPanel({ onClose }: SettingsPanelProps): React.JSX.Elemen
         exit={{ opacity: 0, scale: 0.98 }}
         transition={{ duration: 0.14, ease: [0.4, 0, 0.2, 1] }}
         onClick={(e) => e.stopPropagation()}
-        className="flex h-[560px] max-h-[calc(100vh-48px)] w-[720px] max-w-[calc(100vw-32px)] overflow-hidden rounded-2xl border border-border bg-bg-elevated shadow-[0_8px_24px_rgba(0,0,0,0.35)]"
+        className="flex h-[620px] max-h-[calc(100vh-48px)] w-[880px] max-w-[calc(100vw-32px)] overflow-hidden rounded-[18px] border border-border bg-bg-elevated shadow-[0_40px_100px_rgba(0,0,0,0.55)]"
       >
         <SettingsNav
           query={query}
@@ -79,26 +78,35 @@ export function SettingsPanel({ onClose }: SettingsPanelProps): React.JSX.Elemen
           }}
         />
         <div className="flex min-w-0 flex-1 flex-col">
-          <div className="flex h-14 shrink-0 items-center justify-between pl-7 pr-3.5">
-            <h2 className="text-[17px] font-medium text-text">
+          <div className="flex h-[70px] shrink-0 items-center gap-3 px-7">
+            <h2 className="text-[18px] font-semibold text-text">
               {showSearchResults ? '검색 결과' : activeCategory}
             </h2>
+            {!showSearchResults && activeCategory === '단축키' && (
+              <button
+                type="button"
+                onClick={() => setConfirmResetShortcuts(true)}
+                className="h-[30px] rounded-lg bg-bg-mute px-3 text-[12.5px] text-text-secondary outline-none transition-colors hover:text-text"
+              >
+                초기화
+              </button>
+            )}
             <button
               type="button"
               onClick={onClose}
               aria-label="닫기"
-              className="flex h-[26px] w-[26px] items-center justify-center rounded-md text-text-tertiary transition-colors hover:bg-bg-mute hover:text-text"
+              className="ml-auto flex h-[34px] w-[34px] items-center justify-center rounded-[10px] bg-bg-mute text-text-secondary transition-colors hover:text-text"
             >
               <svg
-                width="14"
-                height="14"
-                viewBox="0 0 14 14"
+                width="15"
+                height="15"
+                viewBox="0 0 16 16"
                 fill="none"
                 stroke="currentColor"
                 strokeWidth="1.6"
                 strokeLinecap="round"
               >
-                <path d="M3 3l8 8M11 3l-8 8" />
+                <path d="M4 4l8 8M12 4l-8 8" />
               </svg>
             </button>
           </div>
@@ -107,13 +115,10 @@ export function SettingsPanel({ onClose }: SettingsPanelProps): React.JSX.Elemen
           showSearchResults={showSearchResults}
           filtered={filtered}
           sections={sections}
-          activeCategory={activeCategory}
           onGoCategory={(cat) => {
             setActiveCategory(cat)
             setViewMode('category')
           }}
-          onResetEditorFont={resetEditorFont}
-          onResetShortcuts={() => setConfirmResetShortcuts(true)}
         />
         </div>
 

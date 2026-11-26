@@ -6,77 +6,65 @@ export interface Section {
   items: SettingItem[]
 }
 
+function SectionBody({ items }: { items: SettingItem[] }): React.JSX.Element {
+  // 테마 카드처럼 자기 모양이 있는 항목은 카드로 감싸지 않는다
+  if (items.every((i) => i.bare)) {
+    return (
+      <>
+        {items.map((item) => (
+          <div key={item.id}>{item.render()}</div>
+        ))}
+      </>
+    )
+  }
+  return (
+    <Card>
+      {items.map((item) => (
+        <div key={item.id}>{item.render()}</div>
+      ))}
+    </Card>
+  )
+}
+
 export function SettingsContent({
   showSearchResults,
   filtered,
   sections,
-  activeCategory,
-  onGoCategory,
-  onResetEditorFont,
-  onResetShortcuts
+  onGoCategory
 }: {
   showSearchResults: boolean
   filtered: SettingItem[]
   sections: Section[]
-  activeCategory: Category
   onGoCategory: (cat: Category) => void
-  onResetEditorFont: () => void
-  onResetShortcuts: () => void
 }): React.JSX.Element {
   return (
-    <div className="min-h-0 flex-1 overflow-y-auto pl-7 pr-4 pb-4 pt-1 [scrollbar-color:transparent_transparent] [scrollbar-width:thin] hover:[scrollbar-color:var(--color-border-strong)_transparent]">
+    <div className="flex min-h-0 flex-1 flex-col gap-[18px] overflow-y-auto px-7 pb-7 [scrollbar-color:transparent_transparent] [scrollbar-width:thin] hover:[scrollbar-color:var(--color-border-strong)_transparent]">
       {showSearchResults ? (
         filtered.length === 0 ? (
           <p className="py-6 text-center text-[13px] text-text-tertiary">검색 결과가 없습니다</p>
         ) : (
           filtered.map((item) => (
-            <div key={item.id} className="mb-4">
+            <section key={item.id} className="flex flex-col gap-2">
               <button
                 type="button"
                 onClick={() => onGoCategory(item.category)}
-                className="mb-1.5 ml-0.5 text-[11.5px] text-text-tertiary transition-colors hover:text-accent"
+                className="mx-1 self-start text-[12px] font-semibold text-text-tertiary transition-colors hover:text-accent"
               >
-                {[item.category, item.group, item.label].filter(Boolean).join(' › ')}
+                {[item.category, item.group].filter(Boolean).join(' / ')}
               </button>
-              <Card>{item.render()}</Card>
-            </div>
+              <SectionBody items={[item]} />
+            </section>
           ))
         )
       ) : (
-        <>
-          {sections.map((sec, i) => (
-            <section key={`${sec.group ?? 'none'}-${i}`} className="mb-5 last:mb-0">
-              {sec.group && (
-                <div className="mb-2 flex items-center justify-between px-0.5 text-xs text-text-tertiary">
-                  <span>{sec.group}</span>
-                  {sec.group === '에디터' && (
-                    <button
-                      type="button"
-                      onClick={onResetEditorFont}
-                      className="transition-colors hover:text-accent"
-                    >
-                      기본값
-                    </button>
-                  )}
-                </div>
-              )}
-              <Card>
-                {sec.items.map((item) => (
-                  <div key={item.id}>{item.render()}</div>
-                ))}
-              </Card>
-            </section>
-          ))}
-          {activeCategory === '단축키' && (
-            <button
-              type="button"
-              onClick={onResetShortcuts}
-              className="h-8 rounded-lg bg-bg-mute px-3 text-[13px] text-text-secondary outline-none transition-colors hover:text-danger"
-            >
-              모두 기본값
-            </button>
-          )}
-        </>
+        sections.map((sec, i) => (
+          <section key={`${sec.group ?? 'none'}-${i}`} className="flex flex-col gap-2">
+            {sec.group && (
+              <h3 className="mx-1 text-[12px] font-semibold text-text-tertiary">{sec.group}</h3>
+            )}
+            <SectionBody items={sec.items} />
+          </section>
+        ))
       )}
     </div>
   )

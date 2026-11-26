@@ -1,12 +1,11 @@
-import { forwardRef, useImperativeHandle, useState } from 'react'
+import { forwardRef, useImperativeHandle, useMemo, useState } from 'react'
 import type { TreeNode } from '../../types/workspace'
 import { ContextMenu } from '../../components/ContextMenu'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { ExportDialog } from '../export/ExportDialog'
 import { FileTypeIcon } from '../../components/FileTypeIcon'
 import { dirOf, fileNameOf, sepOf } from '@renderer/utils/path'
-import ExportIcon from '../../icons/export.svg?react'
-import NewFileIcon from '../../icons/new-file.svg?react'
+import SidebarIcon from '../../icons/sidebar.svg?react'
 import NewFolderIcon from '../../icons/new-folder.svg?react'
 import TrashIcon from '../../icons/ctx-trash.svg?react'
 import SettingsIcon from '../../icons/settings.svg?react'
@@ -42,6 +41,12 @@ interface SidebarProps {
   /** 열려 있는 데일리 노트의 날짜. 날짜 섹션을 그날로 맞춘다 */
   onInsertTemplate: (template: NoteTemplate) => void
   onCreateFromTemplate: (template: NoteTemplate) => void
+  /** 사이드바(와 파일 목록)를 접는다 */
+  onCollapse: () => void
+  /** 파일 목록 칸이 보여 주는 Drive 폴더(최상위는 null). Drive를 보고 있지 않으면 undefined */
+  driveFolderId: string | null | undefined
+  onSelectDriveFolder: (id: string | null, name: string) => void
+  onDriveChanged: () => void
   className?: string
   style?: React.CSSProperties
 }
@@ -62,6 +67,13 @@ const FOOTER_BTN =
 
 const ICON_BTN =
   'flex h-[26px] w-[26px] items-center justify-center rounded-md text-text-secondary transition-colors hover:bg-bg-mute hover:text-text disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-text-secondary'
+
+/** 폴더만 남긴 트리 */
+function foldersOnly(nodes: TreeNode[]): TreeNode[] {
+  return nodes
+    .filter((n) => n.type === 'folder')
+    .map((n) => ({ ...n, children: n.children ? foldersOnly(n.children) : n.children }))
+}
 
 function countDirtyUnder(dirtyFilePaths: string[], node: TreeNode): number {
   const prefix = node.path + sepOf(node.path)
@@ -112,11 +124,17 @@ export const Sidebar = forwardRef<SidebarHandle, SidebarProps>(function Sidebar(
     onSelectFolder,
     onInsertTemplate,
     onCreateFromTemplate,
+    onCollapse,
+    driveFolderId,
+    onSelectDriveFolder,
+    onDriveChanged,
     className,
     style
   }: SidebarProps,
   ref
 ) {
+  // 탐색기에는 폴더만 보인다. 파일은 가운데 파일 목록 칸에서 본다
+  const folderTree = useMemo(() => foldersOnly(tree), [tree])
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; node: TreeNode } | null>(
     null
   )
@@ -152,7 +170,7 @@ export const Sidebar = forwardRef<SidebarHandle, SidebarProps>(function Sidebar(
     visibleNodes,
     handleTreeKeyDown
   } = useTreeFocus({
-    tree,
+    tree: folderTree,
     rootDir,
     activeFilePath,
     selectedFolderPath,
@@ -297,52 +315,35 @@ export const Sidebar = forwardRef<SidebarHandle, SidebarProps>(function Sidebar(
       onDrop={(e) => rootDir && handleDrop(e, rootDir)}
       onKeyDown={(e) => handleTreeKeyDown(e, openDeleteConfirm, () => void undoLast())}
     >
+      <div className="titlebar-drag flex h-11 shrink-0 items-center gap-1.5 pl-3.5 pr-2">
+        <span className="text-[13.5px] font-bold text-text">MarkRoom</span>
+        <button
+          type="button"
+          onClick={onCollapse}
+          title={`사이드바 접기 (${shortcuts.toggleSidebar})`}
+          className="titlebar-no-drag ml-auto flex h-[30px] w-[30px] items-center justify-center rounded-md text-text-secondary outline-none transition-colors hover:bg-bg-mute hover:text-text"
+        >
+          <SidebarIcon />
+        </button>
+      </div>
       <div className={`flex min-h-0 flex-col ${filesOpen ? 'flex-1' : 'shrink-0'}`}>
         <div className="flex h-9 shrink-0 items-center justify-between pl-2 pr-2">
-          <SectionHeader label="로컬 탐색기" open={filesOpen} onToggle={() => setFilesOpen(!filesOpen)} />
-          <div className="flex items-center gap-0.5 opacity-0 transition-opacity duration-150 group-focus-within/sb:opacity-100 group-hover/sb:opacity-100">
-            <button
-              type="button"
-              onClick={() =>
-                rootDir && setExportTarget({ folderPath: rootDir, isRoot: true, label: '전체' })
+          <SectionHeader label="탐색기" open={filesOpen} onToggle={() => setFilesOpen(!filesOpen)} />
+          <button
+            type="button"
+            onClick={() => {
+              const dir = resolveToolbarDir()
+              if (dir) {
+                expandPath(dir)
+                setNewFolderIn(dir)
               }
-              title="전체 내보내기"
-              disabled={!rootDir}
-              className={ICON_BTN}
-            >
-              <ExportIcon />
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                const dir = resolveToolbarDir()
-                if (dir) {
-                  expandPath(dir)
-                  setNewFolderIn(dir)
-                }
-              }}
-              title="새 폴더"
-              disabled={!rootDir}
-              className={`${ICON_BTN} !w-[30px]`}
-            >
-              <NewFolderIcon />
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                const dir = resolveToolbarDir()
-                if (dir) {
-                  expandPath(dir)
-                  setNewFileIn(dir)
-                }
-              }}
-              title="새 파일"
-              disabled={!rootDir}
-              className={ICON_BTN}
-            >
-              <NewFileIcon />
-            </button>
-          </div>
+            }}
+            title="새 폴더"
+            disabled={!rootDir}
+            className={`${ICON_BTN} !w-[30px]`}
+          >
+            <NewFolderIcon />
+          </button>
         </div>
         {filesOpen && (
           <div
@@ -376,7 +377,7 @@ export const Sidebar = forwardRef<SidebarHandle, SidebarProps>(function Sidebar(
                 onCancel={() => setNewFileIn(null)}
               />
             )}
-            {tree.map((node) => (
+            {folderTree.map((node) => (
               <TreeRow key={node.path} node={node} depth={0} ctx={ctx} />
             ))}
           </div>
@@ -385,12 +386,14 @@ export const Sidebar = forwardRef<SidebarHandle, SidebarProps>(function Sidebar(
       <DriveSection
         open={driveOpen}
         onToggle={() => setDriveOpen(!driveOpen)}
-        activeFilePath={activeFilePath}
         onOpenFile={onOpenFile}
         onOpenSettings={onOpenSettings}
         draggingLocalPath={draggingPath}
         dirtyFilePaths={dirtyFilePaths}
         onLocalMoved={finishMoveToDrive}
+        selectedFolderId={driveFolderId}
+        onSelectFolder={onSelectDriveFolder}
+        onChanged={onDriveChanged}
       />
       <div
         className="flex min-h-0 flex-col overflow-hidden border-t border-border transition-[flex-grow] duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]"

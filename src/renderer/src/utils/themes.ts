@@ -103,12 +103,6 @@ export const THEMES: ThemeOption[] = [
     mode: 'light',
     swatch: ['#fdf6e3', '#586e75', '#268bd2']
   },
-  {
-    id: 'solarized-dark',
-    name: 'Solarized Dark',
-    mode: 'dark',
-    swatch: ['#002b36', '#93a1a1', '#268bd2']
-  },
   { id: 'one-dark', name: 'One Dark', mode: 'dark', swatch: ['#282c34', '#abb2bf', '#61afef'] },
   { id: 'rose-pine', name: 'Rosé Pine', mode: 'dark', swatch: ['#191724', '#e0def4', '#c4a7e7'] },
   {

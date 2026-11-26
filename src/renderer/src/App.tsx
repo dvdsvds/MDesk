@@ -3,7 +3,6 @@ import { AnimatePresence, motion } from 'motion/react'
 import { MarkdownEditor, type MarkdownEditorHandle } from './editor/MarkdownEditor'
 import { MarkdownPreview, type MarkdownPreviewHandle } from './features/preview/MarkdownPreview'
 import { Sidebar, type SidebarHandle } from './features/sidebar/Sidebar'
-import { TabBar } from './components/TabBar'
 import { TooltipLayer } from './components/TooltipLayer'
 import { tabLabel } from './utils/tabLabel'
 import { ViewModeSwitch } from './components/ViewModeSwitch'
@@ -24,12 +23,13 @@ import { RecoveryDialog } from './components/RecoveryDialog'
 import { ChangelogDialog } from './components/ChangelogDialog'
 import { TocPanel } from './components/TocPanel'
 import { toggleTaskAtLine } from './utils/tasks'
-import { TitleBar } from './components/TitleBar'
+import { WindowControls } from './components/TitleBar'
+import { NoteTitleInput } from './components/NoteTitleInput'
 import { useAppliedTheme } from './stores/useAppliedTheme'
 import { useAppliedFonts } from './stores/useAppliedFonts'
 import { useAppliedZoom } from './stores/useAppliedZoom'
 import { useWorkspaceStore } from './stores/workspaceStore'
-import { useTabsStore, type Tab } from './stores/tabsStore'
+import { useTabsStore } from './stores/tabsStore'
 import { useSettingsStore } from './stores/settingsStore'
 import { useToastStore } from './stores/toastStore'
 import { flattenFilePaths, flattenNotes } from './utils/noteIndex'
@@ -42,24 +42,27 @@ import SidebarIcon  from './icons/sidebar.svg?react'
 import { readTextFile, fileKindOf, isMarkdownPath } from './utils/fileKind'
 import { FileViewer } from './components/FileViewer'
 import { EmptyState } from './components/EmptyState'
-import SearchIcon from './icons/search.svg?react'
+import { FileList, type FileListItem } from './features/fileList/FileList'
 import { useWorkspaceEvents } from './hooks/useWorkspaceEvents'
 import { useGlobalShortcuts } from './hooks/useGlobalShortcuts'
 import { dirOf, fileNameOf, splitName, sepOf } from './utils/path'
 import { useNotePropsStore } from './stores/notePropsStore'
 import { TagBar } from './components/TagBar'
-import { EditorHeader } from './components/EditorHeader'
 
 /** 본문 카드(에디터·미리보기·뷰어). 네 모서리가 둥글고 창 오른쪽 끝과도 4px 띄운다.
  *  카드 상자는 overflow-clip을 쓴다. hidden이면 에디터의 scrollIntoView가 카드 상자까지 밀어 올려
  *  미리보기 첫 줄 위 여백이 사라졌다(base.css의 #root와 같은 이유) */
-const CARD = 'rounded-xl border border-border bg-bg'
+/** Drive 파일의 임시 복사본 경로(`.drive` 폴더 안) */
+const DRIVE_COPY_RE = /[\\/]\.drive[\\/]/
 
 /** 보기 모드를 바꿀 때 에디터·미리보기 폭이 움직이는 시간과 곡선 */
 const VIEW_TRANSITION = { duration: 0.22, ease: [0.4, 0, 0.2, 1] as const }
 
-/** 타이틀바 왼쪽의 사이드바 접기 버튼 칸 폭 */
-const TITLE_TOGGLE_WIDTH = 40
+/** 가운데 파일 목록 칸 폭 */
+const FILE_LIST_WIDTH = 300
+
+/** 자동 저장: 마지막으로 고친 뒤 이만큼(ms) 지나면 저장한다 */
+const AUTO_SAVE_DELAY = 1000
 
 const TITLE_BTN =
   'flex h-7 w-7 items-center justify-center rounded-md text-text-secondary transition-colors hover:bg-bg-mute hover:text-text'
@@ -176,6 +179,13 @@ function App(): React.JSX.Element {
   const [tocOpen, setTocOpen] = useState(false)
   const [tocFocusToken, setTocFocusToken] = useState(0)
   const [selectedFolderPath, setSelectedFolderPath] = useState<string | null>(null)
+  /** 파일 목록 칸이 Drive 폴더를 보여 주고 있으면 그 폴더(최상위는 id null) */
+  const [driveFolder, setDriveFolder] = useState<{ id: string | null; name: string } | null>(null)
+  const [driveVersion, setDriveVersion] = useState(0)
+  const selectLocalFolder = useCallback((path: string | null): void => {
+    setDriveFolder(null)
+    setSelectedFolderPath(path)
+  }, [])
   const pushToast = useToastStore((s) => s.push)
   // Drive 파일을 저장하면 백그라운드로 올린다. 실패하거나 충돌했을 때만 알린다
   useEffect(
@@ -243,6 +253,17 @@ function App(): React.JSX.Element {
     const id = useTabsStore.getState().activeTabId
     if (id) void saveTab(id)
   }, [saveTab])
+
+  // 자동 저장: 저장된 파일을 고치고 잠시(1초) 멈추면 저장한다. 고칠 때마다 다시 센다
+  const autoSave = useSettingsStore((s) => s.autoSave)
+  const autoSaveTabId = activeTab?.id
+  const autoSaveTarget = activeTab?.dirty && activeTab.filePath && !activeTab.missing
+  const autoSaveContent = activeTab?.content
+  useEffect(() => {
+    if (!autoSave || !autoSaveTarget || !autoSaveTabId) return
+    const timer = setTimeout(() => void saveTab(autoSaveTabId), AUTO_SAVE_DELAY)
+    return () => clearTimeout(timer)
+  }, [autoSave, autoSaveTarget, autoSaveTabId, autoSaveContent, saveTab])
 
   const tabClose = useTabClose(saveTab)
   const { requestQuit } = tabClose
@@ -322,7 +343,12 @@ function App(): React.JSX.Element {
 
   const handleOpenFile = useCallback(
     (filePath: string): void => {
-      setSelectedFolderPath(null)
+      // 작업 공간 안의 파일을 열면 파일 목록도 그 파일이 있는 폴더를 보여 준다 (Drive 임시 복사본은 제외)
+      const root = useWorkspaceStore.getState().rootDir
+      if (root && filePath.startsWith(root) && !DRIVE_COPY_RE.test(filePath)) {
+        setDriveFolder(null)
+        setSelectedFolderPath(dirOf(filePath))
+      }
       const openExternally = (): void => {
         void window.api.workspace.openInDefaultApp(filePath).then((error) => {
           if (error) pushToast({ kind: 'info', message: '이 파일을 열 수 있는 앱이 없습니다.' })
@@ -425,14 +451,6 @@ function App(): React.JSX.Element {
     if (tab.filePath) return dirOf(tab.filePath)
     return useWorkspaceStore.getState().rootDir ?? ''
   }, [])
-
-  const handleMissingTabClick = useCallback(
-    (tab: Tab): void => {
-      setActiveTab(tab.id)
-      pushToast({ kind: 'info', message: '파일이 삭제되었거나 이동되었습니다.' })
-    },
-    [setActiveTab, pushToast]
-  )
 
   const handleEntryRenamed = useCallback(
     (oldPath: string, newPath: string): void => {
@@ -666,75 +684,143 @@ function App(): React.JSX.Element {
     [tabs]
   )
 
-  // 탭 줄은 타이틀바가 아니라 본문 카드 머리 줄에 둔다
-  const tabBar = (
-    <TabBar
-      tabs={tabs}
-      activeTabId={activeTabId}
-      onSelect={setActiveTab}
-      onClose={tabClose.requestClose}
-      onCloseAll={tabClose.closeAll}
-      onMissingClick={handleMissingTabClick}
-    />
+  // 가운데 파일 목록: 사이드바에서 고른 폴더(없으면 작업 공간 맨 위)의 파일. 트리가 바뀌거나 저장하면 다시 읽는다.
+  // Drive 폴더를 골랐으면 그 폴더의 Drive 파일을 보여 준다
+  const listDir = selectedFolderPath ?? rootDir
+  const listTitle = driveFolder ? driveFolder.name : listDir ? fileNameOf(listDir) : ''
+  const [listItems, setListItems] = useState<FileListItem[]>([])
+  const [listLoading, setListLoading] = useState(false)
+  const dirtyKey = dirtyFilePaths.join('\n')
+  useEffect(() => {
+    let alive = true
+    const load = async (): Promise<FileListItem[]> => {
+      if (driveFolder) {
+        const result = await window.api.drive.list(driveFolder.id)
+        if (!result.ok) return []
+        const files = result.items.filter((i) => !i.folder)
+        return Promise.all(
+          files.map(async (f) => ({
+            path: await window.api.drive.localPath(f.id, f.name),
+            name: f.name,
+            mtime: 0,
+            snippet: '',
+            driveId: f.id
+          }))
+        )
+      }
+      if (!listDir) return []
+      return window.api.workspace.listFolderFiles(listDir)
+    }
+    setListLoading(true)
+    void load().then((items) => {
+      if (!alive) return
+      setListItems(items)
+      setListLoading(false)
+    })
+    return () => {
+      alive = false
+    }
+  }, [driveFolder, driveVersion, listDir, tree, dirtyKey])
+
+  const openListItem = useCallback(
+    (item: FileListItem): void => {
+      if (!item.driveId) {
+        handleOpenFile(item.path)
+        return
+      }
+      // Drive 파일: 이미 열린 탭은 저장 안 한 내용이 있을 수 있어 다시 받지 않는다
+      if (useTabsStore.getState().tabs.some((t) => t.filePath === item.path)) {
+        handleOpenFile(item.path)
+        return
+      }
+      void window.api.drive.download(item.driveId, item.name).then((result) => {
+        if (result.ok) handleOpenFile(result.path)
+        else pushToast({ kind: 'info', message: result.error })
+      })
+    },
+    [handleOpenFile, pushToast]
   )
+
+  const newFileInList = useCallback((): void => {
+    if (driveFolder) {
+      void window.api.drive.createFile(driveFolder.id, '새 파일.md').then((result) => {
+        if (!result.ok) {
+          pushToast({ kind: 'info', message: result.error })
+          return
+        }
+        setDriveVersion((v) => v + 1)
+        handleOpenFile(result.path)
+      })
+      return
+    }
+    if (listDir) sidebarRef.current?.startNewFile(listDir)
+  }, [driveFolder, listDir, handleOpenFile, pushToast])
+
+  // 에디터 칸 맨 위 줄: 창을 끄는 자리. 가운데에 보기 전환, 오른쪽 끝에 창 버튼, 사이드바를 접었으면 왼쪽에 펼치기 버튼
+  const editorTopBar = (
+    <div
+      className="titlebar-drag relative flex h-11 shrink-0 items-center border-b border-border px-2"
+      onDoubleClick={() => void window.api.window.toggleMaximize()}
+    >
+      {sidebarCollapsed && (
+        <button
+          type="button"
+          onClick={() => setSidebarCollapsed(false)}
+          onDoubleClick={(e) => e.stopPropagation()}
+          title={`사이드바 펼치기 (${shortcuts.toggleSidebar})`}
+          className={`titlebar-no-drag shrink-0 ${TITLE_BTN}`}
+        >
+          <SidebarIcon />
+        </button>
+      )}
+      {activeTab && activeTab.kind === 'text' && showPreview && (
+        <div
+          className="titlebar-no-drag absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
+          onDoubleClick={(e) => e.stopPropagation()}
+        >
+          <ViewModeSwitch
+            value={viewMode}
+            onChange={changeViewMode}
+            shortcuts={{
+              editor: shortcuts.viewEditor,
+              split: shortcuts.viewSplit,
+              preview: shortcuts.viewPreview
+            }}
+          />
+        </div>
+      )}
+      <div className="titlebar-no-drag ml-auto" onDoubleClick={(e) => e.stopPropagation()}>
+        <WindowControls />
+      </div>
+    </div>
+  )
+
+  // 본문 위: 파일 제목 칸(고치면 파일 이름이 바뀐다)과 태그 줄. 태그 줄은 미리보기만 볼 때는 숨긴다
+  const isDriveCopy = !!activeTab?.filePath && DRIVE_COPY_RE.test(activeTab.filePath)
+  const noteHeader = activeTab ? (
+    <>
+      <div className="shrink-0 border-b border-border px-4 pb-3.5 pt-2.5">
+        <NoteTitleInput
+          filePath={activeTab.filePath}
+          label={tabLabel(activeTab)}
+          readOnly={isDriveCopy || activeTab.missing}
+          onRenamed={handleEntryRenamed}
+          onError={(message) => pushToast({ kind: 'info', message })}
+        />
+      </div>
+      {tagBarPath && !previewOnly && (
+        <div className="flex shrink-0 items-center gap-1.5 border-b border-border px-4 py-2">
+          <TagBar filePath={tagBarPath} menuDirection="down" />
+        </div>
+      )}
+    </>
+  ) : null
 
   return (
     <div className="flex h-full flex-col bg-bg-soft text-text">
-      <TitleBar
-        center={
-          activeTab && activeTab.kind === 'text' && showPreview ? (
-            <ViewModeSwitch
-              value={viewMode}
-              onChange={changeViewMode}
-              shortcuts={{
-                editor: shortcuts.viewEditor,
-                split: shortcuts.viewSplit,
-                preview: shortcuts.viewPreview
-              }}
-            />
-          ) : null
-        }
-        left={
-          // 펼쳤을 때는 아래 사이드바(+ 오른쪽 테두리 1) + 본문 앞 틈 4와 같은 폭. 접기 버튼 다음에 검색창이 남은 폭을 채운다
-          <motion.div
-            className="flex shrink-0 items-center overflow-hidden"
-            initial={false}
-            animate={{ width: sidebarCollapsed ? TITLE_TOGGLE_WIDTH : sidebar.width + 1 + 4 }}
-            transition={{ duration: sidebar.resizing ? 0 : 0.2, ease: [0.4, 0, 0.2, 1] }}
-          >
-            <div className="flex shrink-0 justify-center" style={{ width: TITLE_TOGGLE_WIDTH }}>
-            <button
-              type="button"
-              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-              onDoubleClick={(e) => e.stopPropagation()}
-              title={`사이드바 ${sidebarCollapsed ? '펼치기' : '접기'} (Ctrl+Shift+E)`}
-              className={`titlebar-no-drag shrink-0 ${TITLE_BTN}`}
-            >
-              <SidebarIcon />
-            </button>
-            </div>
-            {!sidebarCollapsed && (
-              <button
-                type="button"
-                onClick={() => setSearchOpen(true)}
-                onDoubleClick={(e) => e.stopPropagation()}
-                title="검색 (Ctrl+P)"
-                style={{ width: sidebar.width + 1 - TITLE_TOGGLE_WIDTH }}
-                className="titlebar-no-drag flex h-6 shrink-0 items-center gap-1.5 rounded-md bg-bg-mute px-2 text-[12px] text-text-tertiary outline-none transition-colors hover:text-text-secondary"
-              >
-                <SearchIcon width={14} height={14} className="shrink-0" />
-                검색
-              </button>
-            )}
-          </motion.div>
-        }
-      />
-      {/* 아래에 4px 여백: 사이드바·에디터·미리보기 카드가 창 맨 아래에 붙지 않게(양옆 틈과 같은 크기) */}
-      <main className="flex min-h-0 flex-1 pb-1">
-        {/* 사이드바를 테두리로 감싼다. 접으면 테두리도 없앤다 */}
-        <div
-          className={`flex shrink-0 rounded-r-xl ${sidebarCollapsed ? '' : 'border-y border-r border-border'}`}
-        >
+      <main className="flex min-h-0 flex-1">
+        {/* 3단 화면: 사이드바(폴더 트리) | 파일 목록 | 에디터. 접으면 앞의 두 칸이 함께 접힌다 */}
+        <div className={`flex shrink-0 ${sidebarCollapsed ? '' : 'border-r border-border'}`}>
         <motion.div
           className="relative shrink-0"
           initial={false}
@@ -762,8 +848,12 @@ function App(): React.JSX.Element {
                 onOpenHistory={handleOpenHistory}
                 onOpenAtLine={handleOpenAtLine}
                 onOpenSettings={() => setSettingsOpen(true)}
+                onCollapse={() => setSidebarCollapsed(true)}
                 selectedFolderPath={selectedFolderPath}
-                onSelectFolder={setSelectedFolderPath}
+                onSelectFolder={selectLocalFolder}
+                driveFolderId={driveFolder ? driveFolder.id : undefined}
+                onSelectDriveFolder={(id, name) => setDriveFolder({ id, name })}
+                onDriveChanged={() => setDriveVersion((v) => v + 1)}
                 onInsertTemplate={handleInsertTemplate}
                 onCreateFromTemplate={(t) => void handleCreateFromTemplate(t)}
                 className="h-full"
@@ -780,11 +870,30 @@ function App(): React.JSX.Element {
         )}
       </motion.div>
         </div>
-        {/* 본문은 카드로 그린다. 에디터와 미리보기는 각각 카드이고, 양옆에 4px 틈을 둔다 */}
-        <div className="mx-1 flex min-w-0 flex-1 flex-col">
+        <motion.div
+          className="shrink-0 overflow-hidden"
+          initial={false}
+          animate={{ width: sidebarCollapsed ? 0 : FILE_LIST_WIDTH }}
+          transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+          inert={sidebarCollapsed}
+        >
+          <div className="h-full" style={{ width: FILE_LIST_WIDTH }}>
+            <FileList
+              title={listTitle}
+              items={listItems}
+              loading={listLoading}
+              activeFilePath={activeTab?.filePath ?? null}
+              onOpenFile={openListItem}
+              onNewFile={driveFolder || listDir ? newFileInList : undefined}
+            />
+          </div>
+        </motion.div>
+        {/* 에디터 칸: 맨 위 줄, 제목, 태그, 본문(에디터 | 미리보기) */}
+        <div className="flex min-w-0 flex-1 flex-col bg-bg">
+          {editorTopBar}
+          {noteHeader}
           {activeTab && activeTab.kind !== 'text' && activeTab.filePath ? (
-            <div className={`flex min-h-0 flex-1 flex-col overflow-clip ${CARD}`}>
-              <EditorHeader>{tabBar}</EditorHeader>
+            <div className="flex min-h-0 flex-1 flex-col overflow-clip">
               <FileViewer key={activeTab.id} filePath={activeTab.filePath} kind={activeTab.kind} />
             </div>
           ) : activeTab ? (
@@ -796,26 +905,16 @@ function App(): React.JSX.Element {
                   animate={{
                     width: editorW,
                     minWidth: splitMode ? EDITOR_MIN_WIDTH : 0,
-                    opacity: previewOnly ? 0 : 1,
-                    borderWidth: previewOnly ? 0 : 1
+                    opacity: previewOnly ? 0 : 1
                   }}
                   transition={widthTransition}
                   inert={previewOnly}
-                  className={`relative flex min-w-0 shrink-0 flex-col overflow-clip ${CARD}`}
+                  className="relative flex min-w-0 shrink-0 flex-col overflow-clip"
                 >
                   <div
                     className="flex min-h-0 flex-1 flex-col"
                     style={{ width: editorContentW || undefined, minWidth: editorContentW || undefined }}
                   >
-                  <EditorHeader
-                    right={
-                      tagBarPath && (
-                        <TagBar filePath={tagBarPath} menuDirection="down" />
-                      )
-                    }
-                  >
-                    {tabBar}
-                  </EditorHeader>
                   <MarkdownEditor
                     ref={editorRef}
                     tabId={activeTab.id}
@@ -846,22 +945,16 @@ function App(): React.JSX.Element {
                 {showPreviewPane && (
                   <motion.div
                     key="preview-card"
-                    initial={{ width: 0, opacity: 0, borderWidth: 0 }}
-                    animate={{ width: previewW, opacity: 1, borderWidth: 1 }}
-                    exit={{ width: 0, opacity: 0, borderWidth: 0, transition: VIEW_TRANSITION }}
+                    initial={{ width: 0, opacity: 0 }}
+                    animate={{ width: previewW, opacity: 1 }}
+                    exit={{ width: 0, opacity: 0, transition: VIEW_TRANSITION }}
                     transition={widthTransition}
-                    className={`flex min-w-0 shrink-0 flex-col overflow-clip ${CARD}`}
+                    className={`flex min-w-0 shrink-0 flex-col overflow-clip ${previewOnly ? '' : 'border-l border-border'}`}
                   >
                   <div
                     className="flex min-h-0 flex-1 flex-col"
                     style={{ width: previewW || undefined, minWidth: previewW || undefined }}
                   >
-                  {/* 에디터 머리 줄과 같은 높이·선 */}
-                  <div className="flex h-8 shrink-0 items-center border-b border-border pl-3 pr-2 text-[12px] text-text-tertiary">
-                    <span className="truncate">
-                      Preview {activeTab.filePath ? tabLabel(activeTab) : `${tabLabel(activeTab)}.md`}
-                    </span>
-                  </div>
                   <MarkdownPreview
                     ref={previewRef}
                     source={activeTab.content}
@@ -882,7 +975,7 @@ function App(): React.JSX.Element {
               </div>
             </div>
           ) : (
-            <div className={`flex min-h-0 flex-1 flex-col overflow-clip ${CARD}`}>
+            <div className="flex min-h-0 flex-1 flex-col overflow-clip">
               <EmptyState />
             </div>
           )}

@@ -45,7 +45,7 @@ export function ShortcutRow({ action }: ShortcutRowProps): React.JSX.Element {
   }, [capturing, shortcuts, action, setShortcut])
 
   return (
-    <div className="flex min-h-11 items-center justify-between gap-4 px-3.5">
+    <div className="flex min-h-[46px] items-center justify-between gap-4 px-[18px]">
       <span className="text-[13.5px] text-text">{SHORTCUT_LABELS[action]}</span>
       <div className="flex items-center gap-1">
         {conflictMessage && <span className="text-xs text-danger">{conflictMessage}</span>}
@@ -55,13 +55,21 @@ export function ShortcutRow({ action }: ShortcutRowProps): React.JSX.Element {
             setConflictMessage(null)
             setCapturing(true)
           }}
-          className={`min-w-[120px] rounded-md border bg-bg px-2.5 py-1 text-center font-mono text-[11px] focus:outline-none ${
-            capturing
-              ? 'border-accent text-accent'
-              : 'border-border text-text-secondary hover:border-border-strong'
+          aria-label={`${SHORTCUT_LABELS[action]} 단축키 바꾸기`}
+          className={`flex items-center gap-1 rounded-md focus:outline-none ${
+            capturing ? 'px-2 py-1 text-[12px] text-accent ring-1 ring-accent' : ''
           }`}
         >
-          {capturing ? '키를 눌러 주십시오…' : combo}
+          {capturing
+            ? '키를 눌러 주십시오…'
+            : combo.split('+').map((k, i) => (
+                <kbd
+                  key={`${k}-${i}`}
+                  className="inline-flex h-6 min-w-[22px] items-center justify-center rounded-md bg-bg px-[7px] font-mono text-[11.5px] text-text shadow-[inset_0_-1px_0_rgba(255,255,255,0.06)]"
+                >
+                  {k}
+                </kbd>
+              ))}
         </button>
         {combo !== DEFAULT_SHORTCUTS[action] && (
           <button

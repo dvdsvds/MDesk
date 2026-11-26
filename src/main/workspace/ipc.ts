@@ -1,9 +1,10 @@
 import { app, clipboard, dialog, ipcMain, shell, type BrowserWindow } from 'electron'
 import { existsSync, statSync } from 'fs'
 import { mkdir } from 'fs/promises'
-import { basename, dirname, extname, join } from 'path'
+import { basename, dirname, extname, isAbsolute, join, relative } from 'path'
 import { getHistoryDir, getRootDir } from './paths'
 import { buildTree } from './tree'
+import { listFolderFiles } from './folderFiles'
 import {
   readNote,
   readTextFile,
@@ -82,6 +83,13 @@ const preparedExportDirs = new Set<string>()
 export function registerWorkspaceIpc(getWindow: () => BrowserWindow | null): void {
   ipcMain.handle('workspace:getRootDir', () => getRootDir())
   ipcMain.handle('workspace:getTree', () => buildTree(getRootDir()))
+  ipcMain.handle('workspace:listFolderFiles', (_event, dir: string) => {
+    const root = getRootDir()
+    // 작업 공간 밖 폴더는 읽지 않는다
+    const rel = relative(root, dir)
+    if (rel.startsWith('..') || isAbsolute(rel)) return []
+    return listFolderFiles(dir)
+  })
   ipcMain.handle('workspace:readFile', (_event, filePath: string) => readNote(filePath))
   ipcMain.handle('workspace:readTextFile', (_event, filePath: string) => readTextFile(filePath))
   ipcMain.handle('workspace:saveNote', (_event, args: SaveNoteArgs) => saveNote(args))

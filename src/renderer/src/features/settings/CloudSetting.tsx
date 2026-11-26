@@ -1,30 +1,25 @@
 import { useEffect, useState } from 'react'
 import { useToastStore } from '../../stores/toastStore'
-import { useSettingsStore } from '../../stores/settingsStore'
-import { Toggle } from './SettingsParts'
 import type { CloudStatus } from '../../../../preload/index.d'
 
-const BTN =
-  'h-8 rounded-lg bg-bg-mute px-3 text-[13px] text-text-secondary outline-none transition-colors hover:text-text disabled:opacity-50'
-const PRIMARY =
-  'h-8 rounded-lg bg-accent-soft px-3 text-[13px] font-medium text-accent outline-none transition-[filter] hover:brightness-110 disabled:opacity-50'
+const DANGER_BTN =
+  'h-[34px] shrink-0 rounded-[9px] bg-bg-mute px-3.5 text-[13px] font-medium text-danger outline-none transition-[filter] hover:brightness-110 disabled:opacity-50'
+const PRIMARY_BTN =
+  'h-[34px] shrink-0 rounded-[9px] bg-accent-soft px-3.5 text-[13px] font-medium text-accent outline-none transition-[filter] hover:brightness-110 disabled:opacity-50'
 
+/** 설정 > 저장 > Google Drive: 연결 상태와 연결·연결 해제 */
 export function CloudSetting(): React.JSX.Element {
   const pushToast = useToastStore((s) => s.push)
   const [status, setStatus] = useState<CloudStatus | null>(null)
   const [busy, setBusy] = useState(false)
-  const [platform, setPlatform] = useState<string | null>(null)
-  const privateLogin = useSettingsStore((s) => s.cloudPrivateLogin)
-  const setPrivateLogin = useSettingsStore((s) => s.setCloudPrivateLogin)
 
   useEffect(() => {
     void window.api.cloud.getStatus().then(setStatus)
-    void window.api.window.platform().then(setPlatform)
   }, [])
 
   const connect = async (): Promise<void> => {
     setBusy(true)
-    const result = await window.api.cloud.connectGoogle({ privateWindow: privateLogin })
+    const result = await window.api.cloud.connectGoogle()
     setBusy(false)
     if (result.ok) {
       setStatus(await window.api.cloud.getStatus())
@@ -42,49 +37,50 @@ export function CloudSetting(): React.JSX.Element {
     pushToast({ kind: 'info', message: 'Google Drive 연결을 해제했습니다.' })
   }
 
-  if (!status) return <div className="px-3.5 py-3" />
+  if (!status) return <div className="h-[76px]" />
 
   return (
-    <div className="px-3.5 py-3">
-      <div className="text-[13.5px] text-text">
-        {status.connected ? 'Google Drive에 연결되어 있습니다' : 'Google Drive에 연결하지 않았습니다'}
+    <div className="flex items-center gap-3.5 p-[18px]">
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[11px] bg-[#4cc38a]/15 text-[#7fd6a8]">
+        <svg
+          aria-hidden="true"
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M7 18a5 5 0 0 1-.6-10 6 6 0 0 1 11.5 1.6A4 4 0 0 1 17 18z" />
+        </svg>
+      </span>
+      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+        <span className="text-[13.5px] font-medium text-text">
+          {status.connected ? 'Google Drive에 연결되어 있습니다' : 'Google Drive에 연결하지 않았습니다'}
+        </span>
+        <span className="truncate text-[12.5px] text-text-tertiary">
+          {status.connected
+            ? (status.email ?? '연결된 계정')
+            : status.configured
+              ? 'Mdesk가 만든 파일에만 접근합니다'
+              : '이 빌드에는 Google 연결 정보가 들어 있지 않습니다'}
+        </span>
       </div>
-      <div className="mt-1 text-[12.5px] text-text-tertiary">
-        {status.connected
-          ? (status.email ?? '연결된 계정')
-          : 'Mdesk가 만든 파일에만 접근하고, 다른 Drive 파일은 볼 수 없습니다'}
-      </div>
-      <div className="mt-2.5 flex items-center gap-2">
-        {status.connected ? (
-          <button type="button" disabled={busy} onClick={() => void disconnect()} className={BTN}>
-            연결 해제
-          </button>
-        ) : (
-          <button
-            type="button"
-            disabled={busy || !status.configured}
-            onClick={() => void connect()}
-            className={PRIMARY}
-          >
-            {busy ? '브라우저에서 로그인하는 중…' : 'Google Drive 연결'}
-          </button>
-        )}
-      </div>
-      {platform === 'linux' && !status.connected && (
-        <div className="mt-3 flex items-center justify-between gap-3">
-          <div>
-            <div className="text-[13px] text-text">로그인을 시크릿 창에서 열기</div>
-            <div className="mt-0.5 text-[12.5px] text-text-tertiary">
-              브라우저에 저장된 계정이나 확장 프로그램 때문에 로그인 오류가 나는 것을 막습니다
-            </div>
-          </div>
-          <Toggle checked={privateLogin} onChange={() => setPrivateLogin(!privateLogin)} />
-        </div>
-      )}
-      {!status.configured && (
-        <div className="mt-2 text-[12.5px] text-text-tertiary">
-          이 빌드에는 Google 연결 정보가 들어 있지 않습니다
-        </div>
+      {status.connected ? (
+        <button type="button" disabled={busy} onClick={() => void disconnect()} className={DANGER_BTN}>
+          연결 해제
+        </button>
+      ) : (
+        <button
+          type="button"
+          disabled={busy || !status.configured}
+          onClick={() => void connect()}
+          className={PRIMARY_BTN}
+        >
+          {busy ? '로그인하는 중…' : '연결'}
+        </button>
       )}
     </div>
   )

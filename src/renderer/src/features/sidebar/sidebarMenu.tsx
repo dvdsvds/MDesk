@@ -48,7 +48,7 @@ export function buildMenuItems(node: TreeNode, a: MenuActions): ContextMenuItem[
     })
   }
   items.push({
-    label: '이름 바꾸기',
+    label: '이름 변경',
     icon: <RenameIcon width={16} height={16} />,
     sepBefore: node.type === 'folder',
     shortcut: a.shortcuts.renameItem,
@@ -57,7 +57,6 @@ export function buildMenuItems(node: TreeNode, a: MenuActions): ContextMenuItem[
   items.push({
     label: '경로 복사',
     icon: <CopyPathIcon width={16} height={16} />,
-    shortcut: a.shortcuts.copyPathAbsolute,
     onClick: () => void window.api.workspace.copyPath(node.path, false)
   })
   items.push({

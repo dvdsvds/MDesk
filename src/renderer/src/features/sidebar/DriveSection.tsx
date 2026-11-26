@@ -31,7 +31,6 @@ const SECTION_HEADER_BASIS = '37px'
 interface Props {
   open: boolean
   onToggle: () => void
-  activeFilePath: string | null
   onOpenFile: (filePath: string) => void
   onOpenSettings: () => void
   /** 로컬 탐색기에서 끌고 있는 항목의 경로 */
@@ -39,6 +38,12 @@ interface Props {
   dirtyFilePaths: string[]
   /** Drive에 다 올라간 뒤 로컬 쪽 뒷정리(탭 옮기기, 원본 지우기) */
   onLocalMoved: (sourcePath: string, moved: { from: string; to: string }[]) => Promise<void>
+  /** 파일 목록 칸이 보여 주는 Drive 폴더(최상위는 null). Drive를 보고 있지 않으면 undefined */
+  selectedFolderId: string | null | undefined
+  /** Drive 폴더를 고르면 파일 목록 칸이 그 폴더의 파일을 보여 준다 */
+  onSelectFolder: (id: string | null, name: string) => void
+  /** Drive 쪽 목록이 바뀌었을 때(만들기·이름 변경·삭제·옮기기) */
+  onChanged: () => void
 }
 
 const keyOf = (id: string | null): string => id ?? ROOT
@@ -46,12 +51,14 @@ const keyOf = (id: string | null): string => id ?? ROOT
 export function DriveSection({
   open,
   onToggle,
-  activeFilePath,
   onOpenFile,
   onOpenSettings,
   draggingLocalPath,
   dirtyFilePaths,
-  onLocalMoved
+  onLocalMoved,
+  selectedFolderId,
+  onSelectFolder,
+  onChanged
 }: Props): React.JSX.Element {
   const pushToast = useToastStore((s) => s.push)
   const [connected, setConnected] = useState<boolean | null>(null)
@@ -123,14 +130,17 @@ export function DriveSection({
     )
 
   // 서버에서 목록을 다시 받지 않고, 방금 한 일을 화면 목록에 바로 반영한다
-  const patchListing = (parent: string | null, fn: (items: DriveItem[]) => DriveItem[]): void =>
+  const patchListing = (parent: string | null, fn: (items: DriveItem[]) => DriveItem[]): void => {
     setListings((prev) => ({
       ...prev,
       [keyOf(parent)]: { items: sortItems(fn(prev[keyOf(parent)]?.items ?? [])) }
     }))
+    onChanged()
+  }
 
   const toggleFolder = (item: DriveItem): void => {
     setSelectedFolder(item.id)
+    onSelectFolder(item.id, item.name)
     const next = new Set(expanded)
     if (next.has(item.id)) {
       next.delete(item.id)
@@ -238,9 +248,6 @@ export function DriveSection({
     setCreating({ parent, kind })
   }
 
-  const isActive = (item: DriveItem): boolean =>
-    !!activeFilePath && /[\\/]\.drive[\\/]/.test(activeFilePath) && activeFilePath.includes(item.id)
-
   // 어느 폴더의 항목인지 알아야 이름 변경과 삭제 뒤에 그 폴더만 다시 불러온다
   const parentOf = (id: string): string | null => {
     for (const [key, listing] of Object.entries(listings)) {
@@ -279,7 +286,8 @@ export function DriveSection({
   ]
 
   const renderItems = (parent: string | null, depth: number): React.ReactNode => {
-    const items = listings[keyOf(parent)]?.items ?? []
+    // 폴더만 보인다. 파일은 가운데 파일 목록 칸에서 본다
+    const items = (listings[keyOf(parent)]?.items ?? []).filter((i) => i.folder)
     const paddingLeft = 8 + depth * 14
     return (
       <>
@@ -325,7 +333,7 @@ export function DriveSection({
                   setMenu({ x: e.clientX, y: e.clientY, item })
                 }}
                 className={`${ROW_BASE} ${
-                  isActive(item) || (item.folder && selectedFolder === item.id) ? 'bg-bg-mute' : ''
+                  item.folder && selectedFolderId === item.id ? 'bg-bg-mute' : ''
                 } ${item.folder && dropTarget === item.id ? 'bg-accent-soft ring-1 ring-inset ring-accent' : ''}`}
                 style={{ paddingLeft }}
               >
@@ -367,7 +375,7 @@ export function DriveSection({
       style={{ flexGrow: open ? 1 : 0, flexShrink: 1, flexBasis: SECTION_HEADER_BASIS }}
     >
       <div className="flex h-9 shrink-0 items-center justify-between pl-2 pr-2">
-        <SectionHeader label="드라이브 탐색기" open={open} onToggle={onToggle} />
+        <SectionHeader label="클라우드" open={open} onToggle={onToggle} />
         <div className="flex items-center gap-0.5 opacity-0 transition-opacity duration-150 group-focus-within/drive:opacity-100 group-hover/drive:opacity-100">
           <button
             type="button"
@@ -403,7 +411,10 @@ export function DriveSection({
         inert={!open}
         {...dropHandlers(null)}
         onMouseDown={(e) => {
-          if (e.target === e.currentTarget) setSelectedFolder(null)
+          if (e.target === e.currentTarget) {
+            setSelectedFolder(null)
+            onSelectFolder(null, 'Mdesk')
+          }
         }}
       >
         {connected === false ? (

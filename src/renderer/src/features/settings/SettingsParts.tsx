@@ -3,7 +3,7 @@ export const INPUT =
 
 export function Card({ children }: { children: React.ReactNode }): React.JSX.Element {
   return (
-    <div className="divide-y divide-border rounded-xl border border-border bg-bg-mute/60">
+    <div className="divide-y divide-border overflow-hidden rounded-[14px] bg-bg-mute/60">
       {children}
     </div>
   )
@@ -17,9 +17,56 @@ export function Row({
   children: React.ReactNode
 }): React.JSX.Element {
   return (
-    <div className="flex min-h-11 items-center justify-between gap-4 px-3.5 text-[13.5px] text-text">
+    <div className="flex min-h-[54px] items-center justify-between gap-4 px-[18px] text-[13.5px] text-text">
       <span>{label}</span>
       {children}
+    </div>
+  )
+}
+
+/** − / + 버튼으로 값을 바꾸는 칸 */
+export function Stepper({
+  value,
+  onChange,
+  step = 1,
+  min,
+  max,
+  label,
+  format = (v) => String(v)
+}: {
+  value: number
+  onChange: (v: number) => void
+  step?: number
+  min: number
+  max: number
+  /** 버튼 설명에 쓰는 이름(예: 글꼴 크기) */
+  label: string
+  format?: (v: number) => string
+}): React.JSX.Element {
+  const clamp = (v: number): number => Math.min(max, Math.max(min, Math.round(v * 100) / 100))
+  const BTN =
+    'flex h-[34px] w-[34px] items-center justify-center text-[16px] text-text-secondary outline-none transition-colors hover:text-text disabled:opacity-30'
+  return (
+    <div className="flex h-[34px] items-center rounded-[9px] bg-bg">
+      <button
+        type="button"
+        aria-label={`${label} 줄이기`}
+        disabled={value <= min}
+        onClick={() => onChange(clamp(value - step))}
+        className={BTN}
+      >
+        −
+      </button>
+      <span className="w-11 text-center font-mono text-[12.5px] text-text">{format(value)}</span>
+      <button
+        type="button"
+        aria-label={`${label} 늘리기`}
+        disabled={value >= max}
+        onClick={() => onChange(clamp(value + step))}
+        className={BTN}
+      >
+        +
+      </button>
     </div>
   )
 }

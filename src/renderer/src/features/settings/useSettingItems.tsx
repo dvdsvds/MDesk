@@ -4,33 +4,40 @@ import { useSettingsStore } from '../../stores/settingsStore'
 import { ShortcutRow } from './ShortcutRow'
 import { FileTypeIcon } from '../../components/FileTypeIcon'
 import { SHORTCUT_LABELS, type ShortcutAction } from '../../utils/shortcuts'
-import { ThemeSelect } from './ThemeSelect'
-import { ThemePreviewCard } from './ThemePreview'
-import { NumberField, Row, Toggle } from './SettingsParts'
-import { TrashSetting } from './TrashSetting'
+import { ThemeGrid } from './ThemeGrid'
+import { Row, Stepper, Toggle } from './SettingsParts'
 import { FontSelect } from './FontSelect'
 import { AboutSetting } from './AboutSetting'
 import { CloudSetting } from './CloudSetting'
+import { VimSetting } from './VimSetting'
 
-/** 설정의 단축키를 하는 일 기준으로 나눈 소제목. 비교 화면의 적용·되돌리기는 키를 바꿀 수 없는 고정 단축키라 여기에 없다 */
+/** 설정의 단축키를 어느 칸에서 쓰는지로 나눈 소제목. 비교 화면의 적용·되돌리기는 키를 바꿀 수 없는 고정 단축키라 여기에 없다 */
 const SHORTCUT_GROUPS: { group: string; actions: ShortcutAction[] }[] = [
-  { group: '파일', actions: ['newNote', 'save', 'copyPathAbsolute', 'copyPathRelative'] },
-  { group: '탭', actions: ['nextTab', 'prevTab'] },
+  {
+    group: '일반',
+    actions: [
+      'save',
+      'search',
+      'toggleSettings',
+      'nextTab',
+      'prevTab',
+      'viewEditor',
+      'viewSplit',
+      'viewPreview',
+      'toggleToc',
+      'zoomIn',
+      'zoomOut',
+      'zoomReset'
+    ]
+  },
   {
     group: '사이드바',
-    actions: ['toggleSidebar', 'renameItem', 'newFolder', 'revealItem', 'exportItem']
+    actions: ['toggleSidebar', 'newFolder', 'renameItem', 'revealItem', 'exportItem']
   },
-  {
-    group: '보기',
-    actions: ['viewEditor', 'viewSplit', 'viewPreview', 'zoomIn', 'zoomOut', 'zoomReset']
-  },
-  {
-    group: '열기',
-    actions: ['search', 'toggleToc', 'toggleSettings']
-  }
+  { group: '파일 목록', actions: ['newNote'] }
 ]
 
-export const CATEGORIES = ['일반', '클라우드', '화면', '단축키', '정보'] as const
+export const CATEGORIES = ['저장', '에디터', '화면', '단축키', '정보'] as const
 export type Category = (typeof CATEGORIES)[number]
 
 export interface SettingItem {
@@ -38,14 +45,16 @@ export interface SettingItem {
   category: Category
   group?: string
   label: string
+  /** 카드 없이 그린다(테마 카드처럼 자기 모양이 있는 것) */
+  bare?: boolean
   render: () => React.ReactNode
 }
 
 export function useSettingItems(): SettingItem[] {
-  const vimMode = useSettingsStore((s) => s.vimMode)
   const showToolbar = useSettingsStore((s) => s.showToolbar)
   const setShowToolbar = useSettingsStore((s) => s.setShowToolbar)
-  const setVimMode = useSettingsStore((s) => s.setVimMode)
+  const autoSave = useSettingsStore((s) => s.autoSave)
+  const setAutoSave = useSettingsStore((s) => s.setAutoSave)
   const editorFontFamily = useSettingsStore((s) => s.editorFontFamily)
   const editorFontSize = useSettingsStore((s) => s.editorFontSize)
   const editorLineHeight = useSettingsStore((s) => s.editorLineHeight)
@@ -63,7 +72,7 @@ export function useSettingItems(): SettingItem[] {
       const result = await window.api.workspace.setHistoryDir(dir)
       if (result.ok) {
         setHistoryDir(result.path)
-        pushToast({ kind: 'info', message: '버전 기록을 새 위치로 옮겼습니다.' })
+        pushToast({ kind: 'info', message: '스냅샷을 새 위치로 옮겼습니다.' })
       } else {
         pushToast({ kind: 'info', message: result.error })
       }
@@ -83,9 +92,59 @@ export function useSettingItems(): SettingItem[] {
   return useMemo(
     () => [
       {
+        id: 'auto-save',
+        category: '저장',
+        label: '자동 저장',
+        render: () => (
+          <Row label="자동 저장">
+            <Toggle checked={autoSave} onChange={() => setAutoSave(!autoSave)} />
+          </Row>
+        )
+      },
+      {
+        id: 'history-dir',
+        category: '저장',
+        group: '저장 위치',
+        label: '저장 위치',
+        render: () => (
+          <div className="flex items-center gap-2 px-[18px] py-3.5">
+            <div className="flex h-[38px] min-w-0 flex-1 items-center gap-2 rounded-[10px] bg-bg px-3">
+              <FileTypeIcon name="" kind="folder" size={15} raise={false} />
+              <span
+                className="min-w-0 flex-1 truncate font-mono text-[12.5px] text-text-secondary"
+                title={historyDir}
+              >
+                {historyDir || '…'}
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={handleChangeHistoryDir}
+              className="h-[38px] shrink-0 rounded-[10px] bg-accent-soft px-4 text-[13px] font-medium text-accent outline-none transition-[filter] hover:brightness-110"
+            >
+              변경
+            </button>
+            <button
+              type="button"
+              onClick={handleResetHistoryDir}
+              className="h-[38px] shrink-0 rounded-[10px] bg-bg-mute px-3.5 text-[13px] font-medium text-text outline-none transition-[filter] hover:brightness-110"
+            >
+              기본값
+            </button>
+          </div>
+        )
+      },
+      {
+        id: 'cloud-google',
+        category: '저장',
+        group: 'Google Drive',
+        label: 'Google Drive',
+        render: () => <CloudSetting />
+      },
+      {
         id: 'show-toolbar',
-        category: '일반',
-        group: '에디터',
+        category: '에디터',
+        group: '일반',
         label: '서식 툴바',
         render: () => (
           <Row label="서식 툴바">
@@ -95,88 +154,15 @@ export function useSettingItems(): SettingItem[] {
       },
       {
         id: 'vim-mode',
-        category: '일반',
-        group: 'Vim',
-        label: 'Vim 모드',
-        render: () => (
-          <Row label="Vim 모드">
-            <Toggle checked={vimMode} onChange={() => setVimMode(!vimMode)} />
-          </Row>
-        )
-      },
-      {
-        id: 'history-dir',
-        category: '일반',
-        group: '버전 기록',
-        label: '기록 저장 위치',
-        render: () => (
-          <div className="px-3.5 py-3">
-            <div className="flex items-center justify-between">
-              <span className="text-[13.5px] text-text">기록 저장 위치</span>
-              <button
-                type="button"
-                onClick={handleResetHistoryDir}
-                className="text-[12.5px] text-text-tertiary outline-none transition-colors hover:text-accent"
-              >
-                기본값
-              </button>
-            </div>
-            <div className="mt-2.5 flex items-center gap-2">
-              <div className="flex h-8 min-w-0 flex-1 items-center gap-2 rounded-lg bg-text/[0.07] px-2.5">
-                <FileTypeIcon name="" kind="folder" size={16} raise={false} />
-                <span
-                  className="min-w-0 flex-1 truncate text-[12.5px] text-text-secondary"
-                  title={historyDir}
-                >
-                  {historyDir || '…'}
-                </span>
-              </div>
-              <button
-                type="button"
-                onClick={handleChangeHistoryDir}
-                className="h-8 shrink-0 rounded-lg bg-accent-soft px-3 text-[13px] font-medium text-accent outline-none transition-[filter] hover:brightness-110"
-              >
-                변경
-              </button>
-            </div>
-          </div>
-        )
-      },
-      {
-        id: 'trash',
-        category: '일반',
-        group: '휴지통',
-        label: '앱 휴지통',
-        render: () => <TrashSetting />
-      },
-      {
-        id: 'cloud-google',
-        category: '클라우드',
-        group: 'Google Drive',
-        label: 'Google Drive 연결',
-        render: () => <CloudSetting />
-      },
-      {
-        id: 'theme-preview',
-        category: '화면',
-        group: '테마',
-        label: '테마 미리보기',
-        render: () => <ThemePreviewCard />
-      },
-      {
-        id: 'theme',
-        category: '화면',
-        label: '테마',
-        render: () => (
-          <div className="p-3">
-            <ThemeSelect />
-          </div>
-        )
+        category: '에디터',
+        group: '일반',
+        label: 'Vim',
+        render: () => <VimSetting />
       },
       {
         id: 'editor-font-family',
-        category: '화면',
-        group: '에디터',
+        category: '에디터',
+        group: '글꼴',
         label: '글꼴',
         render: () => (
           <Row label="글꼴">
@@ -186,12 +172,13 @@ export function useSettingItems(): SettingItem[] {
       },
       {
         id: 'editor-font-size',
-        category: '화면',
-        group: '에디터',
+        category: '에디터',
+        group: '글꼴',
         label: '글꼴 크기',
         render: () => (
           <Row label="글꼴 크기">
-            <NumberField
+            <Stepper
+              label="글꼴 크기"
               value={editorFontSize}
               min={8}
               max={40}
@@ -202,26 +189,35 @@ export function useSettingItems(): SettingItem[] {
       },
       {
         id: 'editor-line-height',
-        category: '화면',
-        group: '에디터',
+        category: '에디터',
+        group: '글꼴',
         label: '줄 간격',
         render: () => (
           <Row label="줄 간격">
-            <NumberField
+            <Stepper
+              label="줄 간격"
               value={editorLineHeight}
               step={0.1}
               min={1}
               max={3}
+              format={(v) => v.toFixed(1)}
               onChange={(v) => setEditorFont({ lineHeight: v })}
             />
           </Row>
         )
       },
       {
+        id: 'theme',
+        category: '화면',
+        label: '테마',
+        bare: true,
+        render: () => <ThemeGrid />
+      },
+      {
         id: 'about-app',
         category: '정보',
-        group: '앱',
-        label: '앱 정보',
+        group: '애플리케이션',
+        label: '애플리케이션',
         render: () => <AboutSetting section="app" />
       },
       {
@@ -242,10 +238,10 @@ export function useSettingItems(): SettingItem[] {
       )
     ],
     [
+      autoSave,
+      setAutoSave,
       showToolbar,
       setShowToolbar,
-      vimMode,
-      setVimMode,
       editorFontFamily,
       editorFontSize,
       editorLineHeight,

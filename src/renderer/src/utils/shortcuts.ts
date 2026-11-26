@@ -1,8 +1,6 @@
 export interface ShortcutMap {
   newNote: string
   toggleSettings: string
-  copyPathAbsolute: string
-  copyPathRelative: string
   diffApply: string
   diffRestore: string
   save: string
@@ -28,8 +26,6 @@ export type ShortcutAction = keyof ShortcutMap
 export const DEFAULT_SHORTCUTS: ShortcutMap = {
   newNote: 'Ctrl+N',
   toggleSettings: 'Ctrl+,',
-  copyPathAbsolute: 'Ctrl+Shift+C',
-  copyPathRelative: 'Ctrl+Alt+C',
   diffApply: 'Ctrl+Enter',
   diffRestore: 'Ctrl+Backspace',
   save: 'Ctrl+S',
@@ -51,10 +47,8 @@ export const DEFAULT_SHORTCUTS: ShortcutMap = {
 }
 
 export const SHORTCUT_LABELS: Record<ShortcutAction, string> = {
-  newNote: '새 노트',
+  newNote: '새 파일',
   toggleSettings: '설정',
-  copyPathAbsolute: '절대 경로 복사',
-  copyPathRelative: '상대 경로 복사',
   diffApply: '적용',
   diffRestore: '되돌리기',
   save: '저장',
@@ -63,11 +57,11 @@ export const SHORTCUT_LABELS: Record<ShortcutAction, string> = {
   zoomOut: '축소',
   zoomReset: '기본 크기',
   toggleToc: '목차',
-  toggleSidebar: '열기 닫기',
+  toggleSidebar: '열기/닫기',
   viewEditor: '에디터',
   viewSplit: '분할',
   viewPreview: '미리보기',
-  renameItem: '이름 바꾸기',
+  renameItem: '이름 변경',
   newFolder: '새 폴더',
   revealItem: '탐색기에서 보기',
   exportItem: '내보내기',

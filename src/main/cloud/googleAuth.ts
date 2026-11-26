@@ -212,7 +212,7 @@ export async function connectGoogle(options?: { privateWindow?: boolean }): Prom
         prompt: 'consent'
       }).toString()
       return url.toString()
-    }, options?.privateWindow ?? true)
+    }, options?.privateWindow ?? false)
 
     const token = await postToken({
       grant_type: 'authorization_code',

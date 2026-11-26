@@ -46,8 +46,9 @@ interface SettingsState {
   setFilesSectionOpen: (value: boolean) => void
   driveSectionOpen: boolean
   setDriveSectionOpen: (value: boolean) => void
-  cloudPrivateLogin: boolean
-  setCloudPrivateLogin: (value: boolean) => void
+  /** 고친 뒤 잠시 멈추면 저절로 저장한다 */
+  autoSave: boolean
+  setAutoSave: (value: boolean) => void
   tagsSectionOpen: boolean
   setTagsSectionOpen: (value: boolean) => void
   collapsedFolders: string[]
@@ -109,11 +110,11 @@ export const useSettingsStore = create<SettingsState>()(
       setSidebarCollapsed: (value) => set({ sidebarCollapsed: value }),
       filesSectionOpen: true,
       setFilesSectionOpen: (value) => set({ filesSectionOpen: value }),
-      driveSectionOpen: false,
+      driveSectionOpen: true,
       setDriveSectionOpen: (value) => set({ driveSectionOpen: value }),
-      cloudPrivateLogin: true,
-      setCloudPrivateLogin: (value) => set({ cloudPrivateLogin: value }),
-      tagsSectionOpen: true,
+      autoSave: false,
+      setAutoSave: (value) => set({ autoSave: value }),
+      tagsSectionOpen: false,
       setTagsSectionOpen: (value) => set({ tagsSectionOpen: value }),
       templates: DEFAULT_TEMPLATES,
       saveTemplate: (template) =>
@@ -124,7 +125,7 @@ export const useSettingsStore = create<SettingsState>()(
         })),
       deleteTemplate: (id) =>
         set((state) => ({ templates: state.templates.filter((t) => t.id !== id) })),
-      templatesSectionOpen: true,
+      templatesSectionOpen: false,
       setTemplatesSectionOpen: (value) => set({ templatesSectionOpen: value }),
       collapsedFolders: [],
       setFolderCollapsed: (path, collapsed) =>
@@ -156,7 +157,7 @@ export const useSettingsStore = create<SettingsState>()(
     {
       name: 'mdesk-settings',
       // 5·6은 되돌린 속성 확장 작업이 쓰던 버전. 8부터 속성은 상태 하나(값 고정)뿐이다
-      version: 12,
+      version: 13,
       merge: (persisted, current) => {
         const p = (persisted ?? {}) as Partial<SettingsState>
         return {
@@ -226,6 +227,13 @@ export const useSettingsStore = create<SettingsState>()(
             if (saved[action] === from) saved[action] = to
           }
           s.shortcuts = saved as unknown as ShortcutMap
+        }
+        if (version < 13) {
+          // 3단 화면으로 바꾸면서 태그·템플릿 섹션은 닫힌 상태로 시작한다
+          s.tagsSectionOpen = false
+          s.templatesSectionOpen = false
+          s.filesSectionOpen = true
+          s.driveSectionOpen = true
         }
         return s as SettingsState
       }

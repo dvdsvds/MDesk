@@ -20,14 +20,6 @@ export interface GlobalShortcutActions {
   sidebarCommand: (command: SidebarCommand) => void
 }
 
-function copyActivePath(e: KeyboardEvent, relative: boolean): void {
-  const { tabs, activeTabId } = useTabsStore.getState()
-  const tab = tabs.find((t) => t.id === activeTabId)
-  if (!tab?.filePath) return
-  e.preventDefault()
-  void window.api.workspace.copyPath(tab.filePath, relative)
-}
-
 /** 열려 있는 탭을 순서대로 옮긴다. 끝에서는 반대쪽 끝으로 이어진다 */
 function moveTab(delta: 1 | -1): void {
   const { tabs, activeTabId, setActiveTab } = useTabsStore.getState()
@@ -71,14 +63,6 @@ export function useGlobalShortcuts(actions: GlobalShortcutActions): void {
       if (matchesShortcut(e, shortcuts.toggleSettings)) {
         e.preventDefault()
         a.toggleSettings()
-        return
-      }
-      if (matchesShortcut(e, shortcuts.copyPathAbsolute)) {
-        copyActivePath(e, false)
-        return
-      }
-      if (matchesShortcut(e, shortcuts.copyPathRelative)) {
-        copyActivePath(e, true)
         return
       }
       if (matchesShortcut(e, shortcuts.zoomIn)) {
