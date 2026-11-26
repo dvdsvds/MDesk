@@ -88,14 +88,14 @@ async function fillNote(
   box.replaceChildren(header, body)
 
   const path = ctx.notes.find((n) => n.title === title)?.path
-  if (!path) return void body.append(message(`'${title}' 노트를 찾을 수 없습니다.`))
+  if (!path) return void body.append(message(`'${title}' 파일을 찾을 수 없습니다.`))
   if (chain.includes(path)) return void body.append(message('순환 임베드라 펼치지 않았습니다.'))
   if (depth >= MAX_DEPTH) return void body.append(message('임베드가 너무 깊어서 펼치지 않았습니다.'))
   ctx.watched.add(path)
 
   const content = await readNote(path)
   if (ctx.cancelled()) return
-  if (content === null) return void body.append(message(`'${title}' 노트를 읽을 수 없습니다.`))
+  if (content === null) return void body.append(message(`'${title}' 파일을 읽을 수 없습니다.`))
   let section = content
   if (heading) {
     const line = findHeadingLine(content, heading)

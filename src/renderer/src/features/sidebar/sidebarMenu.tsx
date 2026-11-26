@@ -60,15 +60,16 @@ export function buildMenuItems(node: TreeNode, a: MenuActions): ContextMenuItem[
     onClick: () => void window.api.workspace.copyPath(node.path, false)
   })
   items.push({
-    label: '폴더에서 보기',
+    label: '탐색기에서 보기',
     icon: <RevealIcon width={16} height={16} />,
     sepBefore: true,
     shortcut: a.shortcuts.revealItem,
     onClick: () => void window.api.workspace.reveal(node.path)
   })
-  if (node.type === 'folder') {
+  const isMd = node.type === 'file' && node.name.toLowerCase().endsWith('.md')
+  if (node.type === 'folder' || isMd) {
     items.push({
-      label: '폴더 내보내기',
+      label: '내보내기',
       icon: <ExportFolderIcon width={16} height={16} />,
       shortcut: a.shortcuts.exportItem,
       onClick: () =>
@@ -79,7 +80,6 @@ export function buildMenuItems(node: TreeNode, a: MenuActions): ContextMenuItem[
         })
     })
   }
-  const isMd = node.type === 'file' && node.name.toLowerCase().endsWith('.md')
   if (isMd && a.dirtyFilePaths.includes(node.path)) {
     items.push({
       label: '변경 내용 비교',
@@ -89,7 +89,7 @@ export function buildMenuItems(node: TreeNode, a: MenuActions): ContextMenuItem[
   }
   if (isMd) {
     items.push({
-      label: '버전 기록',
+      label: '스냅샷',
       icon: <HistoryIcon width={16} height={16} />,
       onClick: () => a.onOpenHistory(node.path)
     })

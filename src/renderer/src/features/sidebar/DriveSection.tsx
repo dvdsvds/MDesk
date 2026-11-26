@@ -272,7 +272,7 @@ export function DriveSection({
         ]
       : []),
     {
-      label: '이름 바꾸기',
+      label: '이름 변경',
       icon: <RenameIcon width={15} height={15} />,
       sepBefore: item.folder,
       onClick: () => setRenaming(item.id)

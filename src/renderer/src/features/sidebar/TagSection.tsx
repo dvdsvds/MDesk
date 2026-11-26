@@ -53,7 +53,7 @@ export function TagSection({
     >
       {groups.length === 0 && (
         <p className="px-4 py-2 text-[12px] text-text-tertiary">
-          탭의 점을 눌러 상태를 정한 노트가 여기 모입니다
+          상태를 정한 파일이 여기에 표시됩니다
         </p>
       )}
       <div className="px-2">

@@ -5,10 +5,11 @@ import { dirOf, fileNameOf, sepOf, splitName } from '@renderer/utils/path'
 import { popUndo, pushUndo } from '@renderer/utils/sidebarUndo'
 import { useToastStore } from '@renderer/stores/toastStore'
 import { useWorkspaceStore } from '@renderer/stores/workspaceStore'
+import type { BacklinkWithContext } from '../../../../preload/index.d'
 
 export interface DeleteTarget {
   node: TreeNode
-  backlinks: { path: string; count: number }[] | null
+  backlinks: BacklinkWithContext[] | null
   loading: boolean
 }
 
@@ -114,7 +115,7 @@ export function useTreeActions({
     const isMd = node.type === 'file' && node.name.toLowerCase().endsWith('.md')
     setDeleteTarget({ node, backlinks: null, loading: isMd })
     if (isMd) {
-      void window.api.workspace.findBacklinks(node.path).then((backlinks) => {
+      void window.api.workspace.findBacklinkContexts(node.path).then((backlinks) => {
         setDeleteTarget({ node, backlinks, loading: false })
       })
     }

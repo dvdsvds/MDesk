@@ -31,12 +31,12 @@ export function TemplateSection({
 
   const menuItems = (t: NoteTemplate): ContextMenuItem[] => [
     {
-      label: '지금 노트에 넣기',
+      label: '현재 파일에 넣기',
       icon: <PlusIcon width={16} height={16} />,
       onClick: () => onInsert(t)
     },
     {
-      label: '이 템플릿으로 새 노트',
+      label: '이 템플릿으로 새 파일',
       icon: <NewFileIcon width={16} height={16} />,
       onClick: () => onCreateNote(t)
     },
@@ -119,7 +119,7 @@ export function TemplateSection({
       {deleting && (
         <ConfirmDialog
           title="템플릿을 삭제하시겠습니까?"
-          message={`'${deleting.name}' 템플릿이 지워집니다. 이 템플릿으로 만든 노트는 그대로 남습니다.`}
+          message={`'${deleting.name}' 템플릿이 지워집니다. 이 템플릿으로 만든 파일은 그대로 남습니다.`}
           confirmLabel="삭제"
           danger
           onConfirm={() => {

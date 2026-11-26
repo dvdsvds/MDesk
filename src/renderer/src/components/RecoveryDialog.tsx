@@ -2,7 +2,10 @@ import { useEffect, useState } from 'react'
 import { DiffContent } from './DiffContent'
 import { useSettingsStore } from '../stores/settingsStore'
 import { matchesShortcut } from '../utils/shortcuts'
-import { fileNameOf } from '@renderer/utils/path'
+import { fileNameOf, folderTrail } from '@renderer/utils/path'
+import { useWorkspaceStore } from '../stores/workspaceStore'
+import { BTN_PRIMARY, BTN_SECONDARY, Dialog, DialogIcon } from './DialogParts'
+import UndoIcon from '../icons/tb-undo.svg?react'
 
 interface RecoverableItem {
   tmpPath: string
@@ -24,6 +27,7 @@ export function RecoveryDialog({
   const [checked, setChecked] = useState<Set<string>>(new Set(initialItems.map((i) => i.tmpPath)))
   const [selected, setSelected] = useState(initialItems[0]?.tmpPath ?? null)
   const shortcuts = useSettingsStore((s) => s.shortcuts)
+  const rootDir = useWorkspaceStore((s) => s.rootDir)
 
   const selectedItem = items.find((i) => i.tmpPath === selected) ?? null
 
@@ -77,86 +81,85 @@ export function RecoveryDialog({
     ).then(onDone)
   }
 
-  const handleDiscardAll = (): void => {
-    void Promise.all(items.map((item) => window.api.workspace.discardRecovery(item.tmpPath))).then(
-      onDone
-    )
-  }
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="flex h-[80vh] w-[860px] max-w-[95vw] flex-col overflow-hidden rounded-xl border border-border bg-bg-elevated shadow-2xl">
-        <div className="shrink-0 border-b border-border px-5 py-3.5">
-          <h2 className="text-[15px] font-semibold text-text">복구할 파일이 있습니다</h2>
-          <p className="mt-0.5 text-[13px] leading-relaxed text-text-secondary">
-            앱이 비정상 종료되어 저장되지 않은 파일입니다.
-          </p>
+    <Dialog width={1000} height={600}>
+      <div className="flex shrink-0 items-center gap-3 px-6 pb-[18px] pt-6">
+        <DialogIcon tone="warning">
+          <UndoIcon width={20} height={20} />
+        </DialogIcon>
+        <h2 className="text-[17px] font-semibold text-text">복구</h2>
+      </div>
+
+      <div className="flex min-h-0 flex-1 gap-3.5 px-6">
+        <div aria-label="복구할 파일" className="flex w-[230px] shrink-0 flex-col gap-1 overflow-y-auto">
+          {items.map((item) => {
+            const active = selected === item.tmpPath
+            return (
+              <div
+                key={item.tmpPath}
+                onClick={() => setSelected(item.tmpPath)}
+                className={`flex cursor-pointer items-center gap-2.5 rounded-xl px-3 py-[9px] ${
+                  active
+                    ? 'bg-accent/15 shadow-[inset_0_0_0_1px_rgba(110,155,255,0.35)]'
+                    : 'hover:bg-bg-mute/60'
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  className="ui-checkbox"
+                  aria-label={`${fileNameOf(item.targetPath)} 복구`}
+                  checked={checked.has(item.tmpPath)}
+                  onClick={(e) => e.stopPropagation()}
+                  onChange={() =>
+                    setChecked((prev) => {
+                      const next = new Set(prev)
+                      if (next.has(item.tmpPath)) next.delete(item.tmpPath)
+                      else next.add(item.tmpPath)
+                      return next
+                    })
+                  }
+                />
+                <span className="flex min-w-0 flex-col gap-px">
+                  <span
+                    className={`truncate text-[13.5px] ${active ? 'font-medium text-text' : 'text-text'}`}
+                  >
+                    {fileNameOf(item.targetPath)}
+                  </span>
+                  <span className="truncate text-[11.5px] text-text-tertiary">
+                    {folderTrail(rootDir, item.targetPath)}
+                  </span>
+                </span>
+              </div>
+            )
+          })}
         </div>
 
-        <div className="grid min-h-0 flex-1 grid-cols-[220px_1fr]">
-          <div className="overflow-auto border-r border-border">
-            {items.map((item) => {
-              const name = fileNameOf(item.targetPath)
-              return (
-                <div
-                  key={item.tmpPath}
-                  onClick={() => setSelected(item.tmpPath)}
-                  className={`flex cursor-pointer items-center gap-2 px-3 py-2 text-[13px] ${
-                    selected === item.tmpPath
-                      ? 'bg-accent-soft text-accent'
-                      : 'text-text hover:bg-bg-mute'
-                  }`}
-                >
-                  <input
-                    type="checkbox"
-                    className="ui-checkbox"
-                    checked={checked.has(item.tmpPath)}
-                    onClick={(e) => e.stopPropagation()}
-                    onChange={() =>
-                      setChecked((prev) => {
-                        const next = new Set(prev)
-                        if (next.has(item.tmpPath)) next.delete(item.tmpPath)
-                        else next.add(item.tmpPath)
-                        return next
-                      })
-                    }
-                  />
-                  <span className="truncate">{name}</span>
-                </div>
-              )
-            })}
-          </div>
-
-          <div className="min-h-0">
-            {selectedItem && (
-              <DiffContent
-                key={selectedItem.tmpPath}
-                oldContent={selectedItem.currentContent ?? ''}
-                newContent={selectedItem.tmpContent}
-                oldLabel={selectedItem.currentContent === null ? '(파일 없음)' : '지금 저장된 내용'}
-                newLabel="복구할 내용"
-              />
-            )}
-          </div>
-        </div>
-
-        <div className="flex shrink-0 items-center justify-end gap-2 border-t border-border px-5 py-3">
-          <button
-            type="button"
-            onClick={handleDiscardAll}
-            className="rounded-md px-3 py-1.5 text-[13px] text-text-secondary hover:bg-bg-mute focus:outline-none"
-          >
-            복구 안 함
-          </button>
-          <button
-            type="button"
-            onClick={handleRecoverChecked}
-            className="rounded-md bg-accent px-3.5 py-1.5 text-[13px] font-medium text-text-inverted focus:outline-none"
-          >
-            선택한 항목 복구
-          </button>
+        <div className="min-h-0 min-w-0 flex-1">
+          {selectedItem && (
+            <DiffContent
+              key={selectedItem.tmpPath}
+              cards
+              oldContent={selectedItem.currentContent ?? ''}
+              newContent={selectedItem.tmpContent}
+              oldLabel="현재"
+              newLabel="복구"
+            />
+          )}
         </div>
       </div>
-    </div>
+
+      <div className="flex shrink-0 justify-end gap-2 px-6 pb-[22px] pt-5">
+        <button type="button" onClick={onDone} className={BTN_SECONDARY}>
+          취소
+        </button>
+        <button
+          type="button"
+          onClick={handleRecoverChecked}
+          className={`${BTN_PRIMARY} px-4`}
+        >
+          복구
+        </button>
+      </div>
+    </Dialog>
   )
 }

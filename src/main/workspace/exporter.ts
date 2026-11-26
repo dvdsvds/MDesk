@@ -129,12 +129,35 @@ export interface BrokenLink {
   line: number
 }
 
+interface ExportScope {
+  /** 내보낼 마크다운 파일 */
+  files: string[]
+  /** 결과물 안의 상대 경로를 잴 기준 폴더 */
+  base: string
+  /** 이 접두어로 시작하는 파일은 함께 내보내는 것으로 본다(파일 하나만 낼 때는 아무것도 맞지 않는다) */
+  prefix: string
+}
+
+/** 폴더면 그 안의 모든 마크다운을, 파일이면 그 파일 하나만 내보낸다 */
+function exportScope(target: string): ExportScope {
+  let single = false
+  try {
+    single = statSync(target).isFile()
+  } catch {
+    single = false
+  }
+  return single
+    ? { files: [target], base: dirname(target), prefix: '\0' }
+    : { files: walkMdFiles(target), base: target, prefix: target + sep }
+}
+
 export function checkExportLinks(rootDir: string, folderPath: string): BrokenLink[] {
   const titleIndex = buildTitleIndex(rootDir)
-  const folderPrefix = folderPath + sep
+  const scope = exportScope(folderPath)
+  const folderPrefix = scope.prefix
   const broken: BrokenLink[] = []
 
-  for (const filePath of walkMdFiles(folderPath)) {
+  for (const filePath of scope.files) {
     let raw: string
     try {
       raw = readFileSync(filePath, 'utf-8')
@@ -177,7 +200,7 @@ export interface ExportResult {
 }
 
 function destRelFor(absPath: string, opts: ExportOptions): string {
-  const rel = relative(opts.folderPath, absPath)
+  const rel = relative(exportScope(opts.folderPath).base, absPath)
   if (opts.isRoot && opts.representativeName && rel === 'main.md') {
     return `${opts.representativeName}.md`
   }
@@ -234,14 +257,15 @@ function rewriteAsset(
 
 export async function exportFolder(rootDir: string, opts: ExportOptions): Promise<ExportResult> {
   const titleIndex = buildTitleIndex(rootDir)
-  const folderPrefix = opts.folderPath + sep
+  const scope = exportScope(opts.folderPath)
+  const folderPrefix = scope.prefix
   const imgs = newCollector(opts.destDir, 'imgs')
   const files = newCollector(opts.destDir, 'files')
   const writes: { to: string; text: string }[] = []
   let allFilesCache: string[] | null = null
   const allFiles = (): string[] => (allFilesCache ??= walkAllFiles(rootDir))
 
-  for (const filePath of walkMdFiles(opts.folderPath)) {
+  for (const filePath of scope.files) {
     const destPath = join(opts.destDir, destRelFor(filePath, opts))
     const destDirPath = dirname(destPath)
     const noteDir = dirname(filePath)
@@ -312,10 +336,11 @@ export interface PdfNote {
 
 export function listPdfNotes(rootDir: string, folderPath: string): PdfNote[] {
   const titleIndex = buildTitleIndex(rootDir)
-  const folderPrefix = folderPath + sep
+  const scope = exportScope(folderPath)
+  const folderPrefix = scope.prefix
   const notes: PdfNote[] = []
 
-  for (const filePath of walkMdFiles(folderPath)) {
+  for (const filePath of scope.files) {
     let source: string
     try {
       source = readFileSync(filePath, 'utf-8')
@@ -334,7 +359,7 @@ export function listPdfNotes(rootDir: string, folderPath: string): PdfNote[] {
         : null
     }
     notes.push({
-      relPath: toPosix(swapPdf(relative(folderPath, filePath))),
+      relPath: toPosix(swapPdf(relative(scope.base, filePath))),
       source,
       baseDir: dirname(filePath),
       links

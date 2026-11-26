@@ -44,7 +44,8 @@ export function FileList({
   loading,
   activeFilePath,
   onOpenFile,
-  onNewFile
+  onNewFile,
+  onItemContextMenu
 }: {
   title: string
   items: FileListItem[]
@@ -53,6 +54,8 @@ export function FileList({
   onOpenFile: (item: FileListItem) => void
   /** 없으면 새 파일 버튼을 숨긴다 */
   onNewFile?: () => void
+  /** 항목을 오른쪽 클릭했을 때 */
+  onItemContextMenu?: (item: FileListItem, x: number, y: number) => void
 }): React.JSX.Element {
   const [query, setQuery] = useState('')
   const byPath = useNotePropsStore((s) => s.byPath)
@@ -116,6 +119,11 @@ export function FileList({
                 key={it.path}
                 type="button"
                 onClick={() => onOpenFile(it)}
+                onContextMenu={(e) => {
+                  if (!onItemContextMenu) return
+                  e.preventDefault()
+                  onItemContextMenu(it, e.clientX, e.clientY)
+                }}
                 aria-current={active ? 'page' : undefined}
                 className={`flex w-full gap-2.5 border-l-[3px] py-3 pl-[11px] pr-3.5 text-left outline-none transition-colors ${
                   active

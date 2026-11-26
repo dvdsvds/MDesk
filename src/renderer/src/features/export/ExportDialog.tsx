@@ -8,6 +8,8 @@ import {
   DialogBody,
   DialogFooter,
   DialogHeader,
+  FIELD_INPUT,
+  FieldLabel,
   ListBox,
   MainButton
 } from '../../components/DialogParts'
@@ -39,7 +41,7 @@ const REPRESENTATIVE_OPTIONS: { value: 'README' | 'index' | 'main'; label: strin
 ]
 
 const BAD_CHARS = /[\\/:*?"<>|]/g
-const HEAD_ICON = <ExportFolderIcon width={22} height={22} />
+const HEAD_ICON = <ExportFolderIcon width={20} height={20} />
 
 export function ExportDialog({
   folderPath,
@@ -54,10 +56,12 @@ export function ExportDialog({
   const [representativeName, setRepresentativeName] = useState<'README' | 'index' | 'main'>(
     'README'
   )
-  const [name, setName] = useState('')
+  // 처음에는 내보내는 폴더나 파일의 이름(확장자 뺀 것)을 넣어 둔다
+  const [name, setName] = useState(() => folderLabel.replace(/\.md$/i, ''))
   const [nameError, setNameError] = useState<string | null>(null)
-  const [useMd, setUseMd] = useState(true)
-  const [usePdf, setUsePdf] = useState(true)
+  const [format, setFormat] = useState<'md' | 'pdf'>('md')
+  const useMd = format === 'md'
+  const usePdf = format === 'pdf'
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null)
   const [failures, setFailures] = useState<string[]>([])
   const [error, setError] = useState<string | null>(null)
@@ -137,7 +141,7 @@ export function ExportDialog({
 
   const submitForm = async (): Promise<void> => {
     const clean = name.trim()
-    if (!clean || (!useMd && !usePdf)) return
+    if (!clean) return
     if (useMd && isRoot && hasMain) setPhase('name')
     else afterNameStep()
   }
@@ -167,7 +171,7 @@ export function ExportDialog({
             {progress ? `PDF 만드는 중… ${progress.done} / ${progress.total}` : '내보내는 중…'}
           </p>
           {progress && progress.total > 0 && (
-            <div className="mt-3 h-1 overflow-hidden rounded-full bg-bg-mute">
+            <div className="h-1 overflow-hidden rounded-full bg-bg-mute">
               <div
                 className="h-full rounded-full bg-accent transition-[width] duration-200"
                 style={{ width: `${Math.round((progress.done / progress.total) * 100)}%` }}
@@ -206,7 +210,7 @@ export function ExportDialog({
           <p className="text-[13px] leading-relaxed text-text-secondary">
             루트의 main.md를 MD로 내보낼 때 쓸 이름을 골라 주십시오.
           </p>
-          <div className="mt-3 flex flex-col gap-1">
+          <div className="flex flex-col gap-1">
             {REPRESENTATIVE_OPTIONS.map((opt) => (
               <label
                 key={opt.value}
@@ -311,45 +315,55 @@ export function ExportDialog({
     )
   }
 
-  const canSubmit = name.trim() !== '' && (useMd || usePdf)
+  const canSubmit = name.trim() !== ''
 
   return (
     <Dialog onClose={onClose}>
-      <DialogHeader icon={HEAD_ICON} title="폴더 내보내기" subtitle={folderLabel} />
+      <DialogHeader icon={HEAD_ICON} title="내보내기" />
       <DialogBody>
-        <label className="mb-1.5 block text-xs text-text-tertiary">폴더 이름</label>
-        <input
-          autoFocus
-          value={name}
-          onChange={(e) => {
-            setName(e.target.value.replace(BAD_CHARS, ''))
-            setNameError(null)
-          }}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && !e.nativeEvent.isComposing) void submitForm()
-          }}
-          className="h-[38px] w-full rounded-[9px] border-0 bg-bg px-3 text-sm text-text shadow-[inset_0_0_0_1px_var(--color-border-strong)] outline-none focus:shadow-[inset_0_0_0_1px_var(--color-accent)]"
-        />
-        {nameError && <p className="mt-1.5 text-xs text-danger">{nameError}</p>}
-        <div className="mt-4 flex gap-5">
-          <label className="flex items-center text-[13px] text-text">
-            <input
-              type="checkbox"
-              checked={useMd}
-              onChange={() => setUseMd(!useMd)}
-              className="ui-checkbox"
-            />
-            MD
-          </label>
-          <label className="flex items-center text-[13px] text-text">
-            <input
-              type="checkbox"
-              checked={usePdf}
-              onChange={() => setUsePdf(!usePdf)}
-              className="ui-checkbox"
-            />
-            PDF
-          </label>
+        <label className="flex flex-col gap-1.5">
+          <FieldLabel>이름</FieldLabel>
+          <input
+            autoFocus
+            value={name}
+            onChange={(e) => {
+              setName(e.target.value.replace(BAD_CHARS, ''))
+              setNameError(null)
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.nativeEvent.isComposing) void submitForm()
+            }}
+            className={FIELD_INPUT}
+          />
+          {nameError && <span className="px-0.5 text-xs text-danger">{nameError}</span>}
+        </label>
+        <div className="flex flex-col gap-1.5">
+          <FieldLabel>형식</FieldLabel>
+          <div
+            role="radiogroup"
+            aria-label="형식"
+            className="grid grid-cols-2 gap-1 rounded-[10px] bg-bg-mute p-1"
+          >
+            {(['md', 'pdf'] as const).map((f) => {
+              const on = format === f
+              return (
+                <button
+                  key={f}
+                  type="button"
+                  role="radio"
+                  aria-checked={on}
+                  onClick={() => setFormat(f)}
+                  className={`h-[30px] rounded-[7px] text-[13px] outline-none transition-colors ${
+                    on
+                      ? 'bg-accent/15 font-semibold text-text shadow-[inset_0_0_0_1px_rgba(110,155,255,0.35)]'
+                      : 'text-text-secondary hover:text-text'
+                  }`}
+                >
+                  {f.toUpperCase()}
+                </button>
+              )
+            })}
+          </div>
         </div>
       </DialogBody>
       <DialogFooter>

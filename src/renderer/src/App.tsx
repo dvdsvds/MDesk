@@ -21,6 +21,7 @@ import { DiffView } from './components/DiffView'
 import { HistoryDialog } from './components/HistoryDialog'
 import { RecoveryDialog } from './components/RecoveryDialog'
 import { ChangelogDialog } from './components/ChangelogDialog'
+import type { ChangelogItem } from '../../preload/index.d'
 import { TocPanel } from './components/TocPanel'
 import { toggleTaskAtLine } from './utils/tasks'
 import { WindowControls } from './components/TitleBar'
@@ -175,7 +176,7 @@ function App(): React.JSX.Element {
     null
   )
   const [recoveryItems, setRecoveryItems] = useState<RecoverableItem[] | null>(null)
-  const [changelog, setChangelog] = useState<string | null>(null)
+  const [changelog, setChangelog] = useState<ChangelogItem[] | null>(null)
   const [tocOpen, setTocOpen] = useState(false)
   const [tocFocusToken, setTocFocusToken] = useState(0)
   const [selectedFolderPath, setSelectedFolderPath] = useState<string | null>(null)
@@ -392,7 +393,7 @@ function App(): React.JSX.Element {
       const tab = allTabs.find((t) => t.id === activeId)
       const view = getCurrentView()
       if (!tab?.filePath || !isMarkdownPath(tab.filePath) || !view) {
-        pushToast({ kind: 'info', message: '템플릿을 넣을 노트를 먼저 열어 주십시오.' })
+        pushToast({ kind: 'info', message: '템플릿을 넣을 파일을 먼저 열어 주십시오.' })
         return
       }
       const text = applyTemplate(template.content, {
@@ -428,7 +429,7 @@ function App(): React.JSX.Element {
         await window.api.workspace.saveNote({ filePath: created, content })
         openFile(created, content)
       } catch {
-        pushToast({ kind: 'info', message: '템플릿으로 노트를 만들지 못했습니다.' })
+        pushToast({ kind: 'info', message: '템플릿으로 파일을 만들지 못했습니다.' })
       }
     },
     [resolveNewNoteDir, openFile, pushToast, setTree]
@@ -849,6 +850,15 @@ function App(): React.JSX.Element {
                 onOpenAtLine={handleOpenAtLine}
                 onOpenSettings={() => setSettingsOpen(true)}
                 onCollapse={() => setSidebarCollapsed(true)}
+                onRenameFile={(filePath) => {
+                  handleOpenFile(filePath)
+                  // 파일이 열리면 제목 입력란으로 옮겨 이름을 고치게 한다
+                  setTimeout(() => {
+                    const input = document.querySelector<HTMLInputElement>('input[aria-label="파일 제목"]')
+                    input?.focus()
+                    input?.select()
+                  }, 80)
+                }}
                 selectedFolderPath={selectedFolderPath}
                 onSelectFolder={selectLocalFolder}
                 driveFolderId={driveFolder ? driveFolder.id : undefined}
@@ -885,6 +895,11 @@ function App(): React.JSX.Element {
               activeFilePath={activeTab?.filePath ?? null}
               onOpenFile={openListItem}
               onNewFile={driveFolder || listDir ? newFileInList : undefined}
+              onItemContextMenu={
+                driveFolder
+                  ? undefined
+                  : (item, x, y) => sidebarRef.current?.openFileMenu(item.path, x, y)
+              }
             />
           </div>
         </motion.div>
@@ -1021,7 +1036,7 @@ function App(): React.JSX.Element {
       {recoveryItems && (
         <RecoveryDialog items={recoveryItems} onDone={() => setRecoveryItems(null)} />
       )}
-      {changelog && <ChangelogDialog content={changelog} onClose={() => setChangelog(null)} />}
+      {changelog && <ChangelogDialog items={changelog} onClose={() => setChangelog(null)} />}
       {!themeChosen && <ThemePickerDialog onConfirm={() => setThemeChosen(true)} />}
       {tabClose.closeConfirm && (
         <SaveChangesDialog

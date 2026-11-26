@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { motion } from 'motion/react'
 import { FileTypeIcon } from './FileTypeIcon'
-import { fileNameOf } from '@renderer/utils/path'
+import { fileNameOf, folderTrail } from '@renderer/utils/path'
 
 interface SearchResult {
   path: string
@@ -18,18 +18,6 @@ interface SearchPanelProps {
 const MAX_LIST_HEIGHT = 360
 const MAX_RESULTS = 10
 
-function baseName(path: string): string {
-  return fileNameOf(path)
-}
-
-function folderLabel(path: string, rootDir: string | null): string {
-  let rel = path.replace(/\\/g, '/')
-  const root = rootDir ? rootDir.replace(/\\/g, '/') : ''
-  if (root && rel.startsWith(`${root}/`)) rel = rel.slice(root.length + 1)
-  const idx = rel.lastIndexOf('/')
-  return idx >= 0 ? rel.slice(0, idx) : ''
-}
-
 function Highlight({ text, query }: { text: string; query: string }): React.JSX.Element {
   const q = query.trim()
   const i = q ? text.toLowerCase().indexOf(q.toLowerCase()) : -1
@@ -37,18 +25,14 @@ function Highlight({ text, query }: { text: string; query: string }): React.JSX.
   return (
     <>
       {text.slice(0, i)}
-      <span className="text-accent">{text.slice(i, i + q.length)}</span>
+      <b className="font-semibold text-accent">{text.slice(i, i + q.length)}</b>
       {text.slice(i + q.length)}
     </>
   )
 }
 
 function Kbd({ children }: { children: React.ReactNode }): React.JSX.Element {
-  return (
-    <span className="inline-flex h-[18px] min-w-[18px] items-center justify-center rounded bg-bg-mute px-1 text-[11px] text-text-secondary">
-      {children}
-    </span>
-  )
+  return <span className="rounded-[5px] bg-bg-mute px-1.5 py-px font-mono text-text-secondary">{children}</span>
 }
 
 export function SearchPanel({ rootDir, onOpenFile, onClose }: SearchPanelProps): React.JSX.Element {
@@ -106,7 +90,7 @@ export function SearchPanel({ rootDir, onOpenFile, onClose }: SearchPanelProps):
 
   return (
     <motion.div
-      className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 pt-[14vh]"
+      className="fixed inset-0 z-50 flex items-start justify-center bg-[rgba(8,9,12,0.55)] pt-[104px] backdrop-blur-[6px]"
       style={{ willChange: 'opacity' }}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -115,18 +99,20 @@ export function SearchPanel({ rootDir, onOpenFile, onClose }: SearchPanelProps):
       onClick={onClose}
     >
       <motion.div
+        role="dialog"
+        aria-label="검색"
         onClick={(e) => e.stopPropagation()}
         style={{ willChange: 'transform, opacity' }}
         initial={{ opacity: 0, y: -8, scale: 0.98 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, y: -8, scale: 0.98 }}
         transition={{ duration: 0.14, ease: [0.4, 0, 0.2, 1] }}
-        className="flex w-[560px] max-w-[calc(100vw-32px)] flex-col overflow-hidden rounded-2xl border border-border bg-bg-elevated shadow-[0_8px_24px_rgba(0,0,0,0.35)]"
+        className="flex w-[660px] max-w-[calc(100vw-32px)] flex-col overflow-hidden rounded-[18px] border border-white/[0.07] bg-bg-elevated shadow-[0_40px_100px_rgba(0,0,0,0.55)]"
       >
-        <div className="flex h-[52px] items-center gap-2.5 border-b border-border px-4">
+        <label className="flex h-16 items-center gap-3.5 px-[22px]">
           <svg
-            width="18"
-            height="18"
+            width="20"
+            height="20"
             viewBox="0 0 18 18"
             fill="none"
             stroke="currentColor"
@@ -143,20 +129,22 @@ export function SearchPanel({ rootDir, onOpenFile, onClose }: SearchPanelProps):
             value={text}
             onChange={(e) => setText(e.target.value)}
             onKeyDown={handleKeyDown}
+            aria-label="파일 이름이나 내용을 검색합니다"
             placeholder="파일 이름이나 내용을 검색합니다…"
-            className="min-w-0 flex-1 bg-transparent text-[15px] text-text outline-none placeholder:text-text-tertiary"
+            className="min-w-0 flex-1 bg-transparent text-[17px] text-text outline-none placeholder:text-text-tertiary"
           />
-        </div>
+        </label>
+        <div className="h-px bg-white/[0.06]" />
 
         <div className="overflow-y-auto" style={{ maxHeight: MAX_LIST_HEIGHT }}>
-          <div className="p-1.5">
+          <div className="flex flex-col gap-0.5 px-3 pb-1.5 pt-3">
             {results.length === 0 ? (
               <p className="px-3 py-6 text-center text-[13px] text-text-tertiary">
                 일치하는 파일이 없습니다
               </p>
             ) : (
               results.map((r, i) => {
-                const folder = folderLabel(r.path, rootDir)
+                const on = i === active
                 return (
                   <button
                     key={r.path}
@@ -166,33 +154,25 @@ export function SearchPanel({ rootDir, onOpenFile, onClose }: SearchPanelProps):
                     type="button"
                     onClick={() => open(r)}
                     onMouseMove={() => active !== i && setActive(i)}
-                    className="relative flex h-11 w-full items-center gap-2.5 rounded-lg px-2.5 text-left"
+                    className={`flex h-12 w-full shrink-0 items-center gap-3 rounded-xl px-3 text-left outline-none ${
+                      on ? 'bg-accent/15 shadow-[inset_0_0_0_1px_rgba(110,155,255,0.35)]' : ''
+                    }`}
                   >
-                    {i === active && (
-                      <motion.div
-                        layoutId="search-active-pill"
-                        className="absolute inset-0 rounded-lg bg-bg-mute"
-                        transition={{ type: 'spring', stiffness: 600, damping: 45 }}
-                      />
-                    )}
-                    <span className="relative flex">
-                      <FileTypeIcon name={baseName(r.path)} kind="file" />
+                    <span
+                      className={`flex size-[30px] shrink-0 items-center justify-center rounded-[9px] ${
+                        on ? 'bg-accent/15' : 'bg-accent/10'
+                      }`}
+                    >
+                      <FileTypeIcon name={fileNameOf(r.path)} kind="file" size={18} raise={false} />
                     </span>
-                    <span className="relative min-w-0 flex-1">
-                      <span className="block truncate text-[13.5px] text-text">
+                    <span className="flex min-w-0 flex-col">
+                      <span className={`truncate text-[13.5px] text-text ${on ? 'font-medium' : ''}`}>
                         <Highlight text={r.title} query={text} />
                       </span>
-                      {r.snippet && (
-                        <span className="mt-px block truncate text-[11.5px] text-text-tertiary">
-                          <Highlight text={r.snippet} query={text} />
-                        </span>
-                      )}
-                    </span>
-                    {folder && (
-                      <span className="relative max-w-[160px] shrink-0 truncate text-[11.5px] text-text-tertiary">
-                        {folder}
+                      <span className="truncate text-[11.5px] text-text-tertiary">
+                        {folderTrail(rootDir, r.path)}
                       </span>
-                    )}
+                    </span>
                   </button>
                 )
               })
@@ -200,19 +180,15 @@ export function SearchPanel({ rootDir, onOpenFile, onClose }: SearchPanelProps):
           </div>
         </div>
 
-        <div className="flex h-[34px] items-center gap-4 border-t border-border px-4 text-[11.5px] text-text-tertiary">
-          <span className="flex items-center gap-1.5">
-            <Kbd>↑</Kbd>
-            <Kbd>↓</Kbd>
-            이동
+        <div className="flex h-10 items-center gap-4 border-t border-white/[0.05] bg-bg px-[22px] text-[11.5px] text-text-tertiary">
+          <span>
+            <Kbd>↑↓</Kbd> 이동
           </span>
-          <span className="flex items-center gap-1.5">
-            <Kbd>↵</Kbd>
-            열기
+          <span>
+            <Kbd>Enter</Kbd> 열기
           </span>
-          <span className="flex items-center gap-1.5">
-            <Kbd>esc</Kbd>
-            닫기
+          <span>
+            <Kbd>Esc</Kbd> 닫기
           </span>
         </div>
       </motion.div>

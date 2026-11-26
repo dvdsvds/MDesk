@@ -22,6 +22,17 @@ interface Backlink {
   count: number
 }
 
+export interface ChangelogItem {
+  kind: '추가' | '변경' | '수정'
+  text: string
+}
+
+export interface BacklinkWithContext {
+  path: string
+  count: number
+  contexts: { line: number; text: string }[]
+}
+
 interface SearchQuery {
   text: string
   folder: string | null
@@ -125,7 +136,7 @@ export interface MdeskApi {
     disconnectGoogle: () => Promise<void>
   }
   app: {
-    getChangelog: () => Promise<string | null>
+    getChangelog: () => Promise<ChangelogItem[] | null>
     getInfo: () => Promise<AppInfo>
   }
   update: {

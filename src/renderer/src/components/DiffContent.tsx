@@ -6,6 +6,8 @@ interface DiffContentProps {
   newContent: string
   oldLabel: string
   newLabel: string
+  /** 두 칸을 떨어진 카드로 그린다(스냅샷, 복구 창) */
+  cards?: boolean
 }
 
 const CONTEXT = 3
@@ -113,7 +115,8 @@ export function DiffContent({
   oldContent,
   newContent,
   oldLabel,
-  newLabel
+  newLabel,
+  cards
 }: DiffContentProps): React.JSX.Element {
   const rows = useMemo(() => diffToRows(oldContent, newContent), [oldContent, newContent])
   const blocks = useMemo(() => groupBlocks(rows), [rows])
@@ -146,6 +149,38 @@ export function DiffContent({
       syncingRef.current = null
     })
   }, [])
+
+  const renderSide = (side: 'left' | 'right'): React.ReactNode =>
+    blocks.map((block) => (
+      <BlockRows
+        key={block.key}
+        block={block}
+        side={side}
+        expanded={expanded.has(block.key)}
+        onExpand={() => setExpanded((s) => new Set(s).add(block.key))}
+      />
+    ))
+
+  if (cards) {
+    const CARD = 'flex min-h-0 min-w-0 flex-col overflow-hidden rounded-[14px] bg-bg-mute'
+    const HEAD = 'flex h-[38px] shrink-0 items-center px-3.5 text-[12px] text-text-tertiary'
+    return (
+      <div className="grid h-full min-h-0 grid-cols-2 gap-2.5">
+        <section aria-label={oldLabel} className={CARD}>
+          <div className={HEAD}>{oldLabel}</div>
+          <div ref={leftRef} onScroll={handleLeftScroll} className="min-h-0 flex-1 overflow-auto pb-3 pt-1">
+            {renderSide('left')}
+          </div>
+        </section>
+        <section aria-label={newLabel} className={CARD}>
+          <div className={HEAD}>{newLabel}</div>
+          <div ref={rightRef} onScroll={handleRightScroll} className="min-h-0 flex-1 overflow-auto pb-3 pt-1">
+            {renderSide('right')}
+          </div>
+        </section>
+      </div>
+    )
+  }
 
   return (
     <div className="flex h-full min-h-0 flex-col">

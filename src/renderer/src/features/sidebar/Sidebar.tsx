@@ -43,6 +43,8 @@ interface SidebarProps {
   onCreateFromTemplate: (template: NoteTemplate) => void
   /** 사이드바(와 파일 목록)를 접는다 */
   onCollapse: () => void
+  /** 파일 이름 변경(파일은 트리에 없어서 제목 입력란으로 바꾼다) */
+  onRenameFile: (filePath: string) => void
   /** 파일 목록 칸이 보여 주는 Drive 폴더(최상위는 null). Drive를 보고 있지 않으면 undefined */
   driveFolderId: string | null | undefined
   onSelectDriveFolder: (id: string | null, name: string) => void
@@ -57,6 +59,8 @@ export type SidebarCommand = 'rename' | 'newFolder' | 'reveal' | 'export'
 export interface SidebarHandle {
   startNewFile: (dirPath: string) => void
   runCommand: (command: SidebarCommand) => void
+  /** 파일 목록 칸의 파일에 오른쪽 클릭 메뉴를 띄운다 */
+  openFileMenu: (filePath: string, x: number, y: number) => void
 }
 
 /** 접힌 섹션의 높이: 머리 줄 36px + 위 테두리 1px */
@@ -80,28 +84,12 @@ function countDirtyUnder(dirtyFilePaths: string[], node: TreeNode): number {
   return dirtyFilePaths.filter((p) => p === node.path || p.startsWith(prefix)).length
 }
 
-function deleteMessage(target: DeleteTarget, dirtyCount: number): string {
-  const parts: string[] = []
-  if (dirtyCount > 0) {
-    parts.push(
-      target.node.type === 'folder'
-        ? `저장 안 한 변경이 있는 파일이 ${dirtyCount}개 있습니다. 되돌려도 이 변경은 돌아오지 않습니다.`
-        : '저장 안 한 변경이 있습니다. 되돌려도 이 변경은 돌아오지 않습니다.'
-    )
-  }
-  if (target.node.type === 'folder') {
-    if (dirtyCount === 0) {
-      parts.push('폴더 안의 모든 파일이 앱 휴지통으로 이동됩니다. Ctrl+Z로 되돌릴 수 있습니다')
-    }
-  } else if (target.loading) {
-    parts.push('링크를 확인하고 있습니다…')
-  } else if (target.backlinks && target.backlinks.length > 0) {
-    const count = target.backlinks.reduce((sum, b) => sum + b.count, 0)
-    parts.push(`이 파일을 가리키는 위키링크가 ${count}개 있습니다. 삭제하면 링크가 끊깁니다.`)
-  } else if (dirtyCount === 0) {
-    parts.push('앱 휴지통으로 이동됩니다. Ctrl+Z로 되돌릴 수 있습니다')
-  }
-  return parts.join(' ')
+/** 삭제 확인 창의 안내. 저장 안 한 변경이 있을 때만 알린다 */
+function deleteMessage(target: DeleteTarget, dirtyCount: number): string | undefined {
+  if (dirtyCount === 0) return undefined
+  return target.node.type === 'folder'
+    ? '저장하지 않은 변경 사항이 있는 파일이 있습니다. 삭제하면 이 변경 사항은 되돌릴 수 없습니다.'
+    : '저장하지 않은 변경 사항이 있습니다. 삭제하면 이 변경 사항은 되돌릴 수 없습니다.'
 }
 
 export const Sidebar = forwardRef<SidebarHandle, SidebarProps>(function Sidebar(
@@ -125,6 +113,7 @@ export const Sidebar = forwardRef<SidebarHandle, SidebarProps>(function Sidebar(
     onInsertTemplate,
     onCreateFromTemplate,
     onCollapse,
+    onRenameFile,
     driveFolderId,
     onSelectDriveFolder,
     onDriveChanged,
@@ -243,7 +232,9 @@ export const Sidebar = forwardRef<SidebarHandle, SidebarProps>(function Sidebar(
 
   useImperativeHandle(ref, () => ({
     startNewFile: (dirPath: string) => setNewFileIn(dirPath),
-    runCommand
+    runCommand,
+    openFileMenu: (filePath: string, x: number, y: number) =>
+      setContextMenu({ x, y, node: { type: 'file', path: filePath, name: fileNameOf(filePath) } })
   }))
 
   const resolveToolbarDir = (): string | null => {
@@ -297,7 +288,8 @@ export const Sidebar = forwardRef<SidebarHandle, SidebarProps>(function Sidebar(
         expandPath,
         startNewFile: setNewFileIn,
         startNewFolder: setNewFolderIn,
-        startRename: setEditingPath,
+        startRename: (path) =>
+          contextMenu.node.type === 'file' ? onRenameFile(path) : setEditingPath(path),
         openExport: setExportTarget,
         openDelete: openDeleteConfirm,
         onCompareChanges,
@@ -453,7 +445,7 @@ export const Sidebar = forwardRef<SidebarHandle, SidebarProps>(function Sidebar(
           title="삭제하시겠습니까?"
           subject={{ name: deleteTarget.node.name, kind: deleteTarget.node.type }}
           message={deleteMessage(deleteTarget, countDirtyUnder(dirtyFilePaths, deleteTarget.node))}
-          items={deleteTarget.backlinks?.map((b) => fileNameOf(b.path))}
+          references={deleteTarget.backlinks ?? undefined}
           confirmLabel="삭제"
           danger
           onConfirm={confirmDelete}

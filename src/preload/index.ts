@@ -150,7 +150,7 @@ const api = {
     disconnectGoogle: (): Promise<void> => ipcRenderer.invoke('cloud:disconnectGoogle')
   },
   app: {
-    getChangelog: (): Promise<string | null> => ipcRenderer.invoke('app:getChangelog'),
+    getChangelog: (): Promise<{ kind: '추가' | '변경' | '수정'; text: string }[] | null> => ipcRenderer.invoke('app:getChangelog'),
     getInfo: (): Promise<AppInfo> => ipcRenderer.invoke('app:getInfo')
   },
   update: {
