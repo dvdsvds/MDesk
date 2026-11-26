@@ -1,4 +1,3 @@
-import { scanTodos } from './todos'
 import { app, clipboard, dialog, ipcMain, shell, type BrowserWindow } from 'electron'
 import { existsSync, statSync } from 'fs'
 import { mkdir } from 'fs/promises'
@@ -21,7 +20,6 @@ import {
   findBacklinks,
   findBacklinkContexts,
   updateWikilinksOnRename,
-  buildLinkGraph,
   walkMdFiles
 } from './links'
 import { searchNotes, type SearchQuery } from './search'
@@ -145,7 +143,6 @@ export function registerWorkspaceIpc(getWindow: () => BrowserWindow | null): voi
   ipcMain.handle('workspace:findBacklinks', (_event, mdPath: string) =>
     findBacklinks(getRootDir(), titleOf(mdPath), mdPath)
   )
-  ipcMain.handle('workspace:linkGraph', () => buildLinkGraph(getRootDir()))
   ipcMain.handle('workspace:findBacklinkContexts', (_event, mdPath: string) =>
     findBacklinkContexts(getRootDir(), titleOf(mdPath), mdPath)
   )
@@ -223,9 +220,6 @@ export function registerWorkspaceIpc(getWindow: () => BrowserWindow | null): voi
   })
   ipcMain.handle('workspace:discardRecovery', (_event, tmpPath: string) => discardRecovery(tmpPath))
   ipcMain.handle('workspace:listHistory', (_event, filePath: string) => listSnapshots(filePath))
-  ipcMain.handle('workspace:scanTodos', (_e, overrides?: Record<string, string>) =>
-    scanTodos(getRootDir(), overrides)
-  )
   ipcMain.handle('workspace:readHistory', (_event, filePath: string, id: number) =>
     readSnapshot(filePath, id)
   )

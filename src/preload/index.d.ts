@@ -22,11 +22,6 @@ interface Backlink {
   count: number
 }
 
-interface LinkGraph {
-  nodes: { path: string; title: string }[]
-  edges: { source: string; target: string}[]
-}
-
 interface SearchQuery {
   text: string
   folder: string | null
@@ -193,7 +188,6 @@ export interface MdeskApi {
     copyPath: (targetPath: string, relative: boolean) => Promise<void>
     findBacklinks: (mdPath: string) => Promise<Backlink[]>
     findBacklinkContexts: (mdPath: string) => Promise<BacklinkWithContext[]>
-    linkGraph: () => Promise<LinkGraph>
     saveAttachment: (
       noteDirPath: string,
       kind: 'img' | 'files',
@@ -217,9 +211,6 @@ export interface MdeskApi {
     applyRecovery: (tmpPath: string, targetPath: string) => Promise<void>
     discardRecovery: (tmpPath: string) => Promise<void>
     listHistory: (filePath: string) => Promise<HistoryEntry[]>
-    scanTodos: (
-      overrides?: Record<string, string>
-    ) => Promise<{ path: string; line: number; text: string; done: boolean }[]>
     readHistory: (filePath: string, id: number) => Promise<string>
     getHistoryDir: () => Promise<string>
     pickFolder: (defaultPath?: string) => Promise<string | null>

@@ -26,7 +26,7 @@ const SHORTCUT_GROUPS: { group: string; actions: ShortcutAction[] }[] = [
   },
   {
     group: '열기',
-    actions: ['search', 'todoDashboard', 'graph', 'toggleToc', 'backlinks', 'toggleSettings']
+    actions: ['search', 'toggleToc', 'toggleSettings']
   }
 ]
 

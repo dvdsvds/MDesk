@@ -23,8 +23,6 @@ import { HistoryDialog } from './components/HistoryDialog'
 import { RecoveryDialog } from './components/RecoveryDialog'
 import { ChangelogDialog } from './components/ChangelogDialog'
 import { TocPanel } from './components/TocPanel'
-import { TodoDialog } from './components/TodoDialog'
-import { BacklinksPanel } from './components/BacklinksPanel'
 import { toggleTaskAtLine } from './utils/tasks'
 import { TitleBar } from './components/TitleBar'
 import { useAppliedTheme } from './stores/useAppliedTheme'
@@ -44,12 +42,10 @@ import SidebarIcon  from './icons/sidebar.svg?react'
 import { readTextFile, fileKindOf, isMarkdownPath } from './utils/fileKind'
 import { FileViewer } from './components/FileViewer'
 import { EmptyState } from './components/EmptyState'
-import { ActivityBar, ACTIVITY_BAR_WIDTH } from './components/ActivityBar'
 import SearchIcon from './icons/search.svg?react'
 import { useWorkspaceEvents } from './hooks/useWorkspaceEvents'
 import { useGlobalShortcuts } from './hooks/useGlobalShortcuts'
 import { dirOf, fileNameOf, splitName, sepOf } from './utils/path'
-import { GraphDialog } from './components/GraphDialog'
 import { useNotePropsStore } from './stores/notePropsStore'
 import { TagBar } from './components/TagBar'
 import { EditorHeader } from './components/EditorHeader'
@@ -61,6 +57,9 @@ const CARD = 'rounded-xl border border-border bg-bg'
 
 /** 보기 모드를 바꿀 때 에디터·미리보기 폭이 움직이는 시간과 곡선 */
 const VIEW_TRANSITION = { duration: 0.22, ease: [0.4, 0, 0.2, 1] as const }
+
+/** 타이틀바 왼쪽의 사이드바 접기 버튼 칸 폭 */
+const TITLE_TOGGLE_WIDTH = 40
 
 const TITLE_BTN =
   'flex h-7 w-7 items-center justify-center rounded-md text-text-secondary transition-colors hover:bg-bg-mute hover:text-text'
@@ -176,9 +175,6 @@ function App(): React.JSX.Element {
   const [changelog, setChangelog] = useState<string | null>(null)
   const [tocOpen, setTocOpen] = useState(false)
   const [tocFocusToken, setTocFocusToken] = useState(0)
-  const [todoOpen, setTodoOpen] = useState(false)
-  const [backlinksOpen, setBacklinksOpen] = useState(false)
-  const [graphOpen, setGraphOpen] = useState(false)
   const [selectedFolderPath, setSelectedFolderPath] = useState<string | null>(null)
   const pushToast = useToastStore((s) => s.push)
   // Drive 파일을 저장하면 백그라운드로 올린다. 실패하거나 충돌했을 때만 알린다
@@ -321,10 +317,7 @@ function App(): React.JSX.Element {
         if (wasOpen) setTocFocusToken((n) => n + 1)
         return true
       }),
-    toggleTodo: () => setTodoOpen((v) => !v),
-    toggleBacklinks: () => setBacklinksOpen((v) => !v),
     toggleSidebar: () => setSidebarCollapsed(!useSettingsStore.getState().sidebarCollapsed),
-    toggleGraph: () => setGraphOpen((v) => !v),
   })
 
   const handleOpenFile = useCallback(
@@ -577,9 +570,8 @@ function App(): React.JSX.Element {
     [getAttachmentDir, handleOpenFile]
   )
 
-  const handleOpenTodo = useCallback(
+  const handleOpenAtLine = useCallback(
     (filePath: string, line: number): void => {
-      setTodoOpen(false)
       const target = resolveNotePath(filePath)
       const jump = (): void => {
         setTimeout(() => jumpToLine(line), 80)
@@ -624,10 +616,10 @@ function App(): React.JSX.Element {
           pushToast({ kind: 'info', message: `'${heading}' 제목을 찾을 수 없습니다.` })
           return
         }
-        handleOpenTodo(targetPath, line)
+        handleOpenAtLine(targetPath, line)
       })
     },
-    [handleOpenFile, handleOpenTodo, pushToast]
+    [handleOpenFile, handleOpenAtLine, pushToast]
   )
 
   const handleToggleTask = useCallback(
@@ -657,34 +649,6 @@ function App(): React.JSX.Element {
     },
     [setContent]
   )
-
-  const handleToggleTodo = useCallback(
-    async (filePath: string, line: number): Promise<void> => {
-      const target = resolveNotePath(filePath)
-      const tab = useTabsStore.getState().tabs.find((t) => t.filePath === target)
-      if (tab) {
-        const next = toggleTaskAtLine(tab.content, line - 1)
-        if (next !== null) setContent(tab.id, next)
-        return
-      }
-      const raw = await window.api.workspace.readFile(target)
-      const next = toggleTaskAtLine(raw, line - 1)
-      if (next === null) return
-      await window.api.workspace.saveNote({
-        filePath: target,
-        content: next
-      })
-    },
-    [setContent]
-  )
-
-  const getTodoOverrides = useCallback((): Record<string, string> => {
-    const out: Record<string, string> = {}
-    for (const t of useTabsStore.getState().tabs) {
-      if (t.filePath) out[t.filePath] = t.content
-    }
-    return out
-  }, [])
 
   const tocEntries = useMemo(() => extractToc(activeTab?.content ?? ''), [activeTab?.content])
   const handleTocJump = useCallback(
@@ -731,15 +695,14 @@ function App(): React.JSX.Element {
           ) : null
         }
         left={
-          // 아래 묶음(아이콘 줄 + 사이드바 + 오른쪽 테두리 1) + 본문 앞 틈 4와 같은 폭이라,
-          // 탭이 에디터 카드 왼쪽 끝에서 시작한다. 접기 버튼은 아이콘 줄 위 가운데, 검색창은 사이드바 바로 위에 같은 폭으로
+          // 펼쳤을 때는 아래 사이드바(+ 오른쪽 테두리 1) + 본문 앞 틈 4와 같은 폭. 접기 버튼 다음에 검색창이 남은 폭을 채운다
           <motion.div
             className="flex shrink-0 items-center overflow-hidden"
             initial={false}
-            animate={{ width: ACTIVITY_BAR_WIDTH + (sidebarCollapsed ? 0 : sidebar.width) + 1 + 4 }}
+            animate={{ width: sidebarCollapsed ? TITLE_TOGGLE_WIDTH : sidebar.width + 1 + 4 }}
             transition={{ duration: sidebar.resizing ? 0 : 0.2, ease: [0.4, 0, 0.2, 1] }}
           >
-            <div className="flex shrink-0 justify-center" style={{ width: ACTIVITY_BAR_WIDTH }}>
+            <div className="flex shrink-0 justify-center" style={{ width: TITLE_TOGGLE_WIDTH }}>
             <button
               type="button"
               onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
@@ -756,7 +719,7 @@ function App(): React.JSX.Element {
                 onClick={() => setSearchOpen(true)}
                 onDoubleClick={(e) => e.stopPropagation()}
                 title="검색 (Ctrl+P)"
-                style={{ width: sidebar.width }}
+                style={{ width: sidebar.width + 1 - TITLE_TOGGLE_WIDTH }}
                 className="titlebar-no-drag flex h-6 shrink-0 items-center gap-1.5 rounded-md bg-bg-mute px-2 text-[12px] text-text-tertiary outline-none transition-colors hover:text-text-secondary"
               >
                 <SearchIcon width={14} height={14} className="shrink-0" />
@@ -768,15 +731,10 @@ function App(): React.JSX.Element {
       />
       {/* 아래에 4px 여백: 사이드바·에디터·미리보기 카드가 창 맨 아래에 붙지 않게(양옆 틈과 같은 크기) */}
       <main className="flex min-h-0 flex-1 pb-1">
-        {/* 아이콘 줄과 사이드바를 한 테두리로 묶는다. 사이드바를 접으면 아이콘 줄만 남는다 */}
-        <div className="flex shrink-0 rounded-r-xl border-y border-r border-border">
-        <ActivityBar
-          onOpenSearch={() => setSearchOpen(true)}
-          onOpenTodo={() => setTodoOpen((v) => !v)}
-          onOpenBacklinks={() => setBacklinksOpen((v) => !v)}
-          onOpenGraph={() => setGraphOpen((v) => !v)}
-          onOpenSettings={() => setSettingsOpen((v) => !v)}
-        />
+        {/* 사이드바를 테두리로 감싼다. 접으면 테두리도 없앤다 */}
+        <div
+          className={`flex shrink-0 rounded-r-xl ${sidebarCollapsed ? '' : 'border-y border-r border-border'}`}
+        >
         <motion.div
           className="relative shrink-0"
           initial={false}
@@ -784,7 +742,7 @@ function App(): React.JSX.Element {
           transition={{ duration: sidebar.resizing ? 0 : 0.2, ease: [0.4, 0, 0.2, 1] }}
         >
           <div
-            className={`h-full overflow-hidden ${sidebarCollapsed ? '' : 'border-l border-border'}`}
+            className="h-full overflow-hidden"
             inert={sidebarCollapsed}
           >
             <div className="h-full" style={{ width: sidebar.width }}>
@@ -802,7 +760,7 @@ function App(): React.JSX.Element {
                 dirtyFilePaths={dirtyFilePaths}
                 onCompareChanges={handleCompareChanges}
                 onOpenHistory={handleOpenHistory}
-                onOpenAtLine={handleOpenTodo}
+                onOpenAtLine={handleOpenAtLine}
                 onOpenSettings={() => setSettingsOpen(true)}
                 selectedFolderPath={selectedFolderPath}
                 onSelectFolder={setSelectedFolderPath}
@@ -987,37 +945,6 @@ function App(): React.JSX.Element {
           onClose={() => setTocOpen(false)}
           focusToken={tocFocusToken}
           onReturnFocus={handleTocReturnFocus}
-        />
-      )}
-      <AnimatePresence>
-        {todoOpen && (
-          <TodoDialog
-            key="todo-dialog"
-            onOpen={handleOpenTodo}
-            onToggle={handleToggleTodo}
-            getOverrides={getTodoOverrides}
-            onClose={() => setTodoOpen(false)}
-          />
-        )}
-      </AnimatePresence>
-      <AnimatePresence>
-        {graphOpen && (
-          <GraphDialog
-            key="graph-dialog"
-            activePath={activeTab?.filePath ?? null}
-            onOpen={(filePath) => {
-              setGraphOpen(false)
-              handleOpenFile(filePath)
-            }}
-            onClose={() => setGraphOpen(false)}
-            />
-        )}
-      </AnimatePresence>
-      {backlinksOpen && activeTab && !isViewer && (
-        <BacklinksPanel
-          filePath={activeTab.filePath}
-          onOpen={handleOpenTodo}
-          onClose={() => setBacklinksOpen(false)}
         />
       )}
     </div>

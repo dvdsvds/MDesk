@@ -13,10 +13,7 @@ export interface GlobalShortcutActions {
   toggleSettings: () => void
   closeSettings: () => void
   openOrFocusToc: () => void
-  toggleTodo: () => void
-  toggleBacklinks: () => void
   toggleSidebar: () => void
-  toggleGraph: () => void
   /** 보기 모드를 바꾼다. 마크다운 노트가 아니면 아무 일도 하지 않는다 */
   setViewMode: (mode: ViewMode) => void
   /** 사이드바에서 선택된 항목에 실행하는 동작(이름 바꾸기 등) */
@@ -104,24 +101,9 @@ export function useGlobalShortcuts(actions: GlobalShortcutActions): void {
         a.openOrFocusToc()
         return
       }
-      if (matchesShortcut(e, shortcuts.todoDashboard)) {
-        e.preventDefault()
-        a.toggleTodo()
-        return
-      }
-      if (matchesShortcut(e, shortcuts.backlinks)) {
-        e.preventDefault()
-        a.toggleBacklinks()
-        return
-      }
       if (matchesShortcut(e, shortcuts.toggleSidebar)) {
         e.preventDefault()
         a.toggleSidebar()
-        return
-      }
-      if (matchesShortcut(e, shortcuts.graph)) {
-        e.preventDefault()
-        a.toggleGraph()
         return
       }
       // Alt+> / Alt+< 는 Shift를 함께 누른 입력이라 따로 받는다 (Alt+. / Alt+, 도 같은 동작)

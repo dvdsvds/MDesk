@@ -1,5 +1,4 @@
 import { forwardRef, useImperativeHandle, useState } from 'react'
-import { AnimatePresence, motion } from 'motion/react'
 import type { TreeNode } from '../../types/workspace'
 import { ContextMenu } from '../../components/ContextMenu'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
@@ -9,6 +8,8 @@ import { dirOf, fileNameOf, sepOf } from '@renderer/utils/path'
 import ExportIcon from '../../icons/export.svg?react'
 import NewFileIcon from '../../icons/new-file.svg?react'
 import NewFolderIcon from '../../icons/new-folder.svg?react'
+import TrashIcon from '../../icons/ctx-trash.svg?react'
+import SettingsIcon from '../../icons/settings.svg?react'
 import { SectionHeader } from './SectionHeader'
 import { InlineNameInput, NewFileRow } from './InlineInputs'
 import { TreeRow, findNodeByPath, type RowContext } from './TreeRow'
@@ -17,7 +18,6 @@ import { useTreeFocus } from './useTreeFocus'
 import { useTreeActions, type DeleteTarget } from './useTreeActions'
 import { TagSection } from './TagSection'
 import { TemplateSection } from './TemplateSection'
-import { DateSection } from './DateSection'
 import { DriveSection } from './DriveSection'
 import type { NoteTemplate } from '../../utils/noteTemplate'
 import { useSettingsStore } from '@renderer/stores/settingsStore'
@@ -54,10 +54,11 @@ export interface SidebarHandle {
   runCommand: (command: SidebarCommand) => void
 }
 
-/** 섹션을 접고 펼 때 움직이는 시간과 곡선 */
-const SECTION_TRANSITION = { duration: 0.2, ease: [0.4, 0, 0.2, 1] as const }
 /** 접힌 섹션의 높이: 머리 줄 36px + 위 테두리 1px */
 const SECTION_HEADER_BASIS = '37px'
+
+const FOOTER_BTN =
+  'flex h-7 w-7 items-center justify-center rounded-md text-text-secondary outline-none transition-colors hover:bg-bg-mute hover:text-text'
 
 const ICON_BTN =
   'flex h-[26px] w-[26px] items-center justify-center rounded-md text-text-secondary transition-colors hover:bg-bg-mute hover:text-text disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-text-secondary'
@@ -131,8 +132,6 @@ export const Sidebar = forwardRef<SidebarHandle, SidebarProps>(function Sidebar(
   const setTagsOpen = useSettingsStore((s) => s.setTagsSectionOpen)
   const driveOpen = useSettingsStore((s) => s.driveSectionOpen)
   const setDriveOpen = useSettingsStore((s) => s.setDriveSectionOpen)
-  const datesOpen = useSettingsStore((s) => s.datesSectionOpen)
-  const setDatesOpen = useSettingsStore((s) => s.setDatesSectionOpen)
   const templatesOpen = useSettingsStore((s) => s.templatesSectionOpen)
   const setTemplatesOpen = useSettingsStore((s) => s.setTemplatesSectionOpen)
 
@@ -393,32 +392,6 @@ export const Sidebar = forwardRef<SidebarHandle, SidebarProps>(function Sidebar(
         dirtyFilePaths={dirtyFilePaths}
         onLocalMoved={finishMoveToDrive}
       />
-      {/* 날짜 섹션은 그날 노트 몇 개뿐이라 남은 높이를 나눠 갖지 않고 목록 길이만큼만 차지한다 */}
-      <div className="flex shrink-0 flex-col border-t border-border">
-        <div className="flex h-9 shrink-0 items-center pl-2 pr-2">
-          <SectionHeader label="날짜" open={datesOpen} onToggle={() => setDatesOpen(!datesOpen)} />
-        </div>
-        <AnimatePresence initial={false}>
-          {datesOpen && (
-            <motion.div
-              key="dates-body"
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={SECTION_TRANSITION}
-              style={{ overflow: 'hidden' }}
-            >
-              <div className="max-h-56 overflow-auto pb-2">
-                <DateSection
-                  tree={tree}
-                  activeFilePath={activeFilePath}
-                  onOpenFile={onOpenFile}
-                />
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
       <div
         className="flex min-h-0 flex-col overflow-hidden border-t border-border transition-[flex-grow] duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]"
         style={{ flexGrow: tagsOpen ? 1 : 0, flexShrink: 1, flexBasis: SECTION_HEADER_BASIS }}
@@ -444,6 +417,25 @@ export const Sidebar = forwardRef<SidebarHandle, SidebarProps>(function Sidebar(
         <div className="min-h-0 flex-1 overflow-auto pb-2" inert={!templatesOpen}>
           <TemplateSection onInsert={onInsertTemplate} onCreateNote={onCreateFromTemplate} />
         </div>
+      </div>
+      {/* 맨 아래 줄: 휴지통 폴더 열기와 설정을 오른쪽 끝에 둔다 */}
+      <div className="flex h-10 shrink-0 items-center justify-end gap-0.5 border-t border-border px-2">
+        <button
+          type="button"
+          onClick={() => void window.api.workspace.openTrash()}
+          title="휴지통 폴더 열기"
+          className={FOOTER_BTN}
+        >
+          <TrashIcon width={16} height={16} />
+        </button>
+        <button
+          type="button"
+          onClick={onOpenSettings}
+          title={`설정 (${shortcuts.toggleSettings})`}
+          className={FOOTER_BTN}
+        >
+          <SettingsIcon width={17} height={17} />
+        </button>
       </div>
       {contextMenu && (
         <ContextMenu

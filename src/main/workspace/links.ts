@@ -1,5 +1,5 @@
 import { readdirSync, statSync, writeFileSync } from 'fs'
-import { basename, extname, join } from 'path'
+import { extname, join } from 'path'
 import { readNoteCached } from './noteCache'
 
 export function walkMdFiles(dir: string): string[] {
@@ -38,11 +38,6 @@ function wikilinkPattern(title: string): RegExp {
     `\\[\\[\\s*${escapeRegExp(title)}\\s*((?:#[^\\]|\\n]*)?(?:\\|[^\\]\\n]*)?)\\]\\]`,
     'g'
   )
-}
-
-/** `[[ ]]` 안쪽에서 노트 이름만 꺼낸다. `[[#제목]]`이면 빈 문자열 */
-function linkTargetNote(inner: string): string {
-  return inner.split(/[#|]/)[0].trim()
 }
 
 export interface Backlink {
@@ -146,45 +141,4 @@ export function updateWikilinksOnRename(
     }
   }
   return changed
-}
-
-export interface LinkGraph {
-  nodes: { path: string; title: string }[]
-  edges: { source: string; target: string }[]
-}
-
-const WIKILINK_RE = /\[\[([^[\n]+?)\]\]/g
-
-export function buildLinkGraph(rootDir: string): LinkGraph {
-  const files = walkMdFiles(rootDir)
-  const byTitle = new Map<string, string>()
-  for (const filePath of files) {
-    const title = basename(filePath, extname(filePath))
-    if (!byTitle.has(title)) byTitle.set(title, filePath)
-  }
-  const edges: LinkGraph['edges'] = []
-  const seen = new Set<string>()
-  for (const filePath of files) {
-    let content: string
-    try {
-      content = readNoteCached(filePath)
-    } catch {
-      continue
-    }
-    for (const m of content.matchAll(WIKILINK_RE)) {
-      const target = byTitle.get(linkTargetNote(m[1]))
-      if (!target || target === filePath) continue
-      const key = `${filePath}\0${target}`
-      if (seen.has(key)) continue
-      seen.add(key)
-      edges.push({ source: filePath, target })
-    }
-  }
-  return {
-    nodes: files.map((filePath) => ({
-      path: filePath,
-      title: basename(filePath, extname(filePath))
-    })),
-    edges
-  }
 }

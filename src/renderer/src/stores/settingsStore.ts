@@ -57,8 +57,6 @@ interface SettingsState {
   deleteTemplate: (id: string) => void
   templatesSectionOpen: boolean
   setTemplatesSectionOpen: (value: boolean) => void
-  datesSectionOpen: boolean
-  setDatesSectionOpen: (value: boolean) => void
   /** 사이드바 태그 섹션에서 접어 둔 상태 값 */
   tagCollapsedGroups: string[]
   toggleTagGroup: (label: string) => void
@@ -128,8 +126,6 @@ export const useSettingsStore = create<SettingsState>()(
         set((state) => ({ templates: state.templates.filter((t) => t.id !== id) })),
       templatesSectionOpen: true,
       setTemplatesSectionOpen: (value) => set({ templatesSectionOpen: value }),
-      datesSectionOpen: true,
-      setDatesSectionOpen: (value) => set({ datesSectionOpen: value }),
       collapsedFolders: [],
       setFolderCollapsed: (path, collapsed) =>
         set((state) => {

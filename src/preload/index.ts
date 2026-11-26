@@ -18,11 +18,6 @@ interface Backlink {
   count: number
 }
 
-interface LinkGraph {
-  nodes: { path: string; title: string }[]
-  edges: { source: string; target: string }[]
-}
-
 interface BacklinkWithContext {
   path: string
   count: number
@@ -247,7 +242,6 @@ const api = {
       ipcRenderer.invoke('workspace:findBacklinks', mdPath),
     findBacklinkContexts: (mdPath: string): Promise<BacklinkWithContext[]> =>
       ipcRenderer.invoke('workspace:findBacklinkContexts', mdPath),
-    linkGraph: (): Promise<LinkGraph> => ipcRenderer.invoke('workspace:linkGraph'),
     saveAttachment: (
       noteDirPath: string,
       kind: 'img' | 'files',
@@ -285,10 +279,6 @@ const api = {
       ipcRenderer.invoke('workspace:listHistory', filePath),
     readHistory: (filePath: string, id: number): Promise<string> =>
       ipcRenderer.invoke('workspace:readHistory', filePath, id),
-    scanTodos: (
-      overrides?: Record<string, string>
-    ): Promise<{ path: string; line: number; text: string; done: boolean }[]> =>
-      ipcRenderer.invoke('workspace:scanTodos', overrides),
     getHistoryDir: (): Promise<string> => ipcRenderer.invoke('workspace:getHistoryDir'),
     pickFolder: (defaultPath?: string): Promise<string | null> =>
       ipcRenderer.invoke('workspace:pickFolder', defaultPath),

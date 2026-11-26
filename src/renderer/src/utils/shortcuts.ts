@@ -11,10 +11,7 @@ export interface ShortcutMap {
   zoomOut: string
   zoomReset: string
   toggleToc: string
-  todoDashboard: string
-  backlinks: string
   toggleSidebar: string
-  graph: string
   viewEditor: string
   viewSplit: string
   viewPreview: string
@@ -41,10 +38,7 @@ export const DEFAULT_SHORTCUTS: ShortcutMap = {
   zoomOut: 'Ctrl+-',
   zoomReset: 'Ctrl+0',
   toggleToc: 'Ctrl+Shift+O',
-  todoDashboard: 'Ctrl+Shift+T',
-  backlinks: 'Ctrl+Shift+B',
   toggleSidebar: 'Ctrl+Shift+E',
-  graph: 'Ctrl+Shift+G',
   viewEditor: 'Alt+I',
   viewSplit: 'Alt+O',
   viewPreview: 'Alt+P',
@@ -69,10 +63,7 @@ export const SHORTCUT_LABELS: Record<ShortcutAction, string> = {
   zoomOut: '축소',
   zoomReset: '기본 크기',
   toggleToc: '목차',
-  todoDashboard: '할 일',
-  backlinks: '백링크',
   toggleSidebar: '열기 닫기',
-  graph: '그래프',
   viewEditor: '에디터',
   viewSplit: '분할',
   viewPreview: '미리보기',
