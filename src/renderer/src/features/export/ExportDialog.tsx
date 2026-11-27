@@ -92,14 +92,14 @@ export function ExportDialog({
       const prep = await window.api.workspace.prepareExport(parent, name.trim(), useMd, usePdf)
       if (!prep.ok) {
         if (prep.error === 'exists') {
-          setNameError('이미 있습니다. 다른 이름을 입력해 주십시오.')
+          setNameError('이미 있는 이름입니다.')
           setPhase('form')
         } else if (prep.error === 'denied') {
           setError(
-            '폴더에 쓸 수 없습니다. 문서, 사진, 바탕화면 같은 보호 폴더는 Windows 보안이 막을 수 있습니다. 다른 폴더를 골라 주십시오.'
+            '폴더에 쓸 수 없습니다. 문서, 사진, 바탕화면 같은 보호 폴더는 Windows 보안이 차단할 수 있습니다.'
           )
         } else {
-          setError('이름을 확인해 주십시오.')
+          setError('올바르지 않은 이름입니다.')
         }
         return
       }
@@ -127,7 +127,7 @@ export function ExportDialog({
       }
     } catch {
       setError(
-        '내보내기에 실패했습니다. 보호 폴더(문서, 사진, 바탕화면)면 Windows 보안이 막을 수 있습니다.'
+        '내보내기에 실패했습니다. 문서, 사진, 바탕화면 같은 보호 폴더는 Windows 보안이 차단할 수 있습니다.'
       )
     }
   }
@@ -206,7 +206,7 @@ export function ExportDialog({
         <DialogHeader icon={HEAD_ICON} title="대표 문서 이름" subtitle={folderLabel} />
         <DialogBody>
           <p className="text-[13px] leading-relaxed text-text-secondary">
-            루트의 main.md를 MD로 내보낼 때 쓸 이름을 골라 주십시오.
+            루트의 main.md를 MD로 내보낼 때 사용할 이름입니다.
           </p>
           <div className="flex flex-col gap-1">
             {REPRESENTATIVE_OPTIONS.map((opt) => (

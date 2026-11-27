@@ -60,7 +60,7 @@ export function createGridKeys(opts: {
     openSplitPanel({
       onOk: (n, m) => {
         if (!(n >= 1) || !(m >= 1) || n * m < 2) {
-          toast('나눌 칸 수와 줄 수를 확인해 주십시오')
+          toast('나눌 칸 수와 줄 수가 올바르지 않습니다')
           return false
         }
         const err = applyGridEdit((getLine) => splitGrid(info, rect, n, m, getLine))

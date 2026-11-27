@@ -38,7 +38,7 @@ export function parseValues(lines: { text: string; no: number }[], env: Env): st
     if (text === '') continue
     const m = VAR_RE.exec(text)
     if (!m) {
-      errors.push(`value ${no}번째 줄: 이름: 값 모양으로 써 주십시오 → ${text}`)
+      errors.push(`value ${no}번째 줄: "이름: 값" 형식이어야 합니다 → ${text}`)
       continue
     }
     const list = found.get(m[1]) ?? []
@@ -212,7 +212,7 @@ function parseNodes(
           else ctx.warn(`table: 모르는 옵션입니다 (col=, row=, frame=, widths=): ${tok}`)
         }
         if (cols === 0) {
-          ctx.warn('table: col=로 열 개수를 적어 주십시오. 예: table col=3 row=2 [ 이 표는 건너뛰었습니다.')
+          ctx.warn('table: col=로 열 개수가 필요합니다. (예: table col=3 row=2 [) 이 표는 건너뛰었습니다.')
           skipBlock(lines, pos)
           continue
         }
@@ -235,7 +235,7 @@ function parseNodes(
           )
         )
       } else {
-        ctx.warn(`옛 문법은 읽지 않습니다. grid=12 [ 처럼 써 주십시오. 이 블록은 건너뛰었습니다: ${t}`)
+        ctx.warn(`옛 문법은 읽지 않습니다. (예: grid=12 [) 이 블록은 건너뛰었습니다: ${t}`)
         skipBlock(lines, pos)
       }
       continue

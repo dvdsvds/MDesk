@@ -75,7 +75,7 @@ async function driveJson<T>(url: string, init?: RequestInit): Promise<T> {
 function failure(e: unknown): { ok: false; error: string; notConnected?: boolean } {
   if (e instanceof NotConnectedError) return { ok: false, error: e.message, notConnected: true }
   if (e instanceof TypeError) {
-    return { ok: false, error: '인터넷에 연결되어 있지 않은 것 같습니다.' }
+    return { ok: false, error: '인터넷에 연결되어 있지 않습니다.' }
   }
   return { ok: false, error: e instanceof Error ? e.message : 'Drive 작업에 실패했습니다.' }
 }
@@ -493,7 +493,7 @@ async function upload(id: string, filePath: string): Promise<void> {
       parents?: string[]
     }>(`${API}/files/${id}?fields=md5Checksum,trashed,parents`)
     if (remote.trashed) {
-      emit({ path: filePath, state: 'error', message: 'Drive에서 삭제된 파일이라 올리지 못했습니다.' })
+      emit({ path: filePath, state: 'error', message: 'Drive에서 삭제된 파일이라 올릴 수 없습니다.' })
       return
     }
     const known = readMeta(id)
@@ -506,7 +506,7 @@ async function upload(id: string, filePath: string): Promise<void> {
       emit({
         path: filePath,
         state: 'conflict',
-        message: 'Drive에서 다른 곳이 먼저 수정해서, 이 내용은 "충돌" 사본으로 올렸습니다.'
+        message: 'Drive에서 먼저 수정된 파일이라 이 내용은 "충돌" 사본으로 올렸습니다.'
       })
       return
     }
@@ -525,7 +525,7 @@ async function upload(id: string, filePath: string): Promise<void> {
     emit({
       path: filePath,
       state: 'error',
-      message: `Drive에 올리지 못했습니다. ${f.error} 다시 저장하면 다시 시도합니다.`
+      message: `Drive에 올리지 못했습니다. ${f.error} 다음 저장 때 다시 시도합니다.`
     })
   } finally {
     uploading.delete(id)

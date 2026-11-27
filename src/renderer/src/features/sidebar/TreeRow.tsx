@@ -29,14 +29,13 @@ export interface RowContext {
   onCancelNewFile: () => void
   onContextMenu: (e: React.MouseEvent, node: TreeNode) => void
   onMenuAt: (node: TreeNode, x: number, y: number) => void
-  onNewFileIn: (dirPath: string) => void
   onDragStart: (e: React.DragEvent, node: TreeNode) => void
   onDragEnd: () => void
   onDrop: (e: React.DragEvent, targetDirPath: string) => void
 }
 
 const ROW_BASE =
-  'flex h-[30px] w-full items-center gap-1.5 rounded-md pr-2 text-left text-[13px] text-text transition-colors group-hover/row:bg-bg-mute/60 focus:outline-none'
+  'flex h-[30px] w-full items-center gap-1.5 rounded-md pr-8 text-left text-[13px] text-text transition-colors group-hover/row:bg-bg-mute/60 focus:outline-none'
 
 const ROW_ACTION =
   'flex h-[22px] w-[22px] items-center justify-center rounded-[5px] text-text-tertiary outline-none hover:bg-bg-mute hover:text-text'
@@ -62,10 +61,10 @@ function Chevron({ open }: { open: boolean }): React.JSX.Element {
   )
 }
 
-/** 마우스를 올리면 나타나는 … (메뉴)와 + (이 폴더에 새 파일) */
+/** 줄 오른쪽의 … 메뉴 버튼 */
 function RowActions({ node, ctx }: { node: TreeNode; ctx: RowContext }): React.JSX.Element {
   return (
-    <span className="pointer-events-none absolute right-1 top-1/2 flex -translate-y-1/2 gap-0.5 opacity-0 group-hover/row:pointer-events-auto group-hover/row:opacity-100">
+    <span className="absolute right-1 top-1/2 flex -translate-y-1/2">
       <button
         type="button"
         aria-label={`${node.name} 메뉴`}
@@ -83,31 +82,6 @@ function RowActions({ node, ctx }: { node: TreeNode; ctx: RowContext }): React.J
           <circle cx="12.5" cy="8" r="1.3" />
         </svg>
       </button>
-      {node.type === 'folder' && (
-        <button
-          type="button"
-          aria-label={`${node.name} 안에 새 파일`}
-          title="새 파일"
-          onClick={(e) => {
-            e.stopPropagation()
-            ctx.onNewFileIn(node.path)
-          }}
-          className={ROW_ACTION}
-        >
-          <svg
-            aria-hidden="true"
-            width="14"
-            height="14"
-            viewBox="0 0 16 16"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.6"
-            strokeLinecap="round"
-          >
-            <path d="M8 3.5v9M3.5 8h9" />
-          </svg>
-        </button>
-      )}
     </span>
   )
 }

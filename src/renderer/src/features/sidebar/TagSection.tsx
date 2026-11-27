@@ -52,7 +52,7 @@ export function TagSection({
     >
       {groups.length === 0 && (
         <p className="px-4 py-2 text-[12px] text-text-tertiary">
-          상태를 정한 파일이 여기에 표시됩니다
+          상태를 지정한 파일이 없습니다
         </p>
       )}
       <div className="px-2">

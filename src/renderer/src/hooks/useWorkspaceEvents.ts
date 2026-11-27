@@ -37,7 +37,7 @@ export function useWorkspaceEvents(): void {
       const newName = fileNameOf(newPath)
       pushToast({
         kind: 'info',
-        message: `사용할 수 없는 문자가 있어 파일 이름을 ${newName}"(으)로 변경했습니다`
+        message: `사용할 수 없는 문자가 있어 파일 이름을 "${newName}"(으)로 변경했습니다`
       })
     })
   }, [renamePath, pushToast])

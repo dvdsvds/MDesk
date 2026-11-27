@@ -38,7 +38,7 @@ export function ThemePickerDialog({ onConfirm }: ThemePickerDialogProps): React.
       </DialogBody>
       <div className="px-7 pb-6 pt-6">
         <button type="button" onClick={() => onConfirm(selected)} className={`${BTN_PRIMARY} w-full`}>
-          시작하기
+          시작
         </button>
       </div>
     </Dialog>

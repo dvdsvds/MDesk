@@ -120,7 +120,7 @@ function parseChart(lines: string[]): ParsedBlock {
       const values: number[] = []
       for (const c of cells) {
         const n = toNumber(c)
-        if (n === null) return err(`chart: ${e.name}의 값이 숫자가 아니에요: ${c}`)
+        if (n === null) return err(`chart: ${e.name}의 값이 숫자가 아닙니다: ${c}`)
         values.push(n)
       }
       series.push({ name: e.name, values })
@@ -130,7 +130,7 @@ function parseChart(lines: string[]): ParsedBlock {
     const values: number[] = []
     for (const e of entries) {
       const n = toNumber(e.raw)
-      if (n === null) return err(`chart: ${e.name}의 값이 숫자가 아니에요: ${e.raw}`)
+      if (n === null) return err(`chart: ${e.name}의 값이 숫자가 아닙니다: ${e.raw}`)
       labels.push(e.name)
       values.push(n)
     }

@@ -11,6 +11,20 @@ import {
   trashDriveItem,
   uploadLocalEntry
 } from './drive'
+import {
+  addGithubLink,
+  browseGithubRepo,
+  cancelGithubLogin,
+  commitGithubLink,
+  disconnectGithub,
+  finishGithubLogin,
+  githubStatus,
+  listGithubLinks,
+  listGithubRepos,
+  removeGithubLink,
+  setGithubSavedListener,
+  startGithubLogin
+} from './github'
 
 export function registerCloudIpc(getWindow: () => BrowserWindow | null): void {
   ipcMain.handle('cloud:getStatus', () => cloudStatus())
@@ -34,4 +48,23 @@ export function registerCloudIpc(getWindow: () => BrowserWindow | null): void {
     uploadLocalEntry(sourcePath, parentId)
   )
   ipcMain.handle('drive:download', (_e, id: string, name: string) => downloadDriveFile(id, name))
+
+  setGithubSavedListener(() => getWindow()?.webContents.send('github:saved'))
+  ipcMain.handle('github:getStatus', () => githubStatus())
+  ipcMain.handle('github:startLogin', () => startGithubLogin())
+  ipcMain.handle('github:finishLogin', () => finishGithubLogin())
+  ipcMain.handle('github:cancelLogin', () => cancelGithubLogin())
+  ipcMain.handle('github:disconnect', () => disconnectGithub())
+  ipcMain.handle('github:browse', (_e, repo: string) => browseGithubRepo(repo))
+  ipcMain.handle('github:listLinks', () => listGithubLinks())
+  ipcMain.handle('github:listRepos', () => listGithubRepos())
+  ipcMain.handle(
+    'github:addLink',
+    (_e, args: { owner: string; repo: string; branch: string; dir: string; files: string[] }) =>
+      addGithubLink(args)
+  )
+  ipcMain.handle('github:removeLink', (_e, id: string) => removeGithubLink(id))
+  ipcMain.handle('github:commit', (_e, id: string, message: string) =>
+    commitGithubLink(id, message)
+  )
 }

@@ -102,24 +102,19 @@ export function FileTypeIcon({
   name,
   kind,
   size = 18,
-  open = false,
-  raise = true
+  open = false
 }: {
   name: string
   kind: 'file' | 'folder'
   size?: number
   open?: boolean
-  raise?: boolean
 }): React.JSX.Element {
   const type = typeOf(name, kind)
   const Svg = kind === 'folder' && open ? FolderOpenSvg : SVGS[type]
   return (
     <span
       className="flex shrink-0"
-      style={{
-        color: `var(--icon-${type})`,
-        transform: kind === 'folder' && raise ? 'translateY(-1.8px)' : undefined
-      }}
+      style={{ color: `var(--icon-${type})` }}
       aria-hidden="true"
     >
       <Svg width={size} height={size} style={{ display: 'block' }} />

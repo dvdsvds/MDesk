@@ -9,7 +9,6 @@ import { ViewModeSwitch } from './components/ViewModeSwitch'
 import type { ViewMode } from './stores/settingsStore'
 import { SaveChangesDialog } from './components/SaveChangesDialog'
 import { useTabClose } from './hooks/useTabClose'
-import { useSidebarResize } from './hooks/useSidebarResize'
 import { EDITOR_MIN_WIDTH, SPLIT_GAP, SPLIT_RATIO } from './utils/splitLayout'
 import { restoreOpenTabs, usePersistOpenTabs } from './hooks/useOpenTabsPersistence'
 import { SearchPanel } from './components/SearchPanel'
@@ -50,7 +49,10 @@ import { dirOf, fileNameOf, splitName, sepOf } from './utils/path'
 import { useNotePropsStore } from './stores/notePropsStore'
 import { TagBar } from './components/TagBar'
 
-const DRIVE_COPY_RE = /[\\/]\.drive[\\/]/
+const DRIVE_COPY_RE = /[\\/]\.(drive|ghmd)[\\/]/
+const GITHUB_COPY_RE = /[\\/]\.ghmd[\\/]/
+
+const SIDEBAR_WIDTH = 280
 
 const VIEW_TRANSITION = { duration: 0.22, ease: [0.4, 0, 0.2, 1] as const }
 
@@ -109,7 +111,8 @@ function App(): React.JSX.Element {
   const tagBarPath =
     activeTab?.kind === 'text' &&
     !activeTab.missing &&
-    activeTab.filePath?.toLowerCase().endsWith('.md')
+    activeTab.filePath?.toLowerCase().endsWith('.md') &&
+    !GITHUB_COPY_RE.test(activeTab.filePath)
       ? activeTab.filePath
       : null
   const isViewer = activeTab !== null && activeTab.kind !== 'text'
@@ -123,7 +126,6 @@ function App(): React.JSX.Element {
 
   const splitRef = useRef<HTMLDivElement>(null)
   const [previewMinWidth, setPreviewMinWidth] = useState(0)
-  const sidebar = useSidebarResize()
   const sidebarCollapsed = useSettingsStore((s) => s.sidebarCollapsed)
   const setSidebarCollapsed = useSettingsStore((s) => s.setSidebarCollapsed)
   const [splitEl, setSplitEl] = useState<HTMLDivElement | null>(null)
@@ -356,8 +358,8 @@ function App(): React.JSX.Element {
           kind: 'info',
           message:
             result.reason === 'tooLarge'
-              ? '20MB가 넘는 파일이라 폴더에서 보여 드립니다.'
-              : '텍스트로 열 수 없는 파일이라 폴더에서 보여 드립니다.'
+              ? '20MB가 넘는 파일은 폴더에서 표시합니다.'
+              : '텍스트로 열 수 없는 파일은 폴더에서 표시합니다.'
         })
         void window.api.workspace.reveal(filePath)
       })
@@ -372,7 +374,7 @@ function App(): React.JSX.Element {
       const tab = allTabs.find((t) => t.id === activeId)
       const view = getCurrentView()
       if (!tab?.filePath || !isMarkdownPath(tab.filePath) || !view) {
-        pushToast({ kind: 'info', message: '템플릿을 넣을 파일을 먼저 열어 주십시오.' })
+        pushToast({ kind: 'info', message: '템플릿을 넣을 파일이 열려 있지 않습니다.' })
         return
       }
       const text = applyTemplate(template.content, {
@@ -736,11 +738,11 @@ function App(): React.JSX.Element {
           <motion.div
             className="relative shrink-0"
             initial={false}
-            animate={{ width: sidebarCollapsed ? 0 : sidebar.width }}
-            transition={{ duration: sidebar.resizing ? 0 : 0.2, ease: [0.4, 0, 0.2, 1] }}
+            animate={{ width: sidebarCollapsed ? 0 : SIDEBAR_WIDTH }}
+            transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
           >
             <div className="h-full overflow-hidden" inert={sidebarCollapsed}>
-              <div className="h-full" style={{ width: sidebar.width }}>
+              <div className="h-full" style={{ width: SIDEBAR_WIDTH }}>
                 <Sidebar
                   ref={sidebarRef}
                   tree={tree}
@@ -766,14 +768,6 @@ function App(): React.JSX.Element {
                 />
               </div>
             </div>
-            {!sidebarCollapsed && (
-              <div
-                onMouseDown={sidebar.onResizeStart}
-                className="group absolute -right-1 top-0 z-10 h-full w-2 cursor-col-resize"
-              >
-                <div className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-transparent" />
-              </div>
-            )}
           </motion.div>
         </div>
         <div className="flex min-w-0 flex-1 flex-col bg-bg">

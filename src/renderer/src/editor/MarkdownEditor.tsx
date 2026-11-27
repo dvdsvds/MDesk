@@ -28,6 +28,7 @@ import { editingAssist } from './editingAssist'
 import { useSettingsStore } from '@renderer/stores/settingsStore'
 import { blockIndent } from './blockIndent'
 import { colorSwatch } from './colorSwatch'
+import { mathPreview } from './mathPreview'
 import type { NoteRef } from '../utils/noteIndex'
 import { codeBlocks } from './codeBlocks'
 import { templateCompletion, templateCompletionSource } from '../features/template/editor/templateCompletion'
@@ -132,6 +133,7 @@ function buildExtensions(
     history(),
     blockIndent,
     colorSwatch,
+    mathPreview,
     tooltips({ position: 'fixed', parent: document.body }),
     templateCompletion,
     codeBlocks,

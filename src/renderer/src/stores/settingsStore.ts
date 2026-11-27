@@ -43,6 +43,8 @@ interface SettingsState {
   setFilesSectionOpen: (value: boolean) => void
   driveSectionOpen: boolean
   setDriveSectionOpen: (value: boolean) => void
+  githubSectionOpen: boolean
+  setGithubSectionOpen: (value: boolean) => void
   autoSave: boolean
   setAutoSave: (value: boolean) => void
   tagsSectionOpen: boolean
@@ -107,6 +109,8 @@ export const useSettingsStore = create<SettingsState>()(
       setFilesSectionOpen: (value) => set({ filesSectionOpen: value }),
       driveSectionOpen: true,
       setDriveSectionOpen: (value) => set({ driveSectionOpen: value }),
+      githubSectionOpen: true,
+      setGithubSectionOpen: (value) => set({ githubSectionOpen: value }),
       autoSave: false,
       setAutoSave: (value) => set({ autoSave: value }),
       tagsSectionOpen: false,

@@ -111,13 +111,55 @@ interface DriveUploadEvent {
   message?: string
 }
 
+interface GithubStatus {
+  configured: boolean
+  connected: boolean
+  login: string | null
+  avatar: string | null
+}
+
+type GithubResult<T> = ({ ok: true } & T) | { ok: false; error: string; notConnected?: boolean }
+
+interface GithubDeviceCode {
+  userCode: string
+  verificationUri: string
+}
+
+interface GithubBrowseResult {
+  owner: string
+  repo: string
+  branch: string
+  dir: string
+  files: string[]
+}
+
+interface GithubAddArgs {
+  owner: string
+  repo: string
+  branch: string
+  dir: string
+  files: string[]
+}
+
+interface GithubLinkView {
+  id: string
+  owner: string
+  repo: string
+  branch: string
+  dir: string
+  files: { path: string; localPath: string; changed: boolean }[]
+}
+
 type CloudConnectResult = { ok: true; email: string | null } | { ok: false; error: string }
 
 const api = {
   drive: {
     list: (folderId: string | null): Promise<DriveResult<{ items: DriveItem[] }>> =>
       ipcRenderer.invoke('drive:list', folderId),
-    createFolder: (parentId: string | null, name: string): Promise<DriveResult<{ item: DriveItem }>> =>
+    createFolder: (
+      parentId: string | null,
+      name: string
+    ): Promise<DriveResult<{ item: DriveItem }>> =>
       ipcRenderer.invoke('drive:createFolder', parentId, name),
     createFile: (
       parentId: string | null,
@@ -142,6 +184,30 @@ const api = {
       return () => ipcRenderer.removeListener('drive:upload', listener)
     }
   },
+  github: {
+    getStatus: (): Promise<GithubStatus> => ipcRenderer.invoke('github:getStatus'),
+    startLogin: (): Promise<GithubResult<GithubDeviceCode>> =>
+      ipcRenderer.invoke('github:startLogin'),
+    finishLogin: (): Promise<GithubResult<{ login: string | null }>> =>
+      ipcRenderer.invoke('github:finishLogin'),
+    cancelLogin: (): Promise<void> => ipcRenderer.invoke('github:cancelLogin'),
+    disconnect: (): Promise<void> => ipcRenderer.invoke('github:disconnect'),
+    browse: (repo: string): Promise<GithubResult<GithubBrowseResult>> =>
+      ipcRenderer.invoke('github:browse', repo),
+    listLinks: (): Promise<GithubLinkView[]> => ipcRenderer.invoke('github:listLinks'),
+    listRepos: (): Promise<GithubResult<{ repos: { owner: string; repo: string }[] }>> =>
+      ipcRenderer.invoke('github:listRepos'),
+    addLink: (args: GithubAddArgs): Promise<GithubResult<{ link: GithubLinkView }>> =>
+      ipcRenderer.invoke('github:addLink', args),
+    removeLink: (id: string): Promise<void> => ipcRenderer.invoke('github:removeLink', id),
+    commit: (id: string, message: string): Promise<GithubResult<{ count: number }>> =>
+      ipcRenderer.invoke('github:commit', id, message),
+    onSaved: (callback: () => void): (() => void) => {
+      const listener = (): void => callback()
+      ipcRenderer.on('github:saved', listener)
+      return () => ipcRenderer.removeListener('github:saved', listener)
+    }
+  },
   cloud: {
     getStatus: (): Promise<CloudStatus> => ipcRenderer.invoke('cloud:getStatus'),
     connectGoogle: (options?: { privateWindow?: boolean }): Promise<CloudConnectResult> =>
@@ -149,7 +215,8 @@ const api = {
     disconnectGoogle: (): Promise<void> => ipcRenderer.invoke('cloud:disconnectGoogle')
   },
   app: {
-    getChangelog: (): Promise<{ kind: '추가' | '변경' | '수정'; text: string }[] | null> => ipcRenderer.invoke('app:getChangelog'),
+    getChangelog: (): Promise<{ kind: '추가' | '변경' | '수정'; text: string }[] | null> =>
+      ipcRenderer.invoke('app:getChangelog'),
     getInfo: (): Promise<AppInfo> => ipcRenderer.invoke('app:getInfo')
   },
   update: {

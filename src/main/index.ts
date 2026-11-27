@@ -204,7 +204,7 @@ app.whenReady().then(() => {
       setUpdateStatus({ state: 'ready', version: info.version })
     })
     autoUpdater.on('error', (err) => {
-      console.error('자동 업데이트 확인에 실패했어요:', err)
+      console.error('자동 업데이트 확인에 실패했습니다:', err)
       if (updateStatus.state === 'downloading') setUpdateStatus({ state: 'idle' })
     })
     let lastCheckAt = 0

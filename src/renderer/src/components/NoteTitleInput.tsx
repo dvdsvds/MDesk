@@ -41,7 +41,7 @@ export function NoteTitleInput({
       onRenamed(filePath, newPath)
     } catch {
       setValue(base)
-      onError('이름을 바꿀 수 없습니다. 같은 이름의 파일이 있는지 확인해 주십시오.')
+      onError('이름을 변경할 수 없습니다. 같은 이름의 파일이 있는지 확인하십시오.')
     }
   }
 

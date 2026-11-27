@@ -272,7 +272,7 @@ export function XlsxViewer({ filePath }: { filePath: string }): React.JSX.Elemen
         ))}
         {sheet?.truncated && (
           <span className="ml-auto shrink-0 px-2 text-[11px] text-text-tertiary">
-            {MAX_ROWS.toLocaleString()}행·{MAX_COLS}열까지만 보입니다
+            {MAX_ROWS.toLocaleString()}행, {MAX_COLS}열까지 표시합니다
           </span>
         )}
       </div>

@@ -69,7 +69,7 @@ export function useTreeActions({
         setEditingPath(null)
         useToastStore
           .getState()
-          .push({ kind: 'info', message: `'${newName}' 이름이 이미 있거나 바꿀 수 없습니다.` })
+          .push({ kind: 'info', message: `'${newName}' 이름이 이미 있거나 사용할 수 없습니다.` })
       })
       .finally(() => {
         renamingRef.current = false

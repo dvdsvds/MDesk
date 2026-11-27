@@ -40,7 +40,7 @@ export function mergeDropsText(info: GridInfo, rect: Rect, getLine: GetLine): bo
 export function mergeGrid(info: GridInfo, rect: Rect, getLine: GetLine): GridResult {
   const inside = cellsIn(info, rect)
   if (typeof inside === 'string') return fail(inside)
-  if (inside.length < 2) return fail('합칠 칸을 둘 이상 선택해 주십시오.')
+  if (inside.length < 2) return fail('합칠 칸을 둘 이상 선택하십시오.')
   const set = new Set(inside)
   const real = inside.filter((c) => c.def !== null).sort((a, b) => a.r - b.r || a.c - b.c)
   const rs = rect.r2 - rect.r1 + 1
@@ -512,7 +512,7 @@ export function deleteRows(info: GridInfo, rect: Rect, getLine: GetLine): GridRe
     const hit = cell.r + cell.rs > rect.r1 && cell.r <= rect.r2
     if (hit) {
       if (cell.r < rect.r1 || cell.r + cell.rs - 1 > rect.r2) {
-        return fail('합친 칸이 걸쳐 있어서 지울 수 없습니다. 먼저 칸을 나눠 주십시오.')
+        return fail('합친 칸이 걸쳐 있어 삭제할 수 없습니다. 칸 나누기가 필요합니다.')
       }
       continue
     }
@@ -541,7 +541,7 @@ export function deleteCols(info: GridInfo, rect: Rect, getLine: GetLine): GridRe
     const hit = cell.c + cell.cs > rect.c1 && cell.c <= rect.c2
     if (hit) {
       if (cell.c < rect.c1 || cell.c + cell.cs - 1 > rect.c2) {
-        return fail('합친 칸이 걸쳐 있어서 지울 수 없습니다. 먼저 칸을 나눠 주십시오.')
+        return fail('합친 칸이 걸쳐 있어 삭제할 수 없습니다. 칸 나누기가 필요합니다.')
       }
       continue
     }

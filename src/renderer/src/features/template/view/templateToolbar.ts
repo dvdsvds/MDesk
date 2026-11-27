@@ -318,12 +318,12 @@ export function createToolbar(api: ToolbarApi): Toolbar {
   }
   const supBtn = button(
     '<span>x<sup style="font-size:9px">2</sup></span>',
-    '위 첨자: 누르면 켜짐/꺼짐, 글자를 선택하고 누르면 바로 적용',
+    '위 첨자 (선택한 글자에 적용)',
     () => api.script('sup')
   )
   const subBtn = button(
     '<span>x<sub style="font-size:9px">2</sub></span>',
-    '아래 첨자: 누르면 켜짐/꺼짐, 글자를 선택하고 누르면 바로 적용',
+    '아래 첨자 (선택한 글자에 적용)',
     () => api.script('sub')
   )
   root.append(sepScript, supBtn, subBtn)

@@ -129,8 +129,8 @@ export function SearchPanel({ rootDir, onOpenFile, onClose }: SearchPanelProps):
             value={text}
             onChange={(e) => setText(e.target.value)}
             onKeyDown={handleKeyDown}
-            aria-label="파일 이름이나 내용을 검색합니다"
-            placeholder="파일 이름이나 내용을 검색합니다…"
+            aria-label="파일 이름 또는 내용 검색"
+            placeholder="파일 이름 또는 내용 검색"
             className="min-w-0 flex-1 bg-transparent text-[17px] text-text outline-none placeholder:text-text-tertiary"
           />
         </label>
@@ -163,7 +163,7 @@ export function SearchPanel({ rootDir, onOpenFile, onClose }: SearchPanelProps):
                         on ? 'bg-accent/15' : 'bg-accent/10'
                       }`}
                     >
-                      <FileTypeIcon name={fileNameOf(r.path)} kind="file" size={18} raise={false} />
+                      <FileTypeIcon name={fileNameOf(r.path)} kind="file" size={18} />
                     </span>
                     <span className="flex min-w-0 flex-col">
                       <span className={`truncate text-[13.5px] text-text ${on ? 'font-medium' : ''}`}>

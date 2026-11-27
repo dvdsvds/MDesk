@@ -87,8 +87,8 @@ async function fillNote(
 
   const path = ctx.notes.find((n) => n.title === title)?.path
   if (!path) return void body.append(message(`'${title}' 파일을 찾을 수 없습니다.`))
-  if (chain.includes(path)) return void body.append(message('순환 임베드라 펼치지 않았습니다.'))
-  if (depth >= MAX_DEPTH) return void body.append(message('임베드가 너무 깊어서 펼치지 않았습니다.'))
+  if (chain.includes(path)) return void body.append(message('순환 임베드는 표시하지 않습니다.'))
+  if (depth >= MAX_DEPTH) return void body.append(message('임베드가 너무 깊어 표시하지 않습니다.'))
   ctx.watched.add(path)
 
   const content = await readNote(path)

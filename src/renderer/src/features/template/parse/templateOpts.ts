@@ -133,7 +133,7 @@ export function parseOpts(tokens: string[], ctx: Ctx, where: string, scope: Scop
       if (deny('border')) continue
       const b = parseBorder(val)
       if (b === null)
-        ctx.warn(`${where}: border= 값이 틀립니다. none, all, -left,-top 처럼 써 주십시오: ${val}`)
+        ctx.warn(`${where}: border= 값이 올바르지 않습니다. (예: none, all, -left,-top): ${val}`)
       else o.border = b
     } else if (/^border-(top|right|bottom|left)$/.test(key)) {
       if (deny('border')) continue

@@ -32,6 +32,7 @@ import {
   type NoteProps
 } from './noteProps'
 import { onNoteSaved } from '../cloud/drive'
+import { onGithubNoteSaved } from '../cloud/github'
 import { emptyTrash, moveToTrash, purgeOldTrash, restoreFromTrash, trashFolderPath } from './trash'
 import { markRemovalByApp, markSavedByApp, markMoveByApp, startWatcher } from './watcher'
 import { checkExportLinks, exportFolder, listPdfNotes, type ExportOptions } from './exporter'
@@ -74,6 +75,7 @@ function saveNote({ filePath, content }: SaveNoteArgs): SaveNoteResult {
   } catch {}
   writeFileAtomic(filePath, content)
   onNoteSaved(filePath)
+  onGithubNoteSaved(filePath)
   return { filePath, renamed: false }
 }
 

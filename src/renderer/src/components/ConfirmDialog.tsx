@@ -74,7 +74,7 @@ function ReferenceList({ references }: { references: BacklinkWithContext[] }): R
                 className="flex h-[38px] w-full items-center gap-2 px-3 text-left text-[12.5px] text-text outline-none"
               >
                 <Chevron open={expanded} />
-                <FileTypeIcon name={name} kind="file" size={15} raise={false} />
+                <FileTypeIcon name={name} kind="file" size={15} />
                 <span className="min-w-0 truncate">{name}</span>
               </button>
               {expanded && (
@@ -130,7 +130,7 @@ export function ConfirmDialog({
       <DialogBody>
         {subject && (
           <NameBox>
-            <FileTypeIcon name={subject.name} kind={subject.kind} size={18} raise={false} />
+            <FileTypeIcon name={subject.name} kind={subject.kind} size={18} />
             <span className="min-w-0 truncate text-[13.5px] font-medium text-text">{subject.name}</span>
           </NameBox>
         )}

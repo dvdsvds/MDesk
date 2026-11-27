@@ -124,7 +124,7 @@ function waitForCode(
       fn()
     }
     const timer = setTimeout(
-      () => finish(() => reject(new Error('로그인 시간이 지났습니다. 다시 시도해 주십시오.'))),
+      () => finish(() => reject(new Error('로그인 시간이 만료되었습니다. 다시 시도하십시오.'))),
       LOGIN_TIMEOUT_MS
     )
 
@@ -138,12 +138,12 @@ function waitForCode(
       }
       res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', Connection: 'close' })
       if (url.searchParams.get('state') !== state) {
-        res.end(DONE_PAGE('연결하지 못했습니다', '요청이 올바르지 않습니다. Mdesk에서 다시 시도해 주십시오.'))
-        finish(() => reject(new Error('로그인 요청이 올바르지 않습니다. 다시 시도해 주십시오.')))
+        res.end(DONE_PAGE('연결하지 못했습니다', '요청이 올바르지 않습니다. Mdesk에서 다시 시도하십시오.'))
+        finish(() => reject(new Error('로그인 요청이 올바르지 않습니다. 다시 시도하십시오.')))
         return
       }
       if (error || !code) {
-        res.end(DONE_PAGE('연결하지 못했습니다', 'Mdesk로 돌아가서 다시 시도해 주십시오.'))
+        res.end(DONE_PAGE('연결하지 못했습니다', 'Mdesk에서 다시 시도하십시오.'))
         finish(() =>
           reject(new Error(error === 'access_denied' ? '로그인을 취소했습니다.' : '로그인에 실패했습니다.'))
         )
@@ -178,7 +178,7 @@ async function revoke(token: string): Promise<void> {
 }
 
 export async function connectGoogle(options?: { privateWindow?: boolean }): Promise<ConnectResult> {
-  if (!isConfigured()) return { ok: false, error: '이 빌드에는 Google 연결 정보가 들어 있지 않습니다.' }
+  if (!isConfigured()) return { ok: false, error: 'Google Drive에 연결할 수 없습니다.' }
   if (!(await safeStorage.isAsyncEncryptionAvailable())) {
     return {
       ok: false,
@@ -219,14 +219,14 @@ export async function connectGoogle(options?: { privateWindow?: boolean }): Prom
       })
       return {
         ok: false,
-        error: `로그인 정보를 받지 못했습니다${token.error ? ` (${token.error})` : ''}. 다시 시도해 주십시오.`
+        error: `로그인 정보를 받지 못했습니다${token.error ? ` (${token.error})` : ''}. 다시 시도하십시오.`
       }
     }
     if (!token.scope?.split(' ').includes(DRIVE_SCOPE)) {
       await revoke(token.refresh_token)
       return {
         ok: false,
-        error: 'Google Drive 접근을 허용해야 연결할 수 있습니다. 다시 시도해서 모든 항목을 허용해 주십시오.'
+        error: 'Google Drive 연결을 위해 모든 항목의 접근 허용이 필요합니다.'
       }
     }
     const email = emailFromIdToken(token.id_token)

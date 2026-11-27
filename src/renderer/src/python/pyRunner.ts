@@ -112,7 +112,7 @@ async function doRun(code: string, baseDir: string): Promise<RunResult> {
     }
     const timer = setTimeout(
       () =>
-        finish(failure(`${RUN_TIMEOUT_MS / 1000}초 안에 끝나지 않아서 중단했습니다.`, true), true),
+        finish(failure(`${RUN_TIMEOUT_MS / 1000}초 안에 끝나지 않아 중단했습니다.`, true), true),
       RUN_TIMEOUT_MS
     )
     const onMessage = (e: MessageEvent): void => {
@@ -120,7 +120,7 @@ async function doRun(code: string, baseDir: string): Promise<RunResult> {
       if (d && d.type === 'result' && d.id === id) finish(normalize(d), false)
     }
     const onError = (): void => {
-      finish(failure('실행 중 오류가 났습니다.'), true)
+      finish(failure('실행 중 오류가 발생했습니다.'), true)
     }
     s.worker.addEventListener('message', onMessage)
     s.worker.addEventListener('error', onError)

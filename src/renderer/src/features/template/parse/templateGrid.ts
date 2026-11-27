@@ -103,7 +103,7 @@ export function parseGrid(
       }
       if (OPENER_RE.test(t)) {
         ctx.warn(
-          `grid 안에서 "${t}"는 쓰지 않습니다. col= 칸 정의를 써 주십시오. 이 블록은 건너뛰었습니다.`
+          `grid 안에서 "${t}"는 쓰지 않습니다. col= 칸 정의를 사용하십시오. 이 블록은 건너뛰었습니다.`
         )
         skipBlock(lines, pos)
         cur = null
@@ -111,7 +111,7 @@ export function parseGrid(
       }
       ctx.warn(
         cur !== null
-          ? `글자는 칸 정의보다 한 단계 더 들여써 주십시오: ${t}`
+          ? `글자는 칸 정의보다 한 단계 더 들여써야 합니다: ${t}`
           : `알 수 없는 줄을 건너뛰었습니다: ${t}`
       )
       continue
@@ -134,7 +134,7 @@ export function parseGrid(
         let a = Number(rm[2])
         let b = rm[3] === undefined ? a : Number(rm[3])
         if (b < a) {
-          ctx.warn(`${label}: 범위는 작은 수-큰 수 순서로 써 주십시오. 바꿔서 읽었습니다.`)
+          ctx.warn(`${label}: 범위는 작은 수-큰 수 순서여야 합니다. 순서를 바꿔 읽었습니다.`)
           ;[a, b] = [b, a]
         }
         if (rm[1] === 'col') {

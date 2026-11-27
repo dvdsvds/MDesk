@@ -75,7 +75,7 @@ export function createToolbarBridge(opts: {
     apply: (ch) => {
       const t = targetRect()
       if (!t) {
-        toast('칸을 먼저 선택해 주십시오')
+        toast('선택한 칸이 없습니다')
         return
       }
       const box = ed.state.editing
@@ -109,7 +109,7 @@ export function createToolbarBridge(opts: {
       const box = ed.state.editing ?? tx.state.editing
       const s = window.getSelection()
       if (!box || !s || s.rangeCount === 0 || !box.contains(s.anchorNode)) {
-        toast('칸을 편집하는 중에 눌러 주십시오')
+        toast('칸 편집 중에만 사용할 수 있습니다')
         return
       }
       const r = s.getRangeAt(0)

@@ -7,10 +7,10 @@ import { FileTypeIcon } from '../../components/FileTypeIcon'
 import { AppLogoMark } from '../../components/AppIcon'
 import { dirOf, fileNameOf, sepOf } from '@renderer/utils/path'
 import SearchIcon from '../../icons/search.svg?react'
-import NewFolderIcon from '../../icons/new-folder.svg?react'
-import NewFileIcon from '../../icons/new-file.svg?react'
 import TrashIcon from '../../icons/ctx-trash.svg?react'
 import SettingsIcon from '../../icons/settings.svg?react'
+import NewFolderIcon from '../../icons/new-folder.svg?react'
+import NewFileIcon from '../../icons/new-file.svg?react'
 import { SectionHeader } from './SectionHeader'
 import { InlineNameInput, NewFileRow } from './InlineInputs'
 import { TreeRow, findNodeByPath, type RowContext } from './TreeRow'
@@ -20,6 +20,8 @@ import { useTreeActions, type DeleteTarget } from './useTreeActions'
 import { TagSection } from './TagSection'
 import { TemplateSection } from './TemplateSection'
 import { DriveSection } from './DriveSection'
+import { GithubSection } from './GithubSection'
+import { OnlineDot } from './OnlineDot'
 import type { NoteTemplate } from '../../utils/noteTemplate'
 import { useSettingsStore } from '@renderer/stores/settingsStore'
 
@@ -59,9 +61,6 @@ const SECTION_HEADER_BASIS = '37px'
 const FOOTER_BTN =
   'flex h-7 w-7 items-center justify-center rounded-md text-text-secondary outline-none transition-colors hover:bg-bg-mute hover:text-text'
 
-const ICON_BTN =
-  'flex h-[26px] w-[26px] items-center justify-center rounded-md text-text-secondary transition-colors hover:bg-bg-mute hover:text-text disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-text-secondary'
-
 function countDirtyUnder(dirtyFilePaths: string[], node: TreeNode): number {
   const prefix = node.path + sepOf(node.path)
   return dirtyFilePaths.filter((p) => p === node.path || p.startsWith(prefix)).length
@@ -71,8 +70,8 @@ function countDirtyUnder(dirtyFilePaths: string[], node: TreeNode): number {
 function deleteMessage(target: DeleteTarget, dirtyCount: number): string | undefined {
   if (dirtyCount === 0) return undefined
   return target.node.type === 'folder'
-    ? '저장하지 않은 변경 사항이 있는 파일이 있습니다. 삭제하면 이 변경 사항은 되돌릴 수 없습니다.'
-    : '저장하지 않은 변경 사항이 있습니다. 삭제하면 이 변경 사항은 되돌릴 수 없습니다.'
+    ? '저장하지 않은 변경 사항이 있는 파일이 있습니다. 삭제한 뒤에는 되돌릴 수 없습니다.'
+    : '저장하지 않은 변경 사항이 있습니다. 삭제한 뒤에는 되돌릴 수 없습니다.'
 }
 
 export const Sidebar = forwardRef<SidebarHandle, SidebarProps>(function Sidebar(
@@ -104,6 +103,7 @@ export const Sidebar = forwardRef<SidebarHandle, SidebarProps>(function Sidebar(
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; node: TreeNode } | null>(
     null
   )
+  const [rootMenu, setRootMenu] = useState<{ x: number; y: number } | null>(null)
   const [exportTarget, setExportTarget] = useState<{
     folderPath: string
     isRoot: boolean
@@ -116,6 +116,8 @@ export const Sidebar = forwardRef<SidebarHandle, SidebarProps>(function Sidebar(
   const setTagsOpen = useSettingsStore((s) => s.setTagsSectionOpen)
   const driveOpen = useSettingsStore((s) => s.driveSectionOpen)
   const setDriveOpen = useSettingsStore((s) => s.setDriveSectionOpen)
+  const githubOpen = useSettingsStore((s) => s.githubSectionOpen)
+  const setGithubOpen = useSettingsStore((s) => s.setGithubSectionOpen)
   const templatesOpen = useSettingsStore((s) => s.templatesSectionOpen)
   const setTemplatesOpen = useSettingsStore((s) => s.setTemplatesSectionOpen)
 
@@ -211,12 +213,6 @@ export const Sidebar = forwardRef<SidebarHandle, SidebarProps>(function Sidebar(
     runCommand
   }))
 
-  const resolveToolbarDir = (): string | null => {
-    if (selectedFolderPath) return selectedFolderPath
-    if (activeFilePath) return dirOf(activeFilePath)
-    return rootDir
-  }
-
   const handleContextMenu = (e: React.MouseEvent, node: TreeNode): void => {
     e.preventDefault()
     setContextMenu({ x: e.clientX, y: e.clientY, node })
@@ -247,10 +243,6 @@ export const Sidebar = forwardRef<SidebarHandle, SidebarProps>(function Sidebar(
     onCancelNewFile: () => setNewFileIn(null),
     onContextMenu: handleContextMenu,
     onMenuAt: (node, x, y) => setContextMenu({ x, y, node }),
-    onNewFileIn: (dirPath) => {
-      expandPath(dirPath)
-      setNewFileIn(dirPath)
-    },
     onDragStart: (e, node) => {
       e.dataTransfer.setData('text/plain', node.path)
       e.dataTransfer.effectAllowed = 'move'
@@ -301,41 +293,28 @@ export const Sidebar = forwardRef<SidebarHandle, SidebarProps>(function Sidebar(
       </div>
       <div className={`flex min-h-0 flex-col ${filesOpen ? 'flex-1' : 'shrink-0'}`}>
         <div className="flex h-9 shrink-0 items-center justify-between pl-2 pr-2">
-          <SectionHeader label="로컬" open={filesOpen} onToggle={() => setFilesOpen(!filesOpen)} />
-          <div className="flex items-center gap-0.5">
-            <button
-              type="button"
-              onClick={() => {
-                const dir = resolveToolbarDir()
-                if (dir) {
-                  expandPath(dir)
-                  setNewFolderIn(dir)
-                }
-              }}
-              title="새 폴더"
-              aria-label="새 폴더"
-              disabled={!rootDir}
-              className={`${ICON_BTN} !w-[30px]`}
-            >
-              <NewFolderIcon />
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                const dir = resolveToolbarDir()
-                if (dir) {
-                  expandPath(dir)
-                  setNewFileIn(dir)
-                }
-              }}
-              title={`새 파일 (${shortcuts.newNote})`}
-              aria-label="새 파일"
-              disabled={!rootDir}
-              className={ICON_BTN}
-            >
-              <NewFileIcon />
-            </button>
-          </div>
+          <SectionHeader
+            label="내 컴퓨터"
+            open={filesOpen}
+            onToggle={() => setFilesOpen(!filesOpen)}
+          />
+          <button
+            type="button"
+            aria-label="내 컴퓨터 메뉴"
+            title="메뉴"
+            disabled={!rootDir}
+            onClick={(e) => {
+              const r = e.currentTarget.getBoundingClientRect()
+              setRootMenu({ x: r.left, y: r.bottom + 4 })
+            }}
+            className="mr-1 flex h-[22px] w-[22px] items-center justify-center rounded-[5px] text-text-tertiary outline-none hover:bg-bg-mute hover:text-text disabled:opacity-30"
+          >
+            <svg aria-hidden="true" width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+              <circle cx="3.5" cy="8" r="1.3" />
+              <circle cx="8" cy="8" r="1.3" />
+              <circle cx="12.5" cy="8" r="1.3" />
+            </svg>
+          </button>
         </div>
         {filesOpen && (
           <div
@@ -383,11 +362,17 @@ export const Sidebar = forwardRef<SidebarHandle, SidebarProps>(function Sidebar(
         open={driveOpen}
         onToggle={() => setDriveOpen(!driveOpen)}
         onOpenFile={onOpenFile}
-        onOpenSettings={onOpenSettings}
         draggingLocalPath={draggingPath}
         dirtyFilePaths={dirtyFilePaths}
         onLocalMoved={finishMoveToDrive}
         activeFilePath={activeFilePath}
+      />
+      <GithubSection
+        open={githubOpen}
+        onToggle={() => setGithubOpen(!githubOpen)}
+        onOpenFile={onOpenFile}
+        activeFilePath={activeFilePath}
+        dirtyFilePaths={dirtyFilePaths}
       />
       <div
         className="flex min-h-0 flex-col overflow-hidden border-t border-border transition-[flex-grow] duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]"
@@ -415,7 +400,8 @@ export const Sidebar = forwardRef<SidebarHandle, SidebarProps>(function Sidebar(
           <TemplateSection onInsert={onInsertTemplate} onCreateNote={onCreateFromTemplate} />
         </div>
       </div>
-      <div className="mt-auto flex h-10 shrink-0 items-center justify-end gap-0.5 border-t border-border px-2">
+      <div className="mt-auto flex h-10 shrink-0 items-center gap-0.5 border-t border-border px-2">
+        <OnlineDot />
         <button
           type="button"
           onClick={() => void window.api.workspace.openTrash()}
@@ -433,6 +419,31 @@ export const Sidebar = forwardRef<SidebarHandle, SidebarProps>(function Sidebar(
           <SettingsIcon width={17} height={17} />
         </button>
       </div>
+      {rootMenu && rootDir && (
+        <ContextMenu
+          x={rootMenu.x}
+          y={rootMenu.y}
+          items={[
+            {
+              label: '새 파일',
+              icon: <NewFileIcon width={15} height={15} />,
+              onClick: () => {
+                setFilesOpen(true)
+                setNewFileIn(rootDir)
+              }
+            },
+            {
+              label: '새 폴더',
+              icon: <NewFolderIcon width={15} height={15} />,
+              onClick: () => {
+                setFilesOpen(true)
+                setNewFolderIn(rootDir)
+              }
+            }
+          ]}
+          onClose={() => setRootMenu(null)}
+        />
+      )}
       {contextMenu && (
         <ContextMenu
           x={contextMenu.x}

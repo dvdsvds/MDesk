@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useToastStore } from '../../stores/toastStore'
+import { GOOGLE_STATUS_CHANGED, notifyGoogleStatusChanged } from '@renderer/utils/cloudEvents'
 import type { CloudStatus } from '../../../../preload/index.d'
 
 const DANGER_BTN =
@@ -14,7 +15,10 @@ export function CloudSetting(): React.JSX.Element {
   const [busy, setBusy] = useState(false)
 
   useEffect(() => {
-    void window.api.cloud.getStatus().then(setStatus)
+    const run = (): void => void window.api.cloud.getStatus().then(setStatus)
+    run()
+    window.addEventListener(GOOGLE_STATUS_CHANGED, run)
+    return () => window.removeEventListener(GOOGLE_STATUS_CHANGED, run)
   }, [])
 
   const connect = async (): Promise<void> => {
@@ -24,6 +28,7 @@ export function CloudSetting(): React.JSX.Element {
     if (result.ok) {
       setStatus(await window.api.cloud.getStatus())
       pushToast({ kind: 'info', message: 'Google Drive에 연결했습니다.' })
+      notifyGoogleStatusChanged()
     } else {
       pushToast({ kind: 'info', message: result.error })
     }
@@ -35,6 +40,7 @@ export function CloudSetting(): React.JSX.Element {
     setStatus(await window.api.cloud.getStatus())
     setBusy(false)
     pushToast({ kind: 'info', message: 'Google Drive 연결을 해제했습니다.' })
+    notifyGoogleStatusChanged()
   }
 
   if (!status) return <div className="h-[76px]" />
@@ -58,18 +64,20 @@ export function CloudSetting(): React.JSX.Element {
       </span>
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
         <span className="text-[13.5px] font-medium text-text">
-          {status.connected ? 'Google Drive에 연결되어 있습니다' : 'Google Drive에 연결하지 않았습니다'}
-        </span>
-        <span className="truncate text-[12.5px] text-text-tertiary">
           {status.connected
-            ? (status.email ?? '연결된 계정')
-            : status.configured
-              ? 'Mdesk가 만든 파일에만 접근합니다'
-              : '이 빌드에는 Google 연결 정보가 들어 있지 않습니다'}
+            ? status.email
+              ? `Google Drive에 ${status.email} 계정으로 연결되어 있습니다`
+              : 'Google Drive에 연결되어 있습니다'
+            : 'Google Drive에 연결되어 있지 않습니다'}
         </span>
       </div>
       {status.connected ? (
-        <button type="button" disabled={busy} onClick={() => void disconnect()} className={DANGER_BTN}>
+        <button
+          type="button"
+          disabled={busy}
+          onClick={() => void disconnect()}
+          className={DANGER_BTN}
+        >
           연결 해제
         </button>
       ) : (
@@ -79,7 +87,7 @@ export function CloudSetting(): React.JSX.Element {
           onClick={() => void connect()}
           className={PRIMARY_BTN}
         >
-          {busy ? '로그인하는 중…' : '연결'}
+          {busy ? '로그인하는 중…' : '로그인'}
         </button>
       )}
     </div>

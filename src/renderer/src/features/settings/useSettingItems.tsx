@@ -9,6 +9,7 @@ import { Row, Stepper, Toggle } from './SettingsParts'
 import { FontSelect } from './FontSelect'
 import { AboutSetting } from './AboutSetting'
 import { CloudSetting } from './CloudSetting'
+import { GithubSetting } from './GithubSetting'
 import { VimSetting } from './VimSetting'
 
 const SHORTCUT_GROUPS: { group: string; actions: ShortcutAction[] }[] = [
@@ -107,7 +108,7 @@ export function useSettingItems(): SettingItem[] {
         render: () => (
           <div className="flex items-center gap-2 px-[18px] py-3.5">
             <div className="flex h-[38px] min-w-0 flex-1 items-center gap-2 rounded-[10px] bg-bg px-3">
-              <FileTypeIcon name="" kind="folder" size={15} raise={false} />
+              <FileTypeIcon name="" kind="folder" size={15} />
               <span
                 className="min-w-0 flex-1 truncate font-mono text-[12.5px] text-text-secondary"
                 title={historyDir}
@@ -138,6 +139,13 @@ export function useSettingItems(): SettingItem[] {
         group: 'Google Drive',
         label: 'Google Drive',
         render: () => <CloudSetting />
+      },
+      {
+        id: 'cloud-github',
+        category: '저장',
+        group: 'GitHub',
+        label: 'GitHub',
+        render: () => <GithubSetting />
       },
       {
         id: 'show-toolbar',

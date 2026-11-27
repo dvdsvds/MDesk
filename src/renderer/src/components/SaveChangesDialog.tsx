@@ -47,7 +47,7 @@ export function SaveChangesDialog({
       <DialogHeader icon={<SaveIcon />} title="저장되지 않은 변경 사항" />
       <DialogBody>
         <NameBox>
-          <FileTypeIcon name={title} kind="file" size={18} raise={false} />
+          <FileTypeIcon name={title} kind="file" size={18} />
           <span className="min-w-0 truncate text-[13.5px] font-medium text-text">{title}</span>
         </NameBox>
       </DialogBody>

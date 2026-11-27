@@ -101,8 +101,7 @@ export interface DriveItem {
 }
 
 export type DriveResult<T> =
-  | ({ ok: true } & T)
-  | { ok: false; error: string; notConnected?: boolean }
+  ({ ok: true } & T) | { ok: false; error: string; notConnected?: boolean }
 
 export interface DriveUploadEvent {
   path: string
@@ -110,12 +109,55 @@ export interface DriveUploadEvent {
   message?: string
 }
 
+export interface GithubStatus {
+  configured: boolean
+  connected: boolean
+  login: string | null
+  avatar: string | null
+}
+
+export type GithubResult<T> =
+  ({ ok: true } & T) | { ok: false; error: string; notConnected?: boolean }
+
+export interface GithubDeviceCode {
+  userCode: string
+  verificationUri: string
+}
+
+export interface GithubBrowseResult {
+  owner: string
+  repo: string
+  branch: string
+  dir: string
+  files: string[]
+}
+
+export interface GithubAddArgs {
+  owner: string
+  repo: string
+  branch: string
+  dir: string
+  files: string[]
+}
+
+export interface GithubLinkView {
+  id: string
+  owner: string
+  repo: string
+  branch: string
+  dir: string
+  files: { path: string; localPath: string; changed: boolean }[]
+}
+
 export type CloudConnectResult = { ok: true; email: string | null } | { ok: false; error: string }
 
 export interface MdeskApi {
   drive: {
     list: (folderId: string | null) => Promise<DriveResult<{ items: DriveItem[] }>>
-    createFolder: (parentId: string | null, name: string) => Promise<DriveResult<{ item: DriveItem }>>
+    createFolder: (
+      parentId: string | null,
+      name: string
+    ) => Promise<DriveResult<{ item: DriveItem }>>
     createFile: (
       parentId: string | null,
       name: string
@@ -129,6 +171,20 @@ export interface MdeskApi {
       parentId: string | null
     ) => Promise<DriveResult<{ item: DriveItem; moved: { from: string; to: string }[] }>>
     onUpload: (callback: (event: DriveUploadEvent) => void) => () => void
+  }
+  github: {
+    getStatus: () => Promise<GithubStatus>
+    startLogin: () => Promise<GithubResult<GithubDeviceCode>>
+    finishLogin: () => Promise<GithubResult<{ login: string | null }>>
+    cancelLogin: () => Promise<void>
+    disconnect: () => Promise<void>
+    browse: (repo: string) => Promise<GithubResult<GithubBrowseResult>>
+    listLinks: () => Promise<GithubLinkView[]>
+    listRepos: () => Promise<GithubResult<{ repos: { owner: string; repo: string }[] }>>
+    addLink: (args: GithubAddArgs) => Promise<GithubResult<{ link: GithubLinkView }>>
+    removeLink: (id: string) => Promise<void>
+    commit: (id: string, message: string) => Promise<GithubResult<{ count: number }>>
+    onSaved: (callback: () => void) => () => void
   }
   cloud: {
     getStatus: () => Promise<CloudStatus>
@@ -166,11 +222,11 @@ export interface MdeskApi {
       pdfDir: string
       relPath: string
     }) => Promise<{ ok: boolean; error?: string }>
-  },
+  }
   props: {
     getAll: () => Promise<Record<string, Record<string, string>>>
     set: (filePath: string, props: Record<string, string> | null) => Promise<void>
-  },
+  }
   code: {
     readFiles: (
       code: string,

@@ -77,7 +77,7 @@ export function DiffView({
             title={shortcuts.diffRestore}
             className="rounded-md border border-border px-3 py-1.5 text-[13px] text-text-secondary hover:border-border-strong focus:outline-none"
           >
-            복구하기
+            복구
           </button>
           <button
             type="button"
@@ -85,7 +85,7 @@ export function DiffView({
             title={shortcuts.diffApply}
             className="rounded-md bg-accent px-3.5 py-1.5 text-[13px] font-medium text-text-inverted focus:outline-none"
           >
-            적용하기
+            적용
           </button>
         </div>
       </div>

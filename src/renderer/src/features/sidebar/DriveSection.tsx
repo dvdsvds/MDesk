@@ -3,6 +3,7 @@ import type { DriveItem, DriveResult } from '../../../../preload/index.d'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { ContextMenu, type ContextMenuItem } from '../../components/ContextMenu'
 import { FileTypeIcon } from '../../components/FileTypeIcon'
+import { Collapse } from '../../components/Collapse'
 import { useTabsStore } from '../../stores/tabsStore'
 import { useToastStore } from '../../stores/toastStore'
 import { fileNameOf, newFileNameFor, sepOf } from '@renderer/utils/path'
@@ -12,9 +13,10 @@ import NewFileIcon from '../../icons/new-file.svg?react'
 import NewFolderIcon from '../../icons/new-folder.svg?react'
 import { InlineNameInput, NewFileRow } from './InlineInputs'
 import { SectionHeader } from './SectionHeader'
+import { GOOGLE_STATUS_CHANGED, notifyGoogleStatusChanged } from '@renderer/utils/cloudEvents'
 
 const ROW_BASE =
-  'flex h-[30px] w-full items-center gap-1.5 rounded-md pr-2 text-left text-[13px] text-text transition-colors group-hover/row:bg-bg-mute/60 focus:outline-none'
+  'flex h-[30px] w-full items-center gap-1.5 rounded-md pr-8 text-left text-[13px] text-text transition-colors group-hover/row:bg-bg-mute/60 focus:outline-none'
 
 const ROW_ACTION =
   'flex h-[22px] w-[22px] items-center justify-center rounded-[5px] text-text-tertiary outline-none hover:bg-bg-mute hover:text-text'
@@ -55,7 +57,6 @@ interface Props {
   open: boolean
   onToggle: () => void
   onOpenFile: (filePath: string) => void
-  onOpenSettings: () => void
   draggingLocalPath: string | null
   dirtyFilePaths: string[]
   onLocalMoved: (sourcePath: string, moved: { from: string; to: string }[]) => Promise<void>
@@ -68,7 +69,6 @@ export function DriveSection({
   open,
   onToggle,
   onOpenFile,
-  onOpenSettings,
   draggingLocalPath,
   dirtyFilePaths,
   onLocalMoved,
@@ -83,9 +83,12 @@ export function DriveSection({
   const [creating, setCreating] = useState<Creating>(null)
   const [renaming, setRenaming] = useState<string | null>(null)
   const [menu, setMenu] = useState<{ x: number; y: number; item: DriveItem } | null>(null)
+  const [rootMenu, setRootMenu] = useState<{ x: number; y: number } | null>(null)
   const [deleting, setDeleting] = useState<DriveItem | null>(null)
   const [dropTarget, setDropTarget] = useState<string | null>(null)
   const [movingIn, setMovingIn] = useState<string | null>(null)
+  const [email, setEmail] = useState<string | null>(null)
+  const [loggingIn, setLoggingIn] = useState(false)
   const expandedRef = useRef(expanded)
   useEffect(() => {
     expandedRef.current = expanded
@@ -128,13 +131,32 @@ export function DriveSection({
   useEffect(() => {
     if (!open) return
     let alive = true
-    void window.api.drive.list(null).then((result) => {
-      if (alive) applyList(null, result)
-    })
+    const run = (): void => {
+      void window.api.cloud.getStatus().then((status) => {
+        if (alive) setEmail(status.connected ? status.email : null)
+      })
+      void window.api.drive.list(null).then((result) => {
+        if (alive) applyList(null, result)
+      })
+    }
+    run()
+    window.addEventListener(GOOGLE_STATUS_CHANGED, run)
     return () => {
       alive = false
+      window.removeEventListener(GOOGLE_STATUS_CHANGED, run)
     }
   }, [open, applyList])
+
+  const login = async (): Promise<void> => {
+    setLoggingIn(true)
+    const result = await window.api.cloud.connectGoogle()
+    setLoggingIn(false)
+    if (!result.ok) {
+      pushToast({ kind: 'info', message: result.error })
+      return
+    }
+    notifyGoogleStatusChanged()
+  }
 
   const sortItems = (items: DriveItem[]): DriveItem[] =>
     [...items].sort((a, b) =>
@@ -244,7 +266,7 @@ export function DriveSection({
     if (dirtyFilePaths.some((p) => p === sourcePath || p.startsWith(sourcePath + sep))) {
       pushToast({
         kind: 'info',
-        message: '저장하지 않은 내용이 있습니다. 저장한 뒤 옮겨 주십시오.'
+        message: '저장하지 않은 내용이 있어 옮길 수 없습니다.'
       })
       return
     }
@@ -386,7 +408,7 @@ export function DriveSection({
                   <FileTypeIcon name={item.name} kind={item.folder ? 'folder' : 'file'} />
                   <span className="truncate">{item.name}</span>
                 </button>
-                <span className="pointer-events-none absolute right-1 top-1/2 flex -translate-y-1/2 gap-0.5 opacity-0 group-hover/row:pointer-events-auto group-hover/row:opacity-100">
+                <span className="absolute right-1 top-1/2 flex -translate-y-1/2">
                   <button
                     type="button"
                     aria-label={`${item.name} 메뉴`}
@@ -409,28 +431,6 @@ export function DriveSection({
                       <circle cx="12.5" cy="8" r="1.3" />
                     </svg>
                   </button>
-                  {item.folder && (
-                    <button
-                      type="button"
-                      aria-label={`${item.name} 안에 새 파일`}
-                      title="새 파일"
-                      onClick={() => startCreate('file', item.id)}
-                      className={ROW_ACTION}
-                    >
-                      <svg
-                        aria-hidden="true"
-                        width="14"
-                        height="14"
-                        viewBox="0 0 16 16"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="1.6"
-                        strokeLinecap="round"
-                      >
-                        <path d="M8 3.5v9M3.5 8h9" />
-                      </svg>
-                    </button>
-                  )}
                 </span>
               </div>
               {item.folder && movingIn === item.id && (
@@ -441,15 +441,17 @@ export function DriveSection({
                   Drive로 옮기는 중…
                 </div>
               )}
-              {item.folder && expanded.has(item.id) && !listings[item.id] && (
-                <div
-                  className="flex h-[30px] items-center text-[12.5px] text-text-tertiary"
-                  style={{ paddingLeft: paddingLeft + 20 }}
-                >
-                  불러오는 중…
-                </div>
-              )}
-              {item.folder && expanded.has(item.id) && renderItems(item.id, depth + 1)}
+              <Collapse open={item.folder && expanded.has(item.id)}>
+                {!listings[item.id] && (
+                  <div
+                    className="flex h-[30px] items-center text-[12.5px] text-text-tertiary"
+                    style={{ paddingLeft: paddingLeft + 20 }}
+                  >
+                    불러오는 중…
+                  </div>
+                )}
+                {renderItems(item.id, depth + 1)}
+              </Collapse>
             </div>
           )
         )}
@@ -464,34 +466,16 @@ export function DriveSection({
       style={{ flexGrow: open ? 1 : 0, flexShrink: 1, flexBasis: SECTION_HEADER_BASIS }}
     >
       <div className="flex h-9 shrink-0 items-center justify-between pl-2 pr-2">
-        <SectionHeader label="클라우드" open={open} onToggle={onToggle} />
-        <div className="flex items-center gap-0.5 opacity-0 transition-opacity duration-150 group-focus-within/drive:opacity-100 group-hover/drive:opacity-100">
+        <SectionHeader label="Google Drive" open={open} onToggle={onToggle} />
+        <div className={`flex items-center gap-0.5 ${connected ? '' : 'invisible'}`}>
           <button
             type="button"
             onClick={() => void reloadAll()}
             title="새로고침"
             disabled={!connected}
-            className={ICON_BTN}
+            className={`${ICON_BTN} opacity-0 transition-opacity duration-150 group-focus-within/drive:opacity-100 group-hover/drive:opacity-100`}
           >
             <span className="text-[14px] leading-none">↻</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => startCreate('folder')}
-            title="새 폴더"
-            disabled={!connected}
-            className={`${ICON_BTN} !w-[30px]`}
-          >
-            <NewFolderIcon />
-          </button>
-          <button
-            type="button"
-            onClick={() => startCreate('file')}
-            title="새 파일"
-            disabled={!connected}
-            className={ICON_BTN}
-          >
-            <NewFileIcon />
           </button>
         </div>
       </div>
@@ -504,16 +488,27 @@ export function DriveSection({
             setSelectedFolder(null)
           }
         }}
+        onContextMenu={(e) => {
+          if (e.defaultPrevented || !connected) return
+          e.preventDefault()
+          setRootMenu({ x: e.clientX, y: e.clientY })
+        }}
       >
+        {connected && email && (
+          <div title={email} className="truncate px-2 pb-1 text-[11.5px] text-text-tertiary">
+            {email}
+          </div>
+        )}
         {connected === false ? (
           <div className="px-2 py-1 text-[12.5px] text-text-tertiary">
-            Google Drive에 연결하면 여기서 파일을 열 수 있습니다
+            Google Drive 연결을 위해 로그인이 필요합니다.
             <button
               type="button"
-              onClick={onOpenSettings}
-              className="mt-2 block h-7 rounded-lg bg-accent-soft px-3 text-[12.5px] font-medium text-accent outline-none hover:brightness-110"
+              disabled={loggingIn}
+              onClick={() => void login()}
+              className="mt-2.5 flex h-8 w-full items-center justify-center rounded-lg bg-accent-soft text-[13px] font-medium text-accent outline-none hover:brightness-110 disabled:opacity-60"
             >
-              설정에서 연결
+              {loggingIn ? '로그인하는 중…' : '로그인'}
             </button>
           </div>
         ) : error ? (
@@ -530,9 +525,7 @@ export function DriveSection({
         ) : !rootItems ? (
           <div className="px-2 py-1 text-[12.5px] text-text-tertiary">불러오는 중…</div>
         ) : rootItems.length === 0 && !creating ? (
-          <div className="px-2 py-1 text-[12.5px] text-text-tertiary">
-            비어 있습니다. 위의 새 파일 버튼으로 시작해 보십시오
-          </div>
+          <div className="px-2 py-1 text-[12.5px] text-text-tertiary">파일 없음</div>
         ) : (
           renderItems(null, 0)
         )}
@@ -540,6 +533,25 @@ export function DriveSection({
           <div className="px-2 py-1 text-[12.5px] text-text-tertiary">Drive로 옮기는 중…</div>
         )}
       </div>
+      {rootMenu && (
+        <ContextMenu
+          x={rootMenu.x}
+          y={rootMenu.y}
+          items={[
+            {
+              label: '새 파일',
+              icon: <NewFileIcon width={15} height={15} />,
+              onClick: () => startCreate('file', null)
+            },
+            {
+              label: '새 폴더',
+              icon: <NewFolderIcon width={15} height={15} />,
+              onClick: () => startCreate('folder', null)
+            }
+          ]}
+          onClose={() => setRootMenu(null)}
+        />
+      )}
       {menu && (
         <ContextMenu
           x={menu.x}

@@ -61,7 +61,7 @@ export function ShortcutRow({ action }: ShortcutRowProps): React.JSX.Element {
           }`}
         >
           {capturing
-            ? '키를 눌러 주십시오…'
+            ? '새 단축키 입력…'
             : combo.split('+').map((k, i) => (
                 <kbd
                   key={`${k}-${i}`}

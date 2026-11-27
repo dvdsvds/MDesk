@@ -47,6 +47,7 @@ jobs:
         env:
           MAIN_VITE_GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
           MAIN_VITE_GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          MAIN_VITE_GH_OAUTH_CLIENT_ID: ${{ vars.GH_OAUTH_CLIENT_ID }}
 
       - name: Package
         run: npx electron-builder --win --publish never
@@ -127,6 +128,7 @@ jobs:
         env:
           MAIN_VITE_GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
           MAIN_VITE_GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          MAIN_VITE_GH_OAUTH_CLIENT_ID: ${{ vars.GH_OAUTH_CLIENT_ID }}
 
       - name: Package and upload
         run: npx electron-builder ${{ matrix.target }} --publish always

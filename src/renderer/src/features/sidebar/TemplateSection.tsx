@@ -69,7 +69,7 @@ export function TemplateSection({
             e.preventDefault()
             setMenu({ x: e.clientX, y: e.clientY, template: t })
           }}
-          title="눌러서 편집, 우클릭으로 더 보기"
+          title="클릭: 편집, 우클릭: 메뉴"
           className={ROW}
         >
           <span className="truncate">{t.name}</span>
@@ -119,7 +119,7 @@ export function TemplateSection({
       {deleting && (
         <ConfirmDialog
           title="템플릿을 삭제하시겠습니까?"
-          message={`'${deleting.name}' 템플릿이 지워집니다. 이 템플릿으로 만든 파일은 그대로 남습니다.`}
+          message={`'${deleting.name}' 템플릿이 삭제됩니다. 이 템플릿으로 만든 파일은 유지됩니다.`}
           confirmLabel="삭제"
           danger
           onConfirm={() => {

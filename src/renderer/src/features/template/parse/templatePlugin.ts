@@ -55,7 +55,7 @@ export function templatePlugin(md: MD): void {
         env.valueSeen = true
         errors =
           env.templates > 0
-            ? [`value는 template보다 앞에 써 주십시오 (${at}번째 줄). 이 value는 읽지 않습니다.`]
+            ? [`value는 template보다 앞에 있어야 합니다. (${at}번째 줄) 이 value는 읽지 않습니다.`]
             : parseValues(lines, env)
       }
 
