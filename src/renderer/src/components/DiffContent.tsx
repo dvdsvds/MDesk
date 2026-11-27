@@ -6,7 +6,6 @@ interface DiffContentProps {
   newContent: string
   oldLabel: string
   newLabel: string
-  /** 두 칸을 떨어진 카드로 그린다(스냅샷, 복구 창) */
   cards?: boolean
 }
 
@@ -107,10 +106,7 @@ function BlockRows({
   )
 }
 
-/**
- * diff 그리드 본체(좌우 나란히 + 동기 스크롤 + 접기). 팝업 모달 차림새는
- * DiffView가, 목록 안 미리보기 자리는 RecoveryDialog가 각자 감싼다.
- */
+/** diff 그리드 본체(좌우 나란히 + 동기 스크롤 + 접기). 팝업 모달 차림새는 */
 export function DiffContent({
   oldContent,
   newContent,

@@ -5,11 +5,8 @@ export interface ContextMenuItem {
   label: string
   onClick: () => void
   danger?: boolean
-  /** 항목 왼쪽 아이콘 (svg 컴포넌트) */
   icon?: React.ReactNode
-  /** true면 이 항목 위에 구분선을 그린다 */
   sepBefore?: boolean
-  /** 항목 오른쪽에 흐리게 보이는 단축키 */
   shortcut?: string
 }
 
@@ -22,12 +19,11 @@ interface ContextMenuProps {
 
 const EDGE = 8
 
-/** 트리 우클릭 메뉴 (기획 문서 8장 "우클릭 메뉴"). 바깥을 클릭하거나 Esc로 닫힌다. */
+/** 우클릭 메뉴. 바깥을 누르거나 Esc로 닫힌다 */
 export function ContextMenu({ x, y, items, onClose }: ContextMenuProps): React.JSX.Element {
   const ref = useRef<HTMLDivElement>(null)
   const [pos, setPos] = useState({ left: x, top: y })
 
-  // 화면 밖으로 나가면 안쪽으로 당긴다.
   useLayoutEffect(() => {
     const el = ref.current
     if (!el) return
@@ -53,7 +49,6 @@ export function ContextMenu({ x, y, items, onClose }: ContextMenuProps): React.J
     }
   }, [onClose])
 
-  // body에 직접 그려서 에디터 툴바(.cm-panels, z-index 300)보다 항상 위에 보이게 한다.
   return createPortal(
     <div
       ref={ref}

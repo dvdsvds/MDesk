@@ -111,7 +111,6 @@ function buildExtensions(
   baseContent: string,
   onChangeClick: () => void
 ): Extension[] {
-  // 기본 Enter(느슨한 목록이면 새 항목 앞에 빈 줄을 넣음)는 쓰지 않고, 빈 줄 없이 기호를 잇고 빈 항목에서는 마커만 지우도록 직접 연결한다
   const markdownLang = markdown({ base: markdownLanguage, codeLanguages: languages, addKeymap: false })
   const markdownKeys = Prec.high(
     keymap.of([
@@ -163,7 +162,7 @@ function buildExtensions(
   ]
 }
 
-// 마크다운이 아닌 파일(코드, 설정, 일반 텍스트)용. 문법 색상은 확장자로 골라 나중에 불러온다.
+/** 마크다운이 아닌 파일(코드, 설정, 일반 텍스트)용. 문법 색상은 확장자로 골라 나중에 불러온다. */
 function buildCodeExtensions(
   vimModeInitial: boolean,
   reportCursor: (pos: CursorPosition) => void,
@@ -298,7 +297,6 @@ export const MarkdownEditor = forwardRef<MarkdownEditorHandle, MarkdownEditorPro
         const hint = delimitedHint(path)
         const desc = hint ? null : LanguageDescription.matchFilename(languages, fileNameOf(path))
         if (desc) loadLanguage(currentTabIdRef.current, desc)
-        // 구분자 파일은 자동 감지해서 켜고, 문법이 없는 일반 텍스트는 꺼 둔 채로 넣어 상태 표시줄에서 켤 수 있게 한다
         const csv = hint
           ? csvColumns({ delimiter: detectDelimiter(doc, hint), header: true })
           : desc
@@ -341,16 +339,12 @@ export const MarkdownEditor = forwardRef<MarkdownEditorHandle, MarkdownEditorPro
     const editorLineHeight = useSettingsStore((s) => s.editorLineHeight)
     const editorFontFamily = useSettingsStore((s) => s.editorFontFamily)
     useEffect(() => {
-      // CodeMirror는 줄 높이(defaultLineHeight)를 재 두고 쓴다. requestMeasure만으로는 다시 재지 않아
-      // 줄 간격을 바꿔도 커서가 옛 높이로 남았다. 내용 크기를 다시 재라는 표시를 켜고 잰다
-      // (내부 값이지만 글꼴이 바뀔 때 CodeMirror 자신도 같은 방식으로 다시 잰다)
       const id = requestAnimationFrame(() => {
         const view = viewRef.current
         if (!view) return
         const state = (view as unknown as { viewState?: { mustMeasureContent?: boolean } }).viewState
         if (state) state.mustMeasureContent = true
         view.requestMeasure()
-        // 글자 폭이 달라졌으니 표 상자 폭도 다시 잰다
         view.dispatch({ annotations: refreshDecorations.of(true) })
       })
       return () => cancelAnimationFrame(id)
@@ -422,7 +416,6 @@ export const MarkdownEditor = forwardRef<MarkdownEditorHandle, MarkdownEditorPro
       if (!view || currentTabIdRef.current !== tabId) return
       const current = view.state.doc.toString()
       if (current !== value) {
-        // 전체를 갈아끼우면 커서와 스크롤이 맨 앞으로 튀므로, 앞뒤가 같은 부분은 두고 바뀐 가운데만 교체한다
         let start = 0
         const minLen = Math.min(current.length, value.length)
         while (start < minLen && current.charCodeAt(start) === value.charCodeAt(start)) start++

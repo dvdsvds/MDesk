@@ -25,12 +25,10 @@ async function settle(host: HTMLElement): Promise<void> {
 }
 
 function transformLinks(host: HTMLElement, note: PdfNote): void {
-  // 종이에서는 접을 수 없으니 접힌 콜아웃은 펼쳐서 낸다
   for (const d of Array.from(host.querySelectorAll('details'))) d.setAttribute('open', '')
   for (const sp of Array.from(host.querySelectorAll<HTMLElement>('span[data-wikilink]'))) {
     const title = sp.getAttribute('data-wikilink') ?? ''
     if (!title) {
-      // `[[#제목]]`처럼 같은 문서를 가리키는 링크는 글자만 남긴다
       sp.removeAttribute('data-wikilink')
       continue
     }

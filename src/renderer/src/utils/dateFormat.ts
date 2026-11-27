@@ -1,14 +1,10 @@
 const DAY_SHORT = ['일', '월', '화', '수', '목', '금', '토']
 
-// 긴 토큰이 먼저 와야 `YYYY`가 `YY` 두 번으로 잘리지 않는다
 const TOKEN_RE = /YYYY|YY|MM|M|DD|D|dddd|ddd/g
 
 const pad = (n: number): string => String(n).padStart(2, '0')
 
-/**
- * 날짜를 형식에 맞춰 글자로 바꾼다.
- * 토큰: YYYY YY MM M DD D ddd(월) dddd(월요일). 그 밖의 글자는 그대로 둔다.
- */
+/** 날짜를 형식에 맞춰 글자로 바꾼다. */
 export function formatDate(date: Date, format: string): string {
   return format.replace(TOKEN_RE, (t) => {
     switch (t) {

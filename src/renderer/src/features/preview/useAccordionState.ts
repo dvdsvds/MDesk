@@ -9,10 +9,7 @@ function ownAccordions(el: HTMLElement): HTMLDetailsElement[] {
   )
 }
 
-/**
- * 미리보기는 글을 고칠 때마다 HTML이 통째로 다시 그려져서 펼쳐 둔 아코디언이 모두 접힌다.
- * 몇 번째 아코디언이 펼쳐져 있는지 기억했다가 다시 그린 뒤에 되돌린다. 다른 노트로 바꾸면 초기화한다.
- */
+/** 미리보기는 글을 고칠 때마다 HTML이 통째로 다시 그려져서 펼쳐 둔 아코디언이 모두 접힌다. */
 export function useAccordionState(
   containerRef: RefObject<HTMLDivElement | null>,
   html: string,
@@ -35,7 +32,7 @@ export function useAccordionState(
   useEffect(() => {
     const el = containerRef.current
     if (!el) return
-    // toggle 이벤트는 위로 올라가지 않으므로 캡처 단계에서 듣는다
+    /** toggle 이벤트는 위로 올라가지 않으므로 캡처 단계에서 듣는다 */
     const onToggle = (e: Event): void => {
       const d = e.target
       if (!(d instanceof HTMLDetailsElement) || !d.matches(SELECTOR)) return

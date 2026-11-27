@@ -160,7 +160,6 @@ function build(view: EditorView): Panel {
   setShown(more, false)
   more.style.marginLeft = '2px'
 
-  // 좁아져서 아이콘이 가려질 때마다 맨 뒤 아이콘부터 하나씩 » 메뉴로 옮긴다
   const groups: { sep: HTMLElement; els: HTMLElement[]; entries: OverflowEntry[] }[] = [
     {
       sep: sepList,
@@ -249,7 +248,6 @@ function build(view: EditorView): Panel {
   const applyCollapse = (n: number): void => {
     hiddenCount = n
     flat.forEach((it, i) => setShown(it.el, i < flat.length - n))
-    // 묶음 구분선: 그 묶음 아이콘이 하나라도 보일 때만. 첫 묶음 앞 선은 » 앞 구분선으로 남긴다
     groups.forEach((g, gi) =>
       setShown(
         g.sep,
@@ -330,7 +328,6 @@ function build(view: EditorView): Panel {
 /** 툴바 패널만. 설정에서 켜고 끌 수 있게 따로 내보낸다. */
 export const mdToolbarPanel = showPanel.of((view) => build(view))
 
-/** 굵게/기울임/링크 단축키. 툴바를 꺼도 계속 쓸 수 있다. */
 export const mdToolbarKeys = Prec.low(
   keymap.of([
     { key: 'Mod-b', run: (v) => (toggleWrap(v, '**'), true) },
@@ -339,5 +336,4 @@ export const mdToolbarKeys = Prec.low(
   ])
 )
 
-/** 에디터 위쪽에 마크다운 툴바 패널을 붙인다. */
 export const mdToolbar = [mdToolbarPanel, mdToolbarKeys]

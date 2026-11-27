@@ -14,9 +14,7 @@ const IME_TOGGLE = new Set([
 ])
 const MODIFIER_KEYS = new Set(['Shift', 'Control', 'Alt', 'Meta', 'CapsLock'])
 const imeRestore = Annotation.define<boolean>()
-/** 한글 조합이 문서·커서를 건드리지 못하게 막는 시간(ms). 짧을수록 영어로 바꾼 직후 명령이 빨리 먹히지만, 너무 짧으면 조합 결과가 새어 들어간다 */
 const GUARD_MS = 80
-/** 막는 동안 흔들린 커서를 원래 자리로 되돌리는 시점(ms) */
 const RESTORE_MS = 50
 
 export function vimImeGuard(): Extension {
@@ -24,13 +22,10 @@ export function vimImeGuard(): Extension {
     EditorView.domEventHandlers({
       keydown: (e, view) => {
         const vs = getCM(view)?.state.vim
-        // 한/영 키와 Shift·Ctrl 같은 조합키는 글자 입력이 아니다. 이것들을 한글 입력으로 보고 막으면
-        // 영어로 바꾼 직후 칠 명령이 한동안 먹히지 않는다
         if (IME_TOGGLE.has(e.code) || IME_TOGGLE.has(e.key) || MODIFIER_KEYS.has(e.key)) {
           imeGuardUntil = 0
           return false
         }
-        // 한글 조합이 아닌 일반 키(영어로 바뀐 뒤의 명령)가 오면 막던 시간을 바로 푼다
         if (!e.isComposing && e.key !== 'Process') imeGuardUntil = 0
         if (vs && !vs.insertMode && (e.key === 'Process' || e.isComposing)) {
           const saved = view.state.selection

@@ -118,7 +118,6 @@ function makeMeasure(view: EditorView): Measure {
 }
 
 function sepCell(align: Align, dashes: number): string {
-  // 구분선은 기본 -- 두 개. 가운데 정렬(:-:)은 대시가 하나 이상 있어야 한다
   const n = Math.max(align === 'center' ? 3 : 2, dashes)
   if (align === 'center') return ':' + '-'.repeat(n - 2) + ':'
   if (align === 'right') return '-'.repeat(n - 1) + ':'
@@ -129,7 +128,7 @@ function sepCell(align: Align, dashes: number): string {
 /** 열마다 가장 긴 칸의 폭(px). 구분선 기본 폭(대시 두 개)보다는 좁아지지 않는다 */
 function columnWidths(cells: string[][], measure: Measure, aligns: Align[] = []): number[] {
   const dash = measure('-') || 1
-  // 가운데 정렬 구분선(:-:)은 최소 세 칸이다
+  /** 가운데 정렬 구분선(:-:)은 최소 세 칸이다 */
   const minOf = (i: number): number => dash * (aligns[i] === 'center' ? 3 : 2)
   const widths: number[] = []
   for (const row of cells) {
@@ -154,11 +153,7 @@ function dashCount(width: number, measure: Measure): number {
   return Math.max(2, Math.round(width / (measure('-') || 1)))
 }
 
-/**
- * 표를 다시 쓰고, 목표 칸의 문서 안 위치를 함께 돌려준다.
- * 열마다 가장 긴 칸에 맞춰 글자 뒤를 공백으로 채우고, 구분선 -도 그 폭으로 맞춘다(기본 --).
- * 가장 긴 칸은 글자 앞뒤 공백이 딱 하나씩이다
- */
+/** 표를 다시 쓰고, 목표 칸의 문서 안 위치를 함께 돌려준다. */
 function render(
   info: TableInfo,
   rows: string[][],
@@ -181,7 +176,6 @@ function render(
       const content = i === 1 ? sepCell(info.aligns[c] ?? 'none', dashCount(w, measure)) : r[c]
       const pad = i === 1 ? 0 : padCount(content, w, measure)
       if (i === target.row && c === target.col) {
-        // 칸으로 이동하면 커서는 늘 `| ` 바로 뒤(칸 글자의 맨 앞)에 놓인다. 글자를 선택하지 않는다
         start = offset + line.length + 1
         end = start
       }
@@ -193,10 +187,7 @@ function render(
   return { text: lines.join('\n'), start, end }
 }
 
-/**
- * from~to 구간을 insert로 바꾸되, 앞뒤에서 같은 글자는 빼고 실제로 달라진 부분만 변경으로 만든다.
- * 표를 통째로 다시 쓰면 되돌리기(vim u)가 "바뀐 구간의 시작"인 표 맨 앞으로 커서를 보내기 때문이다
- */
+/** from~to 구간을 insert로 바꾸되, 앞뒤에서 같은 글자는 빼고 실제로 달라진 부분만 변경으로 만든다. */
 function minimalChange(doc: Text, from: number, to: number, insert: string): Edit {
   const old = doc.sliceString(from, to)
   let a = 0
@@ -285,7 +276,6 @@ function next(view: EditorView, shift: boolean): boolean {
   } else {
     col++
     if (col >= info.cols) {
-      // 마지막 칸에서 Tab: 오른쪽에 새 열을 만들고 같은 행의 새 칸으로 간다 (새 행은 Enter)
       const widened: TableInfo = {
         ...info,
         cols: info.cols + 1,
@@ -315,7 +305,6 @@ function headerEnter(view: EditorView): boolean {
   const { state } = view
   const head = state.selection.main.head
   const line = state.doc.lineAt(head)
-  // 줄 끝이 아니어도(`| a |`의 칸 안) Enter로 구분선과 빈 행을 붙인다
   if (!ROW_RE.test(line.text)) return false
   if (line.number > 1 && ROW_RE.test(state.doc.line(line.number - 1).text)) return false
   if (line.number < state.doc.lines && ROW_RE.test(state.doc.line(line.number + 1).text))
@@ -356,7 +345,6 @@ function enter(view: EditorView): boolean {
   const info = tableAt(view.state, sel.head)
   if (!info) return headerEnter(view)
   let rows = info.rows
-  // 칸이 모두 빈 마지막 행에서 Enter를 치면 그 행을 지우고 표 바로 아래 빈 줄로 나간다 (목록의 빈 항목에서 Enter와 같다)
   if (info.row >= 2 && info.row === rows.length - 1 && rows[info.row].every((c) => c === '')) {
     const line = view.state.doc.lineAt(sel.head)
     view.dispatch({
@@ -370,21 +358,16 @@ function enter(view: EditorView): boolean {
   }
   const row = info.row <= 1 ? 2 : info.row + 1
   if (row >= rows.length) rows = withNewRow(info)
-  // Enter는 늘 다음 행의 첫 칸으로 간다 (구분선은 건너뛴다)
   goTo(view, info, rows, { row, col: 0 })
   return true
 }
 
-/**
- * 헤더 줄 끝에서 `|`로 칸을 닫을 때마다 구분선과 빈 행을 붙이고, 칸이 늘면 열도 같이 늘린다.
- * 커서는 헤더 줄 끝에 둬서 이어서 다음 칸을 칠 수 있다.
- */
+/** 헤더 줄 끝에서 `|`로 칸을 닫을 때마다 구분선과 빈 행을 붙이고, 칸이 늘면 열도 같이 늘린다. */
 const autoTable: Extension = EditorView.inputHandler.of((view, from, to, text) => {
   if (text !== '|' || from !== to) return false
   const { state } = view
   const line = state.doc.lineAt(from)
   if (from !== line.to || inCodeFence(state.doc, line.number)) return false
-  // 빈 줄에서 처음 `|`를 치면 `|  |`로 닫고 커서를 안쪽 칸에 둔다. 이어서 글자를 치면 `| a |`가 된다
   if (line.text.trim() === '') {
     const near = (n: number): boolean =>
       n >= 1 && n <= state.doc.lines && ROW_RE.test(state.doc.line(n).text)
@@ -416,8 +399,6 @@ const autoTable: Extension = EditorView.inputHandler.of((view, from, to, text) =
       col: 0
     }
   } else if (!hasPrev && hasNext) {
-    // 이미 있는 표의 헤더에 칸을 더하는 경우
-    // 닫는 |가 들어간 모습을 미리 계산해 볼 뿐이라, 실시간 정렬 필터는 건너뛴다(공백이 채워지면 위치가 어긋난다)
     const next = state.update({
       changes: { from, insert: '|' },
       annotations: normalizing.of(true)
@@ -430,8 +411,6 @@ const autoTable: Extension = EditorView.inputHandler.of((view, from, to, text) =
 
   const out = render(info, info.rows, { row: 0, col: 0 }, makeMeasure(view))
   const headerLen = out.text.indexOf('\n')
-  // 표는 빈 줄을 만나야 끝나서, 바로 아래에 글자가 붙어 있으면 그 줄이 표의 행으로 읽힌다. 빈 줄로 떼어 놓는다
-  // (이미 표가 있는 헤더에 칸만 더하는 경우에는 아래 빈 줄이 이미 있으니 더하지 않는다)
   const insert = out.text + (!hasNext && needsBlankAfter(state, line.number) ? '\n' : '')
   view.dispatch({
     changes: minimalChange(state.doc, info.from, replaceTo, insert),
@@ -460,11 +439,7 @@ interface Edit {
   insert: string
 }
 
-/**
- * 표 한 개의 모든 칸을 `| 글자 |`(앞뒤 공백 하나)로 맞추는 변경 목록(문서 좌표).
- * 커서가 있는 칸은 스페이스를 연달아 칠 수 있게 공백이 늘어난 것은 두고, 부족한 것만 채운다.
- * 커서가 칸을 벗어나면 다음 입력·이동 때 정리된다
- */
+/** 표 한 개의 모든 칸을 `| 글자 |`(앞뒤 공백 하나)로 맞추는 변경 목록(문서 좌표). */
 function normalizeEdits(
   doc: Text,
   firstLine: number,
@@ -473,7 +448,6 @@ function normalizeEdits(
   measure: Measure
 ): Edit[] {
   const edits: Edit[] = []
-  // 열마다 가장 긴 칸의 폭 (구분선 줄은 빼고 잰다)
   const cells: string[][] = []
   for (let n = firstLine; n <= lastLine; n++) {
     if (n === firstLine + 1) continue
@@ -505,7 +479,6 @@ function normalizeEdits(
         if (content !== want) edits.push({ from: line.from + s, to: line.from + e, insert: want })
         continue
       }
-      // 맨 앞 공백 하나, 글자 뒤는 열 폭에 맞춘 채움 공백 + 공백 하나.
       if (trimmed === '') {
         const want = ' '.repeat(2 + padCount('', w, measure))
         if (content !== want && !(inCell && content.length > 0)) {
@@ -515,7 +488,6 @@ function normalizeEdits(
       }
       const lead = content.length - content.trimStart().length
       const lastNon = content.trimEnd().length
-      // 커서가 글자 바로 뒤의 공백 구간에 있으면 커서까지는 글자로 본다(단어 사이 스페이스를 칠 수 있게)
       const cursorOff = inCell ? cursor - (line.from + s) : -1
       const textEnd = cursorOff > lastNon ? Math.min(cursorOff, content.length) : lastNon
       const wantTail = ' '.repeat(1 + padCount(content.slice(lead, textEnd), w, measure))
@@ -534,7 +506,6 @@ function normalizeEdits(
 const tableNormalize: Extension = EditorState.transactionFilter.of((tr) => {
   if (tr.annotation(normalizing)) return tr
   if (!tr.docChanged) return tr
-  // 한글 조합 중에는 건드리지 않는다. 조합이 끝난 뒤 다음 입력 때 정리된다
   if (tr.isUserEvent('input.type.compose')) return tr
   const doc = tr.newDoc
   const lines = new Set<number>()
@@ -566,11 +537,6 @@ const tableNormalize: Extension = EditorState.transactionFilter.of((tr) => {
 
 let composing = false
 
-/**
- * 커서를 다른 칸이나 표 밖으로 옮기기만 해도 방금 있던 표를 정리한다.
- * 커서가 있던 칸은 스페이스를 연달아 칠 수 있게 늘어난 공백을 그대로 두는데, 글자를 더 치지 않고 커서만 옮기면
- * 정리할 기회가 없어서 `| 파라미터    |`처럼 열이 어긋난 채로 남기 때문이다
- */
 const tableNormalizeOnLeave: Extension = [
   EditorView.domEventHandlers({
     compositionstart: () => {
@@ -583,7 +549,6 @@ const tableNormalizeOnLeave: Extension = [
     }
   }),
   EditorState.transactionFilter.of((tr) => {
-    // 커서만 움직이는 경우만 다룬다. 글자를 고칠 때의 정리는 tableNormalize가 맡는다
     if (tr.docChanged || !tr.selection || tr.annotation(normalizing) || composing) return tr
     const doc = tr.startState.doc
     const info = tableAtDoc(doc, tr.startState.selection.main.head)
@@ -607,11 +572,7 @@ const tableNormalizeOnLeave: Extension = [
   })
 ]
 
-/**
- * 표의 칸 한가운데에 `|`를 쳐서 칸을 나누면 그 행만 칸이 늘어난다.
- * 헤더와 구분선의 칸 수가 다르면 표로 인식되지 않아 박스가 풀리므로, 나머지 행에도 같은 자리에 빈 칸을 넣어 맞춘다.
- * (칸 수가 이미 어긋나 있던 행은 건드리지 않는다)
- */
+/** 표의 칸 한가운데에 `|`를 쳐서 칸을 나누면 그 행만 칸이 늘어난다. */
 const tableColumnSync: Extension = EditorState.transactionFilter.of((tr) => {
   if (tr.annotation(normalizing) || !tr.docChanged || !tr.isUserEvent('input.type')) return tr
   if (tr.isUserEvent('input.type.compose')) return tr
@@ -625,7 +586,6 @@ const tableColumnSync: Extension = EditorState.transactionFilter.of((tr) => {
   })
   if (count !== 1 || !typedPipe) return tr
   const doc = tr.newDoc
-  // 앞이 \ 면 이스케이프된 파이프라서 칸을 나누지 않는다
   if (pos > 0 && doc.sliceString(pos - 1, pos) === '\\') return tr
   const info = tableAtDoc(doc, pos)
   if (!info) return tr
@@ -633,7 +593,7 @@ const tableColumnSync: Extension = EditorState.transactionFilter.of((tr) => {
   const first = doc.lineAt(info.from).number
   const last = doc.lineAt(info.to).number
   const typedPipes = pipePositions(typed.text)
-  const idx = pipePositions(typed.text.slice(0, pos - typed.from)).length // 새로 생긴 칸의 열 번호
+  const idx = pipePositions(typed.text.slice(0, pos - typed.from)).length
   const typedCells = typedPipes.length - 1
   if (idx < 1 || typedCells < 2) return tr
   const edits: Edit[] = []
@@ -642,7 +602,6 @@ const tableColumnSync: Extension = EditorState.transactionFilter.of((tr) => {
     const line = doc.line(n)
     const p = pipePositions(line.text)
     if (p.length - 1 !== typedCells - 1) continue
-    // 새 칸의 열 번호(idx)와 같은 자리, 즉 idx번째 파이프 바로 뒤에 빈 칸을 끼운다. 그 파이프가 없으면 줄 끝에 붙인다
     const at = idx < p.length ? line.from + p[idx] + 1 : line.to
     edits.push({ from: at, to: at, insert: n === first + 1 ? ' --- |' : '  |' })
   }
@@ -653,10 +612,7 @@ const tableColumnSync: Extension = EditorState.transactionFilter.of((tr) => {
   ]
 })
 
-/**
- * 이미 있는 표의 헤더 줄 끝에서 마지막 `|` 뒤에 글자를 쳐서 닫지 않은 새 칸이 생겼을 때의 변경 목록.
- * (`| a |ls`) 헤더를 ` |`로 닫고, 구분선과 아래 행에도 같은 열을 붙인다. 해당하지 않으면 null
- */
+/** 이미 있는 표의 헤더 줄 끝에서 마지막 `|` 뒤에 글자를 쳐서 닫지 않은 새 칸이 생겼을 때의 변경 목록. */
 function closeHeaderEdits(doc: Text, head: number): Edit[] | null {
   const line = doc.lineAt(head)
   const text = line.text
@@ -684,7 +640,6 @@ function closeHeaderEdits(doc: Text, head: number): Edit[] | null {
 /** 헤더 줄 끝에서 `| a |ls`처럼 닫지 않은 새 칸을 치면 바로 ` |`로 닫고 열을 맞춘다 */
 const tableAutoClose: Extension = EditorState.transactionFilter.of((tr) => {
   if (tr.annotation(normalizing) || !tr.docChanged || !tr.isUserEvent('input.type')) return tr
-  // 한글 조합 중에는 문서를 고치지 않는다. 조합이 끝난 뒤에 처리한다
   if (tr.isUserEvent('input.type.compose')) return tr
   const edits = closeHeaderEdits(tr.newDoc, tr.newSelection.main.head)
   if (!edits) return tr
@@ -694,14 +649,8 @@ const tableAutoClose: Extension = EditorState.transactionFilter.of((tr) => {
   ]
 })
 
-/**
- * 헤더 줄에서 칸(`b |`)을 지워 헤더의 칸 수가 구분선보다 줄면, 그 열을 구분선과 나머지 행에서도 지운다.
- * 헤더와 구분선의 칸 수가 다르면 표가 풀리기 때문이다.
- * 지워진 열의 자리는 지우기 전후 칸 목록을 비교해 찾는다(맨 끝부터 한 글자씩 지워도 같다).
- * 두 칸이 합쳐진 경우처럼 어느 칸이 지워졌는지 정해지지 않으면 아무것도 하지 않는다
- */
+/** 헤더 줄에서 칸(`b |`)을 지워 헤더의 칸 수가 구분선보다 줄면, 그 열을 구분선과 나머지 행에서도 지운다. */
 const tableColumnDelete: Extension = EditorState.transactionFilter.of((tr) => {
-  // vim의 x·d 같은 삭제는 `delete`가 아니라 `input.type.compose`로 들어온다. 글자를 지우기만 하는 변경이면 같이 다룬다
   if (tr.annotation(normalizing) || !tr.docChanged) return tr
   if (!tr.isUserEvent('delete') && !tr.isUserEvent('input.type.compose')) return tr
   let count = 0
@@ -746,7 +695,6 @@ const tableColumnDelete: Extension = EditorState.transactionFilter.of((tr) => {
     edits.push({ from: base + p[idx], to: base + p[idx + k], insert: '' })
   }
   if (edits.length === 0) return tr
-  // 맨 끝 열을 지우면 마지막 | 뒤에 공백이 남아 표 박스가 줄어들지 않는다. 그 공백을 지우고 커서를 마지막 | 뒤에 둔다
   const kept = line.text.trimEnd().length
   if (kept < line.text.length) edits.unshift({ from: line.from + kept, to: line.to, insert: '' })
   const lastCol = idx === after.length
@@ -761,16 +709,9 @@ const tableColumnDelete: Extension = EditorState.transactionFilter.of((tr) => {
   ]
 })
 
-/**
- * 한글 조합 중에는 정렬을 건너뛰므로, 조합이 끝나면 커서가 있는 표를 한 번 정리한다.
- * (처음 칸에 있던 빈칸이 그대로 남아 `| 가상환경  |`처럼 공백이 둘이 되는 것을 막는다)
- */
 const tableNormalizeAfterCompose: Extension = EditorView.domEventHandlers({
   compositionend: (_e, view) => {
-    // 에디터가 조합 결과를 문서에 반영한 다음에 정리한다
     setTimeout(() => {
-      // 다음 글자 조합이 벌써 시작됐으면 건드리지 않는다. 조합 중에 문서를 고치면 IME가 글자를 한 번 더 넣는다("밖에서서").
-      // 그 조합이 끝날 때 이 핸들러가 다시 돌아 정리한다
       if (view.composing || view.compositionStarted) return
       const closing = closeHeaderEdits(view.state.doc, view.state.selection.main.head)
       if (closing) view.dispatch({ changes: closing, userEvent: 'input.table' })
@@ -795,10 +736,7 @@ const tableNormalizeAfterCompose: Extension = EditorView.domEventHandlers({
   }
 })
 
-/**
- * 칸이 모두 빈 본문 행(`|  |`)에서 바깥쪽 `|`를 지우면 그 행을 통째로 지운다.
- * 헤더와 구분선 줄은 대상이 아니다. 지운 뒤 커서는 윗줄 끝에 놓인다
- */
+/** 칸이 모두 빈 본문 행(`|  |`)에서 바깥쪽 `|`를 지우면 그 행을 통째로 지운다. */
 function deleteEmptyRow(view: EditorView, forward: boolean): boolean {
   const { state } = view
   const sel = state.selection.main
@@ -810,7 +748,6 @@ function deleteEmptyRow(view: EditorView, forward: boolean): boolean {
   const lead = line.text.length - line.text.trimStart().length
   const end = line.text.trimEnd().length
   const off = sel.head - line.from
-  // 지워질 글자가 맨 앞 | 이거나 맨 뒤 | 일 때만
   const hitsOuter = forward ? off === lead || off === end - 1 : off === lead + 1 || off === end
   if (!hitsOuter) return false
   const prev = state.doc.line(line.number - 1)
@@ -823,12 +760,10 @@ function deleteEmptyRow(view: EditorView, forward: boolean): boolean {
   return true
 }
 
-/** 표 안에서 Tab/Shift+Tab으로 칸을 옮기고, 끝에서 새 행을 만들며, 옮길 때마다 열 너비를 맞춘다 */
 export const tableEdit: Extension = [
   autoTable,
   tableNormalize,
   tableNormalizeOnLeave,
-  // 필터는 뒤에서부터 실행된다. 칸을 먼저 맞춘 다음 정렬이 그 결과를 이어받도록 정렬 필터 뒤에 둔다
   tableColumnSync,
   tableAutoClose,
   tableColumnDelete,

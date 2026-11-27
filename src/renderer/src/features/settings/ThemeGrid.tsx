@@ -1,10 +1,7 @@
 import { useSettingsStore } from '../../stores/settingsStore'
 import { THEMES, type ThemeOption } from '../../utils/themes'
 
-/**
- * 테마 카드 하나. 카드에만 data-theme을 붙여서 그 테마의 색 변수로 견본을 그린다
- * (앱 전체 색은 그대로). 막대는 위에서부터 제목, 목록 기호, 인라인 코드, 강조색이다
- */
+/** 테마 카드 하나. 카드에만 data-theme을 붙여서 그 테마의 색 변수로 견본을 그린다 */
 export function ThemeCard({
   theme,
   selected,

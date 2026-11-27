@@ -14,7 +14,6 @@ const WRAP_ONLY: Record<string, string> = {
 }
 const DOUBLING = new Set(['*', '~'])
 
-// 앞 기호 바로 뒤에서 Backspace를 치면 짝인 뒤 기호도 같이 지운다 (자동으로 만든 빈 짝을 한 번에 지우기 위함)
 const EMPTY_PAIRS: Record<string, string> = { ...AUTO_PAIRS, ...WRAP_ONLY }
 
 const backspacePair = Prec.high(
@@ -78,7 +77,6 @@ function inputHandler(): Extension {
     const hasSelection = from !== to
     const state = view.state
 
-    // `->`를 치면 `→`로 바꾼다. 되돌리기(Ctrl+Z)를 하면 `-`로 돌아간다
     if (insertedText === '>' && !hasSelection && isArrowSpot(state, from)) {
       view.dispatch({
         changes: { from: from - 1, to: from, insert: '→' },

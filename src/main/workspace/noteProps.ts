@@ -63,7 +63,6 @@ export function setNoteProps(filePath: string, props: NoteProps | null): void {
   const data = load()
   const key = keyOf(filePath)
   const clean = Object.fromEntries(Object.entries(props ?? {}).filter(([, v]) => v))
-  // 화면 쪽이 아직 생성 날짜를 모르는 채로 태그를 저장해도 생성 날짜는 지우지 않는다
   const created = data.notes[key]?.created
   if (created && !clean.created) clean.created = created
   if (Object.keys(clean).length === 0) delete data.notes[key]
@@ -84,10 +83,7 @@ export function recordCreated(filePath: string, date = new Date()): void {
   save(data)
 }
 
-/**
- * 생성 날짜 기록이 없는 노트에 파일의 생성 시각을 기록한다.
- * 한 번 기록하면 고정해서, 나중에 복사·동기화로 파일 시각이 바뀌어도 흔들리지 않는다.
- */
+/** 생성 날짜 기록이 없는 노트에 파일의 생성 시각을 기록한다. */
 export function ensureCreatedDates(mdPaths: string[]): void {
   const data = load()
   let changed = false
@@ -97,7 +93,6 @@ export function ensureCreatedDates(mdPaths: string[]): void {
     let time: number
     try {
       const st = statSync(filePath)
-      // 생성 시각을 기록하지 않는 파일 시스템이면 0이 나와서 수정 시각을 쓴다
       time = st.birthtimeMs > 0 ? st.birthtimeMs : st.mtimeMs
     } catch {
       continue

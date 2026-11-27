@@ -7,10 +7,7 @@ type MD = InstanceType<typeof MarkdownIt>
 
 const BLOCK_RE = /^\s*!\[\[([^[\]\n]+)\]\]\s*$/
 
-/**
- * `![[노트]]`, `![[img/그림.png|300]]`.
- * 여기서는 자리만 만들고, 내용은 미리보기의 useEmbeds가 채운다(다른 파일을 읽어야 해서).
- */
+/** `![[노트]]`, `![[img/그림.png|300]]`. */
 export function embedPlugin(md: MD): void {
   const esc = md.utils.escapeHtml
 
@@ -18,7 +15,6 @@ export function embedPlugin(md: MD): void {
     const p = parseEmbed(inner)
     if (isNoteTarget(p.target)) {
       if (!block) {
-        // 문장 중간의 노트 임베드는 상자를 넣을 수 없어 링크로 보여 준다
         const label = wikilinkLabel({ note: p.target, heading: p.heading, alias: p.alias })
         const heading = p.heading ? ` data-heading="${esc(p.heading)}"` : ''
         return `<span class="wikilink" data-wikilink="${esc(p.target)}"${heading}>${esc(label)}</span>`

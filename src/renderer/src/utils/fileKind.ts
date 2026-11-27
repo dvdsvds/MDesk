@@ -4,7 +4,6 @@ export type FileKind = 'text' | 'image' | 'pdf' | 'docx' | 'xlsx' | 'external'
 
 const IMAGE_EXTS = new Set(['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg'])
 const MARKDOWN_EXTS = new Set(['md', 'markdown'])
-// 열어 보지 않아도 바이너리인 게 확실한 확장자. 나머지는 내용을 읽어서 판별한다.
 const BINARY_EXTS = new Set([
   'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'hwp', 'hwpx', 'odt', 'ods', 'odp',
   'zip', '7z', 'rar', 'gz', 'tar', 'bz2', 'xz',

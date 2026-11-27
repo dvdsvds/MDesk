@@ -9,9 +9,7 @@ export interface Tab {
   content: string
   dirty: boolean
   missing: boolean
-  /** 파일을 열 때의 내용. 바뀐 줄 표시(변경 표시줄)의 기준이라 저장해도 그대로다 */
   baseContent: string
-  /** 마지막으로 저장하거나 디스크에서 읽어 온 내용. 지금 내용과 같으면 저장 안 한 변경이 아니다 */
   savedContent: string
   kind: FileKind
 }
@@ -84,7 +82,7 @@ export const useTabsStore = create<TabsState>((set, get) => ({
     }))
   },
 
-  // 앱을 켤 때 저장해 둔 탭을 한 번에 넣는다. 활성 탭만 화면에 그려지게 한 번의 상태 변경으로 끝낸다.
+  /** 앱을 켤 때 저장해 둔 탭을 한 번에 넣는다. 활성 탭만 화면에 그려지게 한 번의 상태 변경으로 끝낸다. */
   restoreTabs: (files, activePath) =>
     set((s) => {
       const known = new Set(s.tabs.map((t) => t.filePath))
@@ -108,7 +106,6 @@ export const useTabsStore = create<TabsState>((set, get) => ({
 
   setContent: (tabId, content) =>
     set((s) => ({
-      // 고쳤다가 되돌려 저장된 내용과 같아지면 저장 안 한 변경이 아니다
       tabs: s.tabs.map((t) =>
         t.id === tabId ? { ...t, content, dirty: content !== t.savedContent } : t
       )
@@ -163,7 +160,7 @@ export const useTabsStore = create<TabsState>((set, get) => ({
     set((s) => ({
       tabs: s.tabs.map((t) => {
         if (!t.filePath?.toLowerCase().endsWith('.md')) return t
-        // `#제목`, `|별칭` 부분은 그대로 두고 노트 이름만 바꾼다
+        /** `#제목`, `|별칭` 부분은 그대로 두고 노트 이름만 바꾼다 */
         const content = t.content.replace(pattern, (_m, rest: string) => `[[${newTitle}${rest}]]`)
         return content === t.content ? t : { ...t, content }
       })

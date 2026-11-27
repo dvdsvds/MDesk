@@ -5,23 +5,11 @@ interface TocPanelProps {
   entries: TocEntry[]
   onJump: (line: number) => void
   onClose: () => void
-  /** 0에서 시작. App에서 단축키를 다시 누를 때마다 늘려서 패널로 포커스를 옮긴다. */
   focusToken: number
-  /** 패널에 포커스가 있을 때 Esc를 누르면 부른다 — 패널은 닫지 않고 에디터로만 돌아간다. */
   onReturnFocus: () => void
 }
 
-/**
- * 목차 플로팅 패널 (기획 문서 8장).
- *
- * "제목을 눌러도 열려 있음, 에디터에 포커스 유지" — 제목 클릭은 onJump로
- * MarkdownEditorHandle.scrollToLine을 호출하는데, 그 구현이 끝에 view.focus()를
- * 부르므로 자연히 에디터로 포커스가 돌아간다.
- * "키보드는 단축키로 패널에 포커스 이동, Esc로 복귀" — 패널이 이미 열려 있는
- * 상태에서 같은 단축키를 다시 누르면 App이 focusToken을 늘려서 이 패널
- * 안으로 포커스를 옮기고, 거기서 Esc를 누르면(패널은 안 닫고) onReturnFocus로
- * 에디터 포커스만 되돌린다.
- */
+/** 목차 플로팅 패널 */
 export function TocPanel({
   entries,
   onJump,

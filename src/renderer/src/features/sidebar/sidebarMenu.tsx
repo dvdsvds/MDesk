@@ -21,7 +21,6 @@ export interface MenuActions {
   openDelete: (node: TreeNode) => void
   onCompareChanges: (filePath: string) => void
   onOpenHistory: (filePath: string) => void
-  /** 항목 오른쪽에 보여 줄 단축키 */
   shortcuts: ShortcutMap
 }
 

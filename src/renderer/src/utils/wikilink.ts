@@ -1,5 +1,4 @@
 export interface WikilinkParts {
-  /** 대상 노트 제목. `[[#제목]]`처럼 지금 노트를 가리키면 빈 문자열 */
   note: string
   heading: string | null
   alias: string | null

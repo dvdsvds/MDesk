@@ -1,10 +1,7 @@
 import { useEffect } from 'react'
 import { useSettingsStore } from './settingsStore'
 
-/**
- * settingsStore의 글꼴 설정을 CSS 변수(assets/theme.css의 기본값)에
- * 덮어쓴다. MarkdownEditor와 MarkdownPreview는 그 변수를 읽기만 한다.
- */
+/** settingsStore의 글꼴 설정을 CSS 변수(assets/theme.css의 기본값)에 */
 export function useAppliedFonts(): void {
   const editorFontFamily = useSettingsStore((s) => s.editorFontFamily)
   const editorFontSize = useSettingsStore((s) => s.editorFontSize)

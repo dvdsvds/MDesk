@@ -16,7 +16,6 @@ import { SectionHeader } from './SectionHeader'
 const ROW_BASE =
   'flex h-[30px] w-full items-center gap-1.5 rounded-md pr-2 text-left text-[13px] text-text transition-colors group-hover/row:bg-bg-mute/60 focus:outline-none'
 
-/** 마우스를 올린 줄에만 보이는 오른쪽 버튼 */
 const ROW_ACTION =
   'flex h-[22px] w-[22px] items-center justify-center rounded-[5px] text-text-tertiary outline-none hover:bg-bg-mute hover:text-text'
 
@@ -50,7 +49,6 @@ interface Listing {
 
 type Creating = { parent: string | null; kind: 'file' | 'folder' } | null
 
-/** 접힌 섹션의 높이: 머리 줄 36px + 위 테두리 1px */
 const SECTION_HEADER_BASIS = '37px'
 
 interface Props {
@@ -58,10 +56,8 @@ interface Props {
   onToggle: () => void
   onOpenFile: (filePath: string) => void
   onOpenSettings: () => void
-  /** 로컬 탐색기에서 끌고 있는 항목의 경로 */
   draggingLocalPath: string | null
   dirtyFilePaths: string[]
-  /** Drive에 다 올라간 뒤 로컬 쪽 뒷정리(탭 옮기기, 원본 지우기) */
   onLocalMoved: (sourcePath: string, moved: { from: string; to: string }[]) => Promise<void>
   activeFilePath: string | null
 }
@@ -88,7 +84,6 @@ export function DriveSection({
   const [renaming, setRenaming] = useState<string | null>(null)
   const [menu, setMenu] = useState<{ x: number; y: number; item: DriveItem } | null>(null)
   const [deleting, setDeleting] = useState<DriveItem | null>(null)
-  /** 끌어 온 항목을 놓을 Drive 폴더(최상위는 ROOT) */
   const [dropTarget, setDropTarget] = useState<string | null>(null)
   const [movingIn, setMovingIn] = useState<string | null>(null)
   const expandedRef = useRef(expanded)
@@ -130,7 +125,6 @@ export function DriveSection({
     for (const id of expandedRef.current) void load(id)
   }, [load])
 
-  // 펼칠 때마다 최상위 목록을 새로 받는다. 설정에서 연결을 바꿨거나 다른 기기에서 고친 것도 따라온다
   useEffect(() => {
     if (!open) return
     let alive = true
@@ -151,7 +145,7 @@ export function DriveSection({
         : a.name.localeCompare(b.name, 'ko', { numeric: true })
     )
 
-  // 서버에서 목록을 다시 받지 않고, 방금 한 일을 화면 목록에 바로 반영한다
+  /** 서버에서 목록을 다시 받지 않고, 방금 한 일을 화면 목록에 바로 반영한다 */
   const patchListing = (parent: string | null, fn: (items: DriveItem[]) => DriveItem[]): void => {
     setListings((prev) => ({
       ...prev,
@@ -173,7 +167,6 @@ export function DriveSection({
 
   const openItem = async (item: DriveItem): Promise<void> => {
     const path = await window.api.drive.localPath(item.id, item.name)
-    // 이미 열려 있는 탭은 저장 안 한 내용이 있을 수 있어서 다시 받지 않는다
     if (useTabsStore.getState().tabs.some((t) => t.filePath === path)) {
       onOpenFile(path)
       return
@@ -283,7 +276,7 @@ export function DriveSection({
     /[\\/]\.drive[\\/]/.test(activeFilePath) &&
     activeFilePath.includes(item.id)
 
-  // 어느 폴더의 항목인지 알아야 이름 변경과 삭제 뒤에 그 폴더만 다시 불러온다
+  /** 어느 폴더의 항목인지 알아야 이름 변경과 삭제 뒤에 그 폴더만 다시 불러온다 */
   const parentOf = (id: string): string | null => {
     for (const [key, listing] of Object.entries(listings)) {
       if (listing.items.some((i) => i.id === id)) return key === ROOT ? null : key

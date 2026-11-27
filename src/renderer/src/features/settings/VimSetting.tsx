@@ -3,7 +3,6 @@ import { AnimatePresence, motion } from 'motion/react'
 import { useSettingsStore } from '../../stores/settingsStore'
 import { Toggle } from './SettingsParts'
 
-/** 보여 주기만 하는 Vim 키 목록. 앱이 따로 더한 명령은 `:w`(저장) 하나다 */
 const VIM_KEYS: { group: string; keys: [string, string][] }[] = [
   {
     group: '모드',

@@ -8,7 +8,7 @@ export function colorSpanPlugin(md: MarkdownIt): void {
     (state: StateInline, silent: boolean): boolean => {
       const src = state.src
       const start = state.pos
-      if (src.charCodeAt(start) !== 0x7b /* { */) return false
+      if (src.charCodeAt(start) !== 0x7b) return false
 
       const close = src.indexOf('}', start + 1)
       if (close === -1 || close >= state.posMax) return false

@@ -5,7 +5,7 @@ export function wikilinkPlugin(md: MarkdownIt): void {
   md.inline.ruler.before('link', 'wikilink', (state: StateInline, silent: boolean): boolean => {
     const start = state.pos
     const src = state.src
-    if (src.charCodeAt(start) !== 0x5b /* [ */ || src.charCodeAt(start + 1) !== 0x5b) {
+    if (src.charCodeAt(start) !== 0x5b || src.charCodeAt(start + 1) !== 0x5b) {
       return false
     }
     const end = src.indexOf(']]', start + 2)

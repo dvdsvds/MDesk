@@ -39,7 +39,6 @@ export function Stepper({
   step?: number
   min: number
   max: number
-  /** 버튼 설명에 쓰는 이름(예: 글꼴 크기) */
   label: string
   format?: (v: number) => string
 }): React.JSX.Element {

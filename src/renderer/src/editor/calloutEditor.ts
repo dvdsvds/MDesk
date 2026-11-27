@@ -9,7 +9,6 @@ import {
 import type { CompletionContext, CompletionResult } from '@codemirror/autocomplete'
 import { CALLOUT_COLOR_HEX, CALLOUT_TYPES, findCalloutType } from '../utils/callout'
 
-// `> [!warning]-` 처럼 인용문 줄 맨 앞의 콜아웃 표시
 const MARKER_RE = /^(\s{0,3}(?:>\s?)+)(\[!([^\]\s]+)\][+-]?)/
 
 const decoCache = new Map<string, Decoration>()
@@ -41,7 +40,6 @@ function buildDecos(view: EditorView): DecorationSet {
   return builder.finish()
 }
 
-/** 원문의 `[!종류]` 부분만 그 종류 색으로 칠한다. 상자는 미리보기에서만 그린다. */
 export const calloutMarkerColors: Extension = ViewPlugin.fromClass(
   class {
     decorations: DecorationSet
@@ -62,7 +60,6 @@ export function calloutCompletionSource(context: CompletionContext): CompletionR
   const m = /^\s{0,3}(?:>\s?)+\[!([^\]\s]*)$/.exec(before)
   if (!m) return null
   const from = context.pos - m[1].length
-  // 괄호 자동 닫기로 `]`가 이미 뒤에 있으면 다시 넣지 않는다
   const hasClose = line.text[context.pos - line.from] === ']'
   return {
     from,

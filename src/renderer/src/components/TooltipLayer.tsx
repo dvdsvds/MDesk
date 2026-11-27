@@ -10,7 +10,6 @@ interface Tip {
   text: string
 }
 
-/** "에디터 (Ctrl+Alt+I)"처럼 끝에 단축키가 괄호로 붙어 있으면 이름과 단축키로 나눈다 */
 const SHORTCUT_TAIL =
   /^([\s\S]*?)\s*\(((?:Ctrl|Cmd|Alt|Shift|F\d{1,2}|Delete|Enter|Esc|Tab|Backspace)[^()]*)\)$/
 
@@ -19,10 +18,7 @@ function splitTip(text: string): { label: string; keys: string | null } {
   return m ? { label: m[1], keys: m[2] } : { label: text, keys: null }
 }
 
-/**
- * 앱 전체의 마우스 올림 설명(툴팁). 브라우저 기본 툴팁 대신 title 속성이 있는 요소 위에 새 모양으로 띄운다.
- * title은 마우스를 올린 순간 data-tip으로 옮겨서 기본 툴팁이 같이 뜨지 않게 한다.
- */
+/** 앱 전체의 마우스 올림 설명(툴팁). 브라우저 기본 툴팁 대신 title 속성이 있는 요소 위에 새 모양으로 띄운다. */
 export function TooltipLayer(): React.JSX.Element | null {
   const [tip, setTip] = useState<Tip | null>(null)
   const [pos, setPos] = useState<{ top: number; left: number } | null>(null)
@@ -43,7 +39,6 @@ export function TooltipLayer(): React.JSX.Element | null {
       if (!el || el === currentRef.current) return
       const title = el.getAttribute('title')
       if (title) {
-        // 기본 툴팁이 뜨지 않게 title을 옮기고, 화면 낭독기를 위해 이름은 남겨 둔다
         el.dataset.tip = title
         if (!el.hasAttribute('aria-label')) el.setAttribute('aria-label', title)
         el.removeAttribute('title')
@@ -78,7 +73,6 @@ export function TooltipLayer(): React.JSX.Element | null {
     }
   }, [])
 
-  // 보이는 동안 요소가 사라지면(탭 닫기 등) 같이 닫는다
   useEffect(() => {
     if (!tip) return
     const id = setInterval(() => {
@@ -91,7 +85,6 @@ export function TooltipLayer(): React.JSX.Element | null {
     return () => clearInterval(id)
   }, [tip])
 
-  // 상자 크기를 잰 뒤 요소 아래 가운데에 놓고, 자리가 없으면 위로, 가장자리에서는 안쪽으로 민다
   useLayoutEffect(() => {
     if (!tip || !boxRef.current) return
     const r = tip.el.getBoundingClientRect()

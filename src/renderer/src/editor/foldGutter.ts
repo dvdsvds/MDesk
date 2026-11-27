@@ -50,7 +50,6 @@ function wrappedRange(
 ): { from: number; to: number } | null {
   const firstEnd = view.moveToLineBoundary(EditorSelection.cursor(from), true).head
   if (firstEnd <= from || firstEnd >= to) return null
-  // 첫 줄이 가득 차 있으면 접힘 표시(…)가 다음 줄로 밀리므로, 첫 줄 끝 몇 글자도 같이 접는다
   return { from: Math.max(from + 1, firstEnd - 4), to }
 }
 

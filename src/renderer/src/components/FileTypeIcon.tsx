@@ -43,7 +43,6 @@ type IconType =
 
 const SYSTEM_FOLDERS = new Set(['img', 'files'])
 
-/** 확장자 → 아이콘 종류. 여기 없는 확장자는 회색 문서(doc) */
 const EXT_TYPES: Record<string, IconType> = {}
 const group = (type: IconType, exts: string): void => {
   for (const ext of exts.split(' ')) EXT_TYPES[ext] = type
@@ -110,7 +109,6 @@ export function FileTypeIcon({
   kind: 'file' | 'folder'
   size?: number
   open?: boolean
-  /** 폴더 아이콘을 글자 높이에 맞춰 살짝 올릴지. 글자 없이 아이콘만 가운데 놓는 곳에서는 끈다 */
   raise?: boolean
 }): React.JSX.Element {
   const type = typeOf(name, kind)
@@ -118,7 +116,6 @@ export function FileTypeIcon({
   return (
     <span
       className="flex shrink-0"
-      // 폴더는 몸통이 아래쪽에 몰려 있어 가운데 정렬해도 글자보다 내려가 보이므로 살짝 올린다
       style={{
         color: `var(--icon-${type})`,
         transform: kind === 'folder' && raise ? 'translateY(-1.8px)' : undefined

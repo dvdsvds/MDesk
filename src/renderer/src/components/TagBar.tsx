@@ -9,10 +9,8 @@ import {
   statusOf
 } from '../utils/noteProperties'
 
-/** 알약 하나의 높이. 입력 중에도 같은 높이를 써서 태그 줄 높이가 바뀌지 않게 한다 */
 const PILL = 'flex h-6 shrink-0 items-center rounded-full px-2.5 text-[12px] font-medium'
 
-/** 태그가 생기고 없어질 때, 입력란이 열리고 닫힐 때 쓰는 움직임 */
 const POP = {
   initial: { opacity: 0, scale: 0.85 },
   animate: { opacity: 1, scale: 1 },
@@ -20,12 +18,7 @@ const POP = {
   transition: { duration: 0.16, ease: [0.4, 0, 0.2, 1] as const }
 }
 
-/**
- * 에디터 위 태그 줄.
- * 앞에는 상태(대기·진행·보류·완료) 알약이 늘 보이고 누르면 그 상태로 바뀐다.
- * 그 뒤에 직접 만든 태그, 맨 끝에 태그 추가 알약이 있다.
- * 태그 추가 알약에 포커스가 가면 입력란이 되고, Enter로 태그를 만들고, 비어 있을 때 Backspace로 마지막 태그를 지운다
- */
+/** 에디터 위 태그 줄. */
 export function TagBar({ filePath }: { filePath: string }): React.JSX.Element {
   const props = useNotePropsStore((s) => s.byPath[filePath])
   const setProps = useNotePropsStore((s) => s.setProps)

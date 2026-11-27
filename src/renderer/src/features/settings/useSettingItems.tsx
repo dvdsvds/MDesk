@@ -11,7 +11,6 @@ import { AboutSetting } from './AboutSetting'
 import { CloudSetting } from './CloudSetting'
 import { VimSetting } from './VimSetting'
 
-/** 설정의 단축키를 어느 칸에서 쓰는지로 나눈 소제목. 비교 화면의 적용·되돌리기는 키를 바꿀 수 없는 고정 단축키라 여기에 없다 */
 const SHORTCUT_GROUPS: { group: string; actions: ShortcutAction[] }[] = [
   {
     group: '일반',
@@ -45,7 +44,6 @@ export interface SettingItem {
   category: Category
   group?: string
   label: string
-  /** 카드 없이 그린다(테마 카드처럼 자기 모양이 있는 것) */
   bare?: boolean
   render: () => React.ReactNode
 }

@@ -102,7 +102,6 @@ class SlashPlugin {
   items: SlashCmd[] = []
   sel = 0
   el: HTMLDivElement | null = null
-  /** Esc 등으로 닫은 슬래시 위치. 같은 슬래시에서는 다시 열지 않는다. */
   dismissed: number | null = null
 
   private onOutside = (e: MouseEvent): void => {
@@ -183,7 +182,6 @@ class SlashPlugin {
   }
 
   place(): void {
-    // 업데이트 도중에는 에디터 레이아웃을 읽을 수 없어서, 측정 단계로 미룬다.
     this.view.requestMeasure({
       key: this,
       read: (view) => {
@@ -220,7 +218,6 @@ class SlashPlugin {
     this.view.dispatch({ changes: { from, to, insert: '' }, selection: { anchor: from } })
     const before = this.view.state.doc.length
     item.run(this.view)
-    // 제목, 목록처럼 줄 앞에 기호만 붙이는 명령은 커서를 그대로 둬서 기호 앞에 남는다. 붙은 글자 뒤로 옮긴다.
     const st = this.view.state
     const grew = st.doc.length - before
     if (grew > 0 && st.selection.main.empty && st.selection.main.head === from) {
@@ -260,7 +257,6 @@ const slashPlugin = ViewPlugin.fromClass(SlashPlugin, {
 
 const get = (v: EditorView): SlashPlugin | null => v.plugin(slashPlugin)
 
-/** 줄 맨 앞이나 공백 뒤에서 "/"를 치면 마크다운 명령 메뉴를 띄운다. */
 export const slashMenu = [
   slashPlugin,
   Prec.highest(

@@ -17,7 +17,6 @@ const markdownHighlight = HighlightStyle.define([
     color: 'var(--color-syntax-heading)'
   },
   { tag: tags.strong, fontWeight: '400', color: 'var(--color-syntax-strong)' },
-  // 기울임은 안쪽 글자에만 입힌다(markdownStyle.ts). 여기서는 색만 지정한다
   { tag: tags.emphasis, color: 'var(--color-syntax-em)' },
   { tag: tags.strikethrough, textDecoration: 'line-through', color: 'var(--color-text-secondary)' },
   { tag: tags.monospace, fontFamily: 'var(--font-editor)', color: 'var(--color-syntax-code)' },
@@ -58,7 +57,6 @@ function buildSymbolDecos(view: EditorView): DecorationSet {
         } else if (key === 'EmphasisMark') {
           key = node.node.parent?.name === 'StrongEmphasis' ? 'StrongMark' : 'EmMark'
         }
-        // 인라인 코드의 백틱은 일반 글자와 같은 색(안의 글자만 코드 색). 코드 블록 울타리는 그대로
         if (key === 'CodeMark' && node.node.parent?.name === 'InlineCode') key = 'InlineCodeMark'
         const deco = symbolDecos[key]
         if (deco) builder.add(node.from, node.to, deco)

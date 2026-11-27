@@ -125,16 +125,12 @@ export interface BrokenLink {
   fromPath: string
   title: string
   reason: 'missing' | 'outside'
-  /** 링크가 처음 나오는 줄 (1부터) */
   line: number
 }
 
 interface ExportScope {
-  /** 내보낼 마크다운 파일 */
   files: string[]
-  /** 결과물 안의 상대 경로를 잴 기준 폴더 */
   base: string
-  /** 이 접두어로 시작하는 파일은 함께 내보내는 것으로 본다(파일 하나만 낼 때는 아무것도 맞지 않는다) */
   prefix: string
 }
 
@@ -187,7 +183,6 @@ export function checkExportLinks(rootDir: string, folderPath: string): BrokenLin
 
 export interface ExportOptions {
   folderPath: string
-  /** MD 결과물이 들어갈 폴더 (export-md) */
   destDir: string
   isRoot: boolean
   representativeName: 'README' | 'index' | 'main' | null
@@ -283,7 +278,6 @@ export async function exportFolder(rootDir: string, opts: ExportOptions): Promis
       return href ? `[${label}](${href})` : whole
     })
 
-    // 앱 안의 `![[ ]]`를 표준 마크다운으로 바꾼다. 노트 임베드는 링크로 둔다.
     text = text.replace(EMBED_RE, (_whole: string, inner: string) => {
       const target = inner.split('|')[0].split('#')[0].trim()
       if (!isFileTarget(target)) return `[[${inner}]]`

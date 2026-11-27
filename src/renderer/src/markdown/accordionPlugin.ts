@@ -3,18 +3,9 @@ import type { StateBlock } from 'markdown-it'
 
 type MD = InstanceType<typeof MarkdownIt>
 
-/** `[>] 제목` 한 줄. 제목이 없으면 아코디언으로 보지 않는다 */
 const HEAD_RE = /^\[>\][ \t]+(\S.*)$/
 
-/**
- * 아코디언: `[>] 제목` 줄과 그 아래 들여쓴 줄들을 접히는 상자로 바꾼다. 항상 접힌 채로 시작한다.
- *
- *     [>] 제목
- *         들여쓴 내용(여러 줄, 목록, 코드, 다른 아코디언도 가능)
- *
- * 들여쓴 줄이 하나도 없으면 아코디언이 아니라 그냥 글자로 둔다.
- * 내용은 첫 들여쓴 줄의 들여쓰기를 기준으로 다시 해석하므로 리스트처럼 중첩할 수 있다.
- */
+/** 아코디언: `[>] 제목` 줄과 그 아래 들여쓴 줄들을 접히는 상자로 바꾼다. 항상 접힌 채로 시작한다. */
 export function accordionPlugin(md: MD): void {
   md.block.ruler.before(
     'reference',

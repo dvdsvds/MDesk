@@ -29,7 +29,6 @@ export function DocxViewer({ filePath }: { filePath: string }): React.JSX.Elemen
           renderHeaders: true,
           renderFooters: true,
           renderFootnotes: true,
-          // CSP가 blob: 이미지를 막아서 data: 주소로 넣는다
           useBase64URL: true
         })
       } catch (e) {
@@ -43,7 +42,7 @@ export function DocxViewer({ filePath }: { filePath: string }): React.JSX.Elemen
     }
   }, [filePath])
 
-  // 문서 안 링크는 앱 안에서 이동하지 않게 막고, 웹 주소만 외부 브라우저로 연다
+  /** 문서 안 링크는 앱 안에서 이동하지 않게 막고, 웹 주소만 외부 브라우저로 연다 */
   const handleClick = (e: React.MouseEvent): void => {
     const anchor = (e.target as HTMLElement).closest('a')
     if (!anchor) return

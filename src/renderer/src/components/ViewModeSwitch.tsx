@@ -51,7 +51,6 @@ export function ViewModeSwitch({
 }: {
   value: ViewMode
   onChange: (mode: ViewMode) => void
-  /** 모드별 단축키. 마우스를 올리면 이름 옆에 보인다 */
   shortcuts?: Record<ViewMode, string>
 }): React.JSX.Element {
   return (

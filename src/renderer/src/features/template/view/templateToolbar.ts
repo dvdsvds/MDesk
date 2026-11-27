@@ -328,7 +328,6 @@ export function createToolbar(api: ToolbarApi): Toolbar {
   )
   root.append(sepScript, supBtn, subBtn)
 
-  // 좁아지면 맨 뒤 아이콘부터 하나씩 » 메뉴로 옮긴다 (정렬 ~ 아래 첨자)
   interface Entry {
     el: HTMLElement
     icon: string
@@ -447,7 +446,6 @@ export function createToolbar(api: ToolbarApi): Toolbar {
   const applyCollapse = (n: number): void => {
     hiddenCount = n
     entries.forEach((it, i) => setShown(it.el, i < entries.length - n))
-    // 첫 묶음 앞 구분선은 » 앞 구분선으로 남기고, 나머지는 그 묶음이 보일 때만
     groupSeps.forEach((sp, gi) =>
       setShown(
         sp,

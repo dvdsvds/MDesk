@@ -19,7 +19,6 @@ interface BrokenLink {
   fromPath: string
   title: string
   reason: 'missing' | 'outside'
-  /** 링크가 있는 줄 번호 (1부터). 없으면 파일만 연다. */
   line?: number
 }
 
@@ -28,7 +27,6 @@ interface ExportDialogProps {
   isRoot: boolean
   folderLabel: string
   onClose: () => void
-  /** 깨진 링크 줄을 누르면 호출한다. 주면 줄이 눌리는 버튼이 된다. */
   onOpenLink?: (filePath: string, line?: number) => void
 }
 
@@ -56,7 +54,7 @@ export function ExportDialog({
   const [representativeName, setRepresentativeName] = useState<'README' | 'index' | 'main'>(
     'README'
   )
-  // 처음에는 내보내는 폴더나 파일의 이름(확장자 뺀 것)을 넣어 둔다
+  /** 처음에는 내보내는 폴더나 파일의 이름(확장자 뺀 것)을 넣어 둔다 */
   const [name, setName] = useState(() => folderLabel.replace(/\.md$/i, ''))
   const [nameError, setNameError] = useState<string | null>(null)
   const [format, setFormat] = useState<'md' | 'pdf'>('md')

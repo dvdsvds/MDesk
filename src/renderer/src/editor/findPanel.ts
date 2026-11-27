@@ -180,7 +180,6 @@ export function createFindPanel(view: EditorView): Panel {
     if (!replaceAllBtn.classList.contains('off')) replaceAll(view)
   })
   expand.addEventListener('click', () => setOpen(!dom.classList.contains('open')))
-  /** 사라지는 애니메이션이 끝난 뒤에 패널을 닫는다. */
   let closing = false
   const closePanel = (): void => {
     if (closing) return

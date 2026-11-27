@@ -17,11 +17,9 @@ import type { BacklinkWithContext } from '../../../preload/index.d'
 
 interface ConfirmDialogProps {
   title: string
-  /** 대상 파일이나 폴더. 주면 이름 칩으로 보여준다. */
   subject?: { name: string; kind: 'file' | 'folder' }
   message?: string
   items?: string[]
-  /** 이 파일을 가리키는 다른 파일들. 주면 "참조" 아코디언으로 보여준다 */
   references?: BacklinkWithContext[]
   confirmLabel: string
   danger?: boolean
@@ -138,7 +136,6 @@ export function ConfirmDialog({
         )}
         {message && (
           <div className="text-[13px] leading-relaxed text-text-secondary">
-            {/* 마침표 뒤에 공백이 있으면 거기서 줄을 바꾼다 ("test.md"처럼 공백 없는 점은 그대로) */}
             {message.split(/(?<=\.)\s+/).map((line, i) => (
               <p key={i}>{line}</p>
             ))}

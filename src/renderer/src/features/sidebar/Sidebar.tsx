@@ -40,16 +40,13 @@ interface SidebarProps {
   onOpenSettings: () => void
   selectedFolderPath: string | null
   onSelectFolder: (path: string | null) => void
-  /** 열려 있는 데일리 노트의 날짜. 날짜 섹션을 그날로 맞춘다 */
   onInsertTemplate: (template: NoteTemplate) => void
   onCreateFromTemplate: (template: NoteTemplate) => void
-  /** 검색 창을 연다 */
   onOpenSearch: () => void
   className?: string
   style?: React.CSSProperties
 }
 
-/** 단축키로 선택된 항목에 실행하는 사이드바 동작 */
 export type SidebarCommand = 'rename' | 'newFolder' | 'reveal' | 'export'
 
 export interface SidebarHandle {
@@ -57,7 +54,6 @@ export interface SidebarHandle {
   runCommand: (command: SidebarCommand) => void
 }
 
-/** 접힌 섹션의 높이: 머리 줄 36px + 위 테두리 1px */
 const SECTION_HEADER_BASIS = '37px'
 
 const FOOTER_BTN =
@@ -178,7 +174,7 @@ export const Sidebar = forwardRef<SidebarHandle, SidebarProps>(function Sidebar(
     onFileCreated
   })
 
-  // 단축키 동작의 대상: 삭제(Delete)와 같은 규칙으로 고른다(포커스한 줄, 선택한 폴더, 열려 있는 파일 순)
+  /** 단축키 동작의 대상: 삭제(Delete)와 같은 규칙으로 고른다(포커스한 줄, 선택한 폴더, 열려 있는 파일 순) */
   const runCommand = (command: SidebarCommand): void => {
     const path = focusedPath ?? selectedFolderPath ?? activeFilePath
     const node = path ? findNodeByPath(tree, path) : null
@@ -199,7 +195,6 @@ export const Sidebar = forwardRef<SidebarHandle, SidebarProps>(function Sidebar(
         void window.api.workspace.reveal(node.path)
         break
       case 'export': {
-        // 폴더가 아니면 그 파일이 들어 있는 폴더를 내보낸다
         const dir = node.type === 'folder' ? node.path : dirOf(node.path)
         setExportTarget({
           folderPath: dir,
@@ -293,7 +288,6 @@ export const Sidebar = forwardRef<SidebarHandle, SidebarProps>(function Sidebar(
       <div className="titlebar-drag flex h-11 shrink-0 items-center gap-1.5 pl-3.5 pr-2">
         <AppLogoMark size={20} />
       </div>
-      {/* 검색: 아래 영역 제목과 헷갈리지 않게 입력칸 모양으로 둔다 */}
       <div className="shrink-0 px-2.5 pb-2">
         <button
           type="button"
@@ -421,7 +415,6 @@ export const Sidebar = forwardRef<SidebarHandle, SidebarProps>(function Sidebar(
           <TemplateSection onInsert={onInsertTemplate} onCreateNote={onCreateFromTemplate} />
         </div>
       </div>
-      {/* 맨 아래 줄: 휴지통 폴더 열기와 설정을 오른쪽 끝에 둔다. 영역을 모두 접어도 맨 아래에 붙어 있게 mt-auto */}
       <div className="mt-auto flex h-10 shrink-0 items-center justify-end gap-0.5 border-t border-border px-2">
         <button
           type="button"

@@ -8,7 +8,6 @@ export interface Section {
 }
 
 function SectionBody({ items }: { items: SettingItem[] }): React.JSX.Element {
-  // 테마 카드처럼 자기 모양이 있는 항목은 카드로 감싸지 않는다
   if (items.every((i) => i.bare)) {
     return (
       <>
@@ -38,7 +37,6 @@ export function SettingsContent({
   sections: Section[]
   onGoCategory: (cat: Category) => void
 }): React.JSX.Element {
-  // 스크롤바 자리를 늘 비워 두고 그만큼 오른쪽 여백을 줄여, 스크롤바가 생겨도 안 생겨도 내용 위치가 같게 한다
   const scrollRef = useRef<HTMLDivElement>(null)
   const [scrollbarWidth, setScrollbarWidth] = useState(0)
   useLayoutEffect(() => {

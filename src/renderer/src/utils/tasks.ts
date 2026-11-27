@@ -52,7 +52,6 @@ function ancestorItems(lines: string[], line: number): number[] {
     if (isBlank(raw)) continue
     const indent = indentOf(raw)
     if (indent >= threshold) continue
-    // 목록이 아닌 줄을 만나면 거기서 목록이 끝난 것이다
     if (!LIST_RE.test(raw)) break
     found.push(i)
     threshold = indent
@@ -60,12 +59,7 @@ function ancestorItems(lines: string[], line: number): number[] {
   return found
 }
 
-/**
- * 체크박스 한 줄을 바꾸고 계층에 맞춰 나머지를 함께 바꾼다.
- *  - 상위를 체크하거나 해제하면 그 아래 하위 체크박스가 전부 따라 바뀐다
- *  - 하위가 전부 체크되면 상위가 자동으로 체크되고, 하나라도 해제되면 상위도 해제된다 (위 단계까지 이어서)
- * 체크박스가 아닌 줄이면 null.
- */
+/** 체크박스 한 줄을 바꾸고 계층에 맞춰 나머지를 함께 바꾼다. */
 export function toggleTaskAtLine(content: string, line: number): string | null {
   const lines = content.split('\n')
   const raw = lines[line]

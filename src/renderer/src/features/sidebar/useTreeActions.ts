@@ -36,10 +36,8 @@ export function useTreeActions({
   const [draggingPath, setDraggingPath] = useState<string | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null)
 
-  // 파일 감시기가 트리를 알려 주기까지 약 0.15초가 걸린다. 그 사이 입력 줄이 먼저 사라지면
-  // 목록에서 줄이 잠깐 없어졌다 나타나 새로고침처럼 보이므로, 만든 직후 트리를 바로 받아 반영한 뒤에 입력 줄을 닫는다
   const creatingRef = useRef(false)
-  // 새 트리와 입력 줄 닫기를 한 번에 반영해서, 새 줄과 입력 줄이 잠깐 같이 보이는 것도 막는다
+  /** 새 트리와 입력 줄 닫기를 한 번에 반영해서, 새 줄과 입력 줄이 잠깐 같이 보이는 것도 막는다 */
   const applyTreeAndClose = async (close: () => void): Promise<void> => {
     const tree = await window.api.workspace.getTree()
     flushSync(() => {
@@ -48,7 +46,7 @@ export function useTreeActions({
     })
   }
 
-  // 트리만 바로 다시 받아 반영한다(삭제·이동·되돌리기처럼 닫을 입력 줄이 없는 경우)
+  /** 트리만 바로 다시 받아 반영한다(삭제·이동·되돌리기처럼 닫을 입력 줄이 없는 경우) */
   const syncTree = (): Promise<void> => applyTreeAndClose(() => {})
 
   const renamingRef = useRef(false)
@@ -65,7 +63,6 @@ export function useTreeActions({
       .then(async (newPath) => {
         pushUndo({ kind: 'rename', oldPath: node.path, newPath })
         onEntryRenamed(node.path, newPath)
-        // 새 이름의 트리가 반영되기 전에 입력 줄을 닫으면 옛 이름이 잠깐 보인다
         await applyTreeAndClose(() => setEditingPath(null))
       })
       .catch(() => {
@@ -155,10 +152,7 @@ export function useTreeActions({
     })
   }
 
-  /**
-   * 드라이브 탐색기로 올린 항목의 뒷정리: 열린 탭을 Drive 복사본으로 옮기고 로컬 원본은 휴지통으로 보낸다.
-   * Ctrl+Z로 되살리면 Drive에도 같은 파일이 남아 둘이 되므로 되돌리기 목록에는 넣지 않는다
-   */
+  /** 드라이브 탐색기로 올린 항목의 뒷정리: 열린 탭을 Drive 복사본으로 옮기고 로컬 원본은 휴지통으로 보낸다. */
   const finishMoveToDrive = async (
     sourcePath: string,
     moved: { from: string; to: string }[]

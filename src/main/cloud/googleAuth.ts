@@ -9,12 +9,10 @@ const AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth'
 const TOKEN_URL = 'https://oauth2.googleapis.com/token'
 const REVOKE_URL = 'https://oauth2.googleapis.com/revoke'
 const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file'
-// 앱이 만든 파일만 접근하는 범위(drive.file)와, 어느 계정인지 보여 주기 위한 이메일
 const SCOPES = [DRIVE_SCOPE, 'openid', 'email']
 const LOGIN_TIMEOUT_MS = 5 * 60 * 1000
 
 export interface CloudStatus {
-  /** 이 빌드에 Google 클라이언트 정보가 들어 있는지 */
   configured: boolean
   connected: boolean
   email: string | null
@@ -55,7 +53,6 @@ async function readLogin(): Promise<StoredLogin | null> {
     const { result, shouldReEncrypt } = await safeStorage.decryptStringAsync(readFileSync(file))
     const parsed = JSON.parse(result) as StoredLogin
     if (typeof parsed.refreshToken !== 'string') return null
-    // 암호화 키가 바뀌었으면 새 키로 다시 저장한다
     if (shouldReEncrypt) await writeLogin(parsed)
     return parsed
   } catch {
@@ -117,8 +114,6 @@ function waitForCode(
     const server = createServer()
     pendingServer = server
     let settled = false
-    // 서버를 닫은 뒤에는 주소를 읽을 수 없으므로, 열릴 때 한 번만 저장해 둔다.
-    // 인증 요청과 토큰 교환의 redirect_uri는 글자 하나까지 같아야 한다
     let redirectUri = ''
     const finish = (fn: () => void): void => {
       if (settled) return
@@ -179,9 +174,7 @@ async function revoke(token: string): Promise<void> {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({ token })
     })
-  } catch {
-    // 오프라인이어도 이 기기에서의 연결 해제는 진행한다
-  }
+  } catch {}
 }
 
 export async function connectGoogle(options?: { privateWindow?: boolean }): Promise<ConnectResult> {
@@ -208,7 +201,6 @@ export async function connectGoogle(options?: { privateWindow?: boolean }): Prom
         code_challenge_method: 'S256',
         state,
         access_type: 'offline',
-        // 이전에 연결한 적이 있어도 refresh token을 다시 받기 위해 동의 화면을 매번 보인다
         prompt: 'consent'
       }).toString()
       return url.toString()
@@ -230,7 +222,6 @@ export async function connectGoogle(options?: { privateWindow?: boolean }): Prom
         error: `로그인 정보를 받지 못했습니다${token.error ? ` (${token.error})` : ''}. 다시 시도해 주십시오.`
       }
     }
-    // 동의 화면에서 Drive 항목을 끄면 로그인은 되지만 파일에 접근할 수 없다
     if (!token.scope?.split(' ').includes(DRIVE_SCOPE)) {
       await revoke(token.refresh_token)
       return {
@@ -270,7 +261,6 @@ export async function getGoogleAccessToken(): Promise<string | null> {
   try {
     const token = await postToken({ grant_type: 'refresh_token', refresh_token: login.refreshToken })
     if (token.error === 'invalid_grant') {
-      // 사용자가 Google 계정에서 연결을 끊었거나 토큰이 만료됨
       clearLogin()
       return null
     }

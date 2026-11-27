@@ -242,9 +242,7 @@ function lock() {
     } catch (_) {
       try {
         self[k] = undefined
-      } catch (_2) {
-        /* 무시 */
-      }
+      } catch (_2) {}
     }
   }
 }

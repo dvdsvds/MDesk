@@ -247,7 +247,6 @@ export function registerWorkspaceIpc(getWindow: () => BrowserWindow | null): voi
   ensureCreatedDates(walkMdFiles(getRootDir()))
   startWatcher({
     onTreeChanged: () => {
-      // 앱 밖에서 생긴 노트에도 생성 날짜를 남긴 뒤 알린다(화면이 트리를 받고 속성을 다시 읽는다)
       ensureCreatedDates(walkMdFiles(getRootDir()))
       getWindow()?.webContents.send('workspace:tree-changed', buildTree(getRootDir()))
     },

@@ -8,19 +8,12 @@ interface DiffViewProps {
   newContent: string
   oldLabel: string
   newLabel: string
-  /** 오른쪽(새 내용)을 최종 내용으로 (기획 문서 10장 "적용하기"). */
   onApply: () => void
-  /** 왼쪽(이전 내용)으로 되돌림 (기획 문서 10장 "복구하기"). */
   onRestore: () => void
-  /** 버튼 없이 닫으면 아무것도 하지 않는다. */
   onClose: () => void
 }
 
-/**
- * 차이(diff) 팝업 (기획 문서 10장). 외부 변경 토스트와 "변경 내용 비교"
- * 메뉴에서 쓴다. 복구 목록은 이 팝업 대신 자기 안에 DiffContent를 직접
- * 끼워 넣는다(RecoveryDialog).
- */
+/** 두 내용의 차이를 보여 주는 팝업 */
 export function DiffView({
   oldContent,
   newContent,

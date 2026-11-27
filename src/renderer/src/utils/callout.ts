@@ -6,7 +6,6 @@ export interface CalloutType {
   aliases: string[]
   title: string
   color: CalloutColor
-  /** 24x24 viewBox 안의 stroke 경로 */
   icon: string
 }
 
@@ -104,7 +103,6 @@ export const CALLOUT_TYPES: CalloutType[] = [
   }
 ]
 
-/** 에디터 원문 색칠용. 미리보기 색은 preview.css의 같은 값 */
 export const CALLOUT_COLOR_HEX: Record<CalloutColor, string> = {
   blue: '#2383e2',
   cyan: '#0e9fb5',
@@ -127,7 +125,6 @@ export function findCalloutType(name: string): CalloutType | null {
   return BY_NAME.get(name.toLowerCase()) ?? null
 }
 
-/** 인용문 첫 줄 `[!종류]+ 제목`을 읽는다. 콜아웃이 아니면 null */
 export const CALLOUT_HEAD_RE = /^\[!([^\]\s]+)\]([+-]?)[ \t]*(.*)$/
 
 export function calloutIconSvg(type: CalloutType): string {

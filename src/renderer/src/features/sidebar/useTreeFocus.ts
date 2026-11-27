@@ -20,7 +20,6 @@ export function useTreeFocus({
   onSelectFolder: (path: string | null) => void
   onFocusEditor: () => void
 }) {
-  // 접은 폴더는 설정에 저장해서 앱을 다시 켜도 그대로 둔다
   const collapsedFolders = useSettingsStore((s) => s.collapsedFolders)
   const setFolderCollapsed = useSettingsStore((s) => s.setFolderCollapsed)
   const collapsedPaths = useMemo(() => new Set(collapsedFolders), [collapsedFolders])

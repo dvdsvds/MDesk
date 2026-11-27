@@ -5,11 +5,9 @@ const NOTE_EXT_RE = /\.(md|markdown)$/i
 const HAS_EXT_RE = /\.[A-Za-z0-9]{1,8}$/
 
 export interface EmbedParts {
-  /** `회의록`, `img/그림.png` 처럼 `#`·`|` 앞부분 */
   target: string
   heading: string | null
   alias: string | null
-  /** `![[그림.png|300]]` 의 300 */
   width: number | null
 }
 
@@ -51,10 +49,7 @@ function joinPath(dir: string, rel: string): string {
   return (dir.startsWith('/') ? '/' : '') + out.join(sep)
 }
 
-/**
- * 임베드한 파일을 찾는다. 노트 기준 상대 경로가 맞으면 그것을, 아니면 같은 이름 파일 중
- * 가까운 것(같은 폴더의 img/·files/ → 같은 폴더 → 나머지)을 고른다.
- */
+/** 임베드한 파일을 찾는다. 노트 기준 상대 경로가 맞으면 그것을, 아니면 같은 이름 파일 중 */
 export function resolveEmbedFile(target: string, noteDir: string, files: string[]): string | null {
   const byPath = new Map(files.map((f) => [normalize(f), f]))
   const direct = byPath.get(normalize(joinPath(noteDir, target)))

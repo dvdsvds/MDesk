@@ -50,18 +50,10 @@ import { dirOf, fileNameOf, splitName, sepOf } from './utils/path'
 import { useNotePropsStore } from './stores/notePropsStore'
 import { TagBar } from './components/TagBar'
 
-/** 본문 카드(에디터·미리보기·뷰어). 네 모서리가 둥글고 창 오른쪽 끝과도 4px 띄운다.
- *  카드 상자는 overflow-clip을 쓴다. hidden이면 에디터의 scrollIntoView가 카드 상자까지 밀어 올려
- *  미리보기 첫 줄 위 여백이 사라졌다(base.css의 #root와 같은 이유) */
-/** Drive 파일의 임시 복사본 경로(`.drive` 폴더 안) */
 const DRIVE_COPY_RE = /[\\/]\.drive[\\/]/
 
-/** 보기 모드를 바꿀 때 에디터·미리보기 폭이 움직이는 시간과 곡선 */
 const VIEW_TRANSITION = { duration: 0.22, ease: [0.4, 0, 0.2, 1] as const }
 
-/** 가운데 파일 목록 칸 폭 */
-
-/** 자동 저장: 마지막으로 고친 뒤 이만큼(ms) 지나면 저장한다 */
 const AUTO_SAVE_DELAY = 1000
 
 const TITLE_BTN =
@@ -124,7 +116,6 @@ function App(): React.JSX.Element {
   const showPreview = !activeTab?.filePath || isMarkdownPath(activeTab.filePath)
   const viewMode = useSettingsStore((s) => s.viewMode)
   const setViewMode = useSettingsStore((s) => s.setViewMode)
-  // 마크다운이 아닌 파일은 미리보기가 없으니 늘 에디터만 보인다
   const splitMode = showPreview && viewMode === 'split'
   const previewOnly = showPreview && viewMode === 'preview'
   const showPreviewPane = showPreview && viewMode !== 'editor'
@@ -135,7 +126,6 @@ function App(): React.JSX.Element {
   const sidebar = useSidebarResize()
   const sidebarCollapsed = useSettingsStore((s) => s.sidebarCollapsed)
   const setSidebarCollapsed = useSettingsStore((s) => s.setSidebarCollapsed)
-  // 폭 애니메이션은 px 값끼리만 움직일 수 있어서 본문 영역 폭을 재서 카드 폭을 직접 계산한다
   const [splitEl, setSplitEl] = useState<HTMLDivElement | null>(null)
   const [boxW, setBoxW] = useState(0)
   const setSplitBox = useCallback((el: HTMLDivElement | null) => {
@@ -149,7 +139,6 @@ function App(): React.JSX.Element {
     ro.observe(splitEl)
     return () => ro.disconnect()
   }, [splitEl])
-  // 보기 모드 버튼을 눌렀을 때만 움직이고, 창 크기를 줄일 때는 바로 따라간다
   const [animating, setAnimating] = useState(false)
   useEffect(() => {
     if (!animating) return
@@ -164,8 +153,6 @@ function App(): React.JSX.Element {
       : boxW
   const previewW = previewOnly ? boxW : Math.max(0, boxW - editorW - gapW)
   const widthTransition = animating ? VIEW_TRANSITION : { duration: 0 }
-  // 카드 폭이 변하는 동안 안쪽 내용 폭은 최종 폭으로 고정한다. 매 프레임 줄바꿈을 다시 계산하지 않아 부드럽다
-  // (폭이 0이 되는 에디터는 마지막 폭을 유지한다)
   const [lastEditorW, setLastEditorW] = useState(0)
   if (editorW > 0 && editorW !== lastEditorW) setLastEditorW(editorW)
   const editorContentW = editorW > 0 ? editorW : lastEditorW
@@ -182,7 +169,6 @@ function App(): React.JSX.Element {
   const [tocFocusToken, setTocFocusToken] = useState(0)
   const [selectedFolderPath, setSelectedFolderPath] = useState<string | null>(null)
   const pushToast = useToastStore((s) => s.push)
-  // Drive 파일을 저장하면 백그라운드로 올린다. 실패하거나 충돌했을 때만 알린다
   useEffect(
     () =>
       window.api.drive.onUpload((e) => {
@@ -196,8 +182,7 @@ function App(): React.JSX.Element {
   const previewRef = useRef<MarkdownPreviewHandle>(null)
   const scrollSourceRef = useRef<'editor' | 'preview' | 'jump' | null>(null)
   const jumpTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  // 특정 줄로 이동할 때는 에디터와 미리보기를 각각 그 위치로 맞추고,
-  // 그 직후 생기는 스크롤 이벤트로 서로를 비율로 다시 끌고 가지 않게 잠깐 동기화를 멈춘다
+  /** 지정한 줄로 에디터와 미리보기를 함께 이동한다 */
   const jumpToLine = useCallback((line: number) => {
     scrollSourceRef.current = 'jump'
     editorRef.current?.scrollToLine(line)
@@ -249,7 +234,7 @@ function App(): React.JSX.Element {
     if (id) void saveTab(id)
   }, [saveTab])
 
-  // 자동 저장: 저장된 파일을 고치고 잠시(1초) 멈추면 저장한다. 고칠 때마다 다시 센다
+  /** 자동 저장: 저장된 파일을 고치고 잠시(1초) 멈추면 저장한다. 고칠 때마다 다시 센다 */
   const autoSave = useSettingsStore((s) => s.autoSave)
   const autoSaveTabId = activeTab?.id
   const autoSaveTarget = activeTab?.dirty && activeTab.filePath && !activeTab.missing
@@ -304,7 +289,7 @@ function App(): React.JSX.Element {
     [selectedFolderPath]
   )
 
-  // 보기 모드 버튼과 단축키가 같이 쓴다. 마크다운 노트가 아니면 미리보기가 없으니 바꾸지 않는다
+  /** 보기 모드 버튼과 단축키가 같이 쓴다. 마크다운 노트가 아니면 미리보기가 없으니 바꾸지 않는다 */
   const changeViewMode = (next: ViewMode): void => {
     if (!(activeTab && activeTab.kind === 'text' && showPreview)) return
     setAnimating(true)
@@ -316,7 +301,6 @@ function App(): React.JSX.Element {
     settingsOpen,
     setViewMode: changeViewMode,
     sidebarCommand: (command) => {
-      // 접혀 있으면 펼친 다음, 화면이 그려지고 나서 실행한다
       if (useSettingsStore.getState().sidebarCollapsed) setSidebarCollapsed(false)
       requestAnimationFrame(() => sidebarRef.current?.runCommand(command))
     },
@@ -338,7 +322,6 @@ function App(): React.JSX.Element {
 
   const handleOpenFile = useCallback(
     (filePath: string): void => {
-      // 작업 공간 안의 파일을 열면 그 파일이 있는 폴더를 새 파일을 만들 곳으로 삼는다 (Drive 임시 복사본은 제외)
       const root = useWorkspaceStore.getState().rootDir
       if (root && filePath.startsWith(root) && !DRIVE_COPY_RE.test(filePath)) {
         setSelectedFolderPath(dirOf(filePath))
@@ -379,7 +362,7 @@ function App(): React.JSX.Element {
     [openFile, pushToast]
   )
 
-  // 템플릿을 지금 노트의 커서 위치에 넣는다
+  /** 템플릿을 지금 노트의 커서 위치에 넣는다 */
   const handleInsertTemplate = useCallback(
     (template: NoteTemplate): void => {
       const { tabs: allTabs, activeTabId: activeId } = useTabsStore.getState()
@@ -405,7 +388,7 @@ function App(): React.JSX.Element {
     [pushToast]
   )
 
-  // 템플릿 이름으로 새 노트를 만든다. 이름이 겹치면 '회의록 2'처럼 번호가 붙는다
+  /** 템플릿 이름으로 새 노트를 만든다. 이름이 겹치면 '회의록 2'처럼 번호가 붙는다 */
   const handleCreateFromTemplate = useCallback(
     async (template: NoteTemplate): Promise<void> => {
       try {
@@ -605,7 +588,6 @@ function App(): React.JSX.Element {
 
   const handleWikilinkClick = useCallback(
     (title: string, heading: string | null): void => {
-      // `[[#제목]]`은 지금 보고 있는 노트를 가리킨다
       const targetPath = title
         ? flattenNotes(useWorkspaceStore.getState().tree).find((n) => n.title === title)?.path
         : (useTabsStore.getState().tabs.find((t) => t.id === useTabsStore.getState().activeTabId)
@@ -642,7 +624,6 @@ function App(): React.JSX.Element {
       if (!tab) return
       const next = toggleTaskAtLine(tab.content, line)
       if (next === null) return
-      // 원문이 바뀌면서 생기는 에디터 스크롤 이벤트가 미리보기를 비율로 다시 끌고 가지 않게 잠깐 동기화를 멈춘다
       scrollSourceRef.current = 'jump'
       if (jumpTimerRef.current) clearTimeout(jumpTimerRef.current)
       jumpTimerRef.current = setTimeout(() => {
@@ -679,9 +660,6 @@ function App(): React.JSX.Element {
     [tabs]
   )
 
-  // 가운데 파일 목록: 사이드바에서 고른 폴더(없으면 작업 공간 맨 위)의 파일. 트리가 바뀌거나 저장하면 다시 읽는다.
-  // Drive 폴더를 골랐으면 그 폴더의 Drive 파일을 보여 준다
-  // 고른 폴더가 지워지거나 옮겨지면 작업 폴더 맨 위로 돌아간다
   useEffect(() => {
     if (
       selectedFolderPath &&
@@ -691,13 +669,11 @@ function App(): React.JSX.Element {
       setSelectedFolderPath(null)
   }, [tree, rootDir, selectedFolderPath])
 
-  // 에디터 칸 맨 위 줄: 창을 끄는 자리. 가운데에 보기 전환, 오른쪽 끝에 창 버튼, 사이드바를 접었으면 왼쪽에 펼치기 버튼
   const editorTopBar = (
     <div
       className="titlebar-drag relative flex h-11 shrink-0 items-center border-b border-border px-2"
       onDoubleClick={() => void window.api.window.toggleMaximize()}
     >
-      {/* 사이드바 접기와 펼치기: 열려 있든 닫혀 있든 에디터 칸 맨 위 줄 왼쪽 끝 같은 자리에 둔다 */}
       <button
         type="button"
         onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
@@ -730,7 +706,6 @@ function App(): React.JSX.Element {
     </div>
   )
 
-  // 본문 위: 파일 제목 칸(고치면 파일 이름이 바뀐다)과 태그 줄. 태그 줄은 미리보기만 볼 때는 숨긴다
   const isDriveCopy = !!activeTab?.filePath && DRIVE_COPY_RE.test(activeTab.filePath)
   const noteHeader = activeTab ? (
     <>
@@ -744,7 +719,6 @@ function App(): React.JSX.Element {
         />
       </div>
       {tagBarPath && !previewOnly && (
-        // 높이를 고정해 태그 입력란이 열리고 닫혀도 줄 높이가 그대로다
         <div className="flex h-10 shrink-0 items-center border-b border-border px-4">
           <TagBar filePath={tagBarPath} />
         </div>
@@ -755,7 +729,6 @@ function App(): React.JSX.Element {
   return (
     <div className="flex h-full flex-col bg-bg-soft text-text">
       <main className="flex min-h-0 flex-1">
-        {/* 3단 화면: 사이드바(폴더 트리) | 파일 목록 | 에디터. 접으면 앞의 두 칸이 함께 접힌다 */}
         <div className={`flex shrink-0 ${sidebarCollapsed ? '' : 'border-r border-border'}`}>
           <motion.div
             className="relative shrink-0"
@@ -800,10 +773,8 @@ function App(): React.JSX.Element {
             )}
           </motion.div>
         </div>
-        {/* 에디터 칸: 맨 위 줄, 제목, 태그, 본문(에디터 | 미리보기) */}
         <div className="flex min-w-0 flex-1 flex-col bg-bg">
           {editorTopBar}
-          {/* 제목과 태그는 에디터 칸 위에만 둔다. 텍스트가 아닌 파일은 본문 위에 둔다 */}
           {activeTab?.kind !== 'text' && noteHeader}
           {activeTab && activeTab.kind !== 'text' && activeTab.filePath ? (
             <div className="flex min-h-0 flex-1 flex-col overflow-clip">
@@ -812,7 +783,6 @@ function App(): React.JSX.Element {
           ) : activeTab ? (
             <div className="flex min-h-0 flex-1 flex-col">
               <div ref={setSplitBox} className="flex min-h-0 flex-1">
-                {/* 미리보기만 볼 때도 에디터는 폭만 0으로 줄인다(편집 상태와 되돌리기 기록을 지키기 위해) */}
                 <motion.div
                   initial={false}
                   animate={{

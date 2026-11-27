@@ -1,7 +1,5 @@
-/** 노트 속성: 상태(대기·진행·보류·완료 중 하나)와 직접 만든 태그 목록 */
 export type PropertyKey = 'status' | 'tags'
 export type PropertyColor = 'gray' | 'blue' | 'green' | 'orange'
-/** created: 앱이 기록한 생성 날짜(YYYY-MM-DD). 고르는 값은 아니다 */
 export type NoteProps = Partial<Record<PropertyKey | 'created', string>>
 
 export interface PropertyOption {
@@ -23,7 +21,6 @@ export const PROPERTY_COLORS: Record<PropertyColor, string> = {
   orange: '#e07a1f'
 }
 
-/** 상태를 정하지 않은 노트는 진행으로 본다 */
 export const DEFAULT_STATUS = '진행'
 
 /** 노트의 상태 항목. 저장된 값이 없거나 고정 값에 없는 예전 값이면 기본(진행) */

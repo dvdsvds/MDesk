@@ -28,5 +28,10 @@ export default defineConfig(
       ...eslintPluginReactRefresh.configs.vite.rules
     }
   },
+  {
+    rules: {
+      'no-empty': ['error', { allowEmptyCatch: true }]
+    }
+  },
   eslintConfigPrettier
 )

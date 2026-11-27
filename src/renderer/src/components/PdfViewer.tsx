@@ -17,7 +17,6 @@ interface PageSize {
   h: number
 }
 
-// 앱을 끄기 전까지만 파일별 배율·스크롤 위치를 기억
 const pdfMemory = new Map<string, { scale: number; top: number }>()
 
 function PdfPage({
@@ -136,7 +135,6 @@ export function PdfViewer({ filePath }: { filePath: string }): React.JSX.Element
     }
   }, [filePath])
 
-  // 처음 배율: 기억해 둔 값이 있으면 그것, 없으면 너비에 맞춤
   useLayoutEffect(() => {
     if (!root || !sizes || scale !== null) return
     const mem = pdfMemory.get(filePath)
@@ -154,7 +152,6 @@ export function PdfViewer({ filePath }: { filePath: string }): React.JSX.Element
     setScale(fit)
   }, [root, sizes, scale, filePath])
 
-  // 배율이 바뀌면 스크롤 위치를 비율로 맞춤
   useLayoutEffect(() => {
     if (!root || scale === null) return
     if (restoreTop.current !== null) {

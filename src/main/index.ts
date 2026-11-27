@@ -12,7 +12,6 @@ import { registerPdfExport } from './pdfExport'
 import { registerCloudIpc } from './cloud/ipc'
 import { pathToFileURL } from 'url'
 
-
 protocol.registerSchemesAsPrivileged([
   {
     scheme: 'snote',
@@ -37,9 +36,7 @@ type UpdateStatus =
 let updateStatus: UpdateStatus = { state: 'idle' }
 let installOnClose = false
 
-/** 실행 중에 새 버전을 다시 확인하는 간격 */
 const UPDATE_CHECK_INTERVAL_MS = 30 * 60 * 1000
-/** 창으로 돌아올 때 확인하되, 직전 확인과 이만큼은 떨어져 있어야 한다 */
 const UPDATE_FOCUS_GAP_MS = 5 * 60 * 1000
 
 function setUpdateStatus(next: UpdateStatus): void {
@@ -47,8 +44,6 @@ function setUpdateStatus(next: UpdateStatus): void {
   mainWindowRef?.webContents.send('update:status', next)
 }
 
-// 같은 작업 폴더를 두 앱이 동시에 감시·저장하지 않도록 한 번만 실행되게 한다.
-// 두 번째로 실행하면 새로 띄우지 않고 이미 떠 있는 창을 앞으로 가져온다.
 const gotInstanceLock = app.requestSingleInstanceLock()
 if (!gotInstanceLock) {
   app.quit()
@@ -141,13 +136,12 @@ app.whenReady().then(() => {
     optimizer.watchWindowShortcuts(window)
   })
 
-  // 카메라·위치·알림 같은 권한은 쓰지 않으므로 모두 거절한다. 코드 복사용 클립보드 쓰기만 허용한다
+  /** 카메라·위치·알림 같은 권한은 쓰지 않으므로 모두 거절한다. 코드 복사용 클립보드 쓰기만 허용한다 */
   const allowPermission = (permission: string): boolean => permission === 'clipboard-sanitized-write'
   session.defaultSession.setPermissionRequestHandler((_wc, permission, callback) =>
     callback(allowPermission(permission))
   )
   session.defaultSession.setPermissionCheckHandler((_wc, permission) => allowPermission(permission))
-  // <webview>는 쓰지 않는다. 노트 내용이 어떤 경로로든 webview를 만들지 못하게 막는다
   app.on('web-contents-created', (_e, contents) => {
     contents.on('will-attach-webview', (event) => event.preventDefault())
   })
@@ -167,7 +161,6 @@ app.whenReady().then(() => {
   ipcMain.handle('window:confirmClose', () => {
     closeConfirmed = true
     if (installOnClose) {
-      // 설치가 끝나면 앱이 자동으로 다시 실행되게 한다
       autoUpdater.quitAndInstall(false, true)
       return
     }
@@ -194,7 +187,6 @@ app.whenReady().then(() => {
   ipcMain.handle('update:getStatus', () => updateStatus)
   ipcMain.handle('update:install', () => {
     if (updateStatus.state !== 'ready') return
-    // 저장 안 한 변경이 있으면 기존 닫기 확인 흐름을 거친 뒤에 설치한다.
     installOnClose = true
     mainWindowRef?.close()
   })
@@ -217,17 +209,14 @@ app.whenReady().then(() => {
     })
     let lastCheckAt = 0
     const checkForUpdate = (): void => {
-      // 이미 받는 중이거나 받아 둔 업데이트가 있으면 다시 확인하지 않는다
       if (updateStatus.state !== 'idle') return
       lastCheckAt = Date.now()
       autoUpdater.checkForUpdates().catch(() => {})
     }
     checkForUpdate()
-    // 오래 켜 둔 창으로 돌아올 때도 확인한다
     app.on('browser-window-focus', () => {
       if (Date.now() - lastCheckAt >= UPDATE_FOCUS_GAP_MS) checkForUpdate()
     })
-    // 앱을 켜 둔 채로 있어도 새 버전을 받을 수 있게 주기적으로 확인한다
     setInterval(checkForUpdate, UPDATE_CHECK_INTERVAL_MS)
   }
 

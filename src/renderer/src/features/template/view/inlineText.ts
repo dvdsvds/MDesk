@@ -1,7 +1,3 @@
-/**
- * 서식 칸 글 속의 "글자 일부 스타일":  {fs=14 fc=#ff0000 bold|글자}
- * 쓸 수 있는 값: fs(1~400pt) fc(이름 색/#hex) ff(글꼴, 공백이 있으면 "따옴표") bold italic underline strike
- */
 export type InlineOpts = Record<string, string>
 export type InlinePiece = { text: string } | { opts: InlineOpts; inner: string }
 

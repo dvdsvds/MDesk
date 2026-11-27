@@ -5,13 +5,9 @@ import WindowMinimizeIcon from '../icons/window-minimize.svg?react'
 import WindowRestoreIcon from '../icons/window-restore.svg?react'
 
 interface TitleBarProps {
-  /** 왼쪽 칸(아이콘 줄·사이드바 위). 폭과 내용은 부르는 쪽이 정한다 */
   left?: React.ReactNode
-  /** 가운데(탭). 남는 폭을 다 쓰고, 빈 곳은 창 끌기 영역이다 */
   children?: React.ReactNode
-  /** 창 버튼 바로 앞에 붙일 버튼 */
   right?: React.ReactNode
-  /** 타이틀바 한가운데(창 가운데 기준)에 놓을 것 */
   center?: React.ReactNode
 }
 
@@ -76,8 +72,6 @@ export function TitleBar({ left, children, right, center }: TitleBarProps): Reac
           {center}
         </div>
       )}
-      {/* 탭은 no-drag라 두 번 누르기가 여기까지 올라온다. 창 최대화로 번지지 않게 막는다.
-          오른쪽 40px는 탭이 많아도 늘 비워 둔다. 마지막 탭의 ×와 창 버튼이 붙어 잘못 누르지 않게(창 끌기 영역도 남는다) */}
       <div
         className="flex min-w-0 flex-1 items-center pr-10"
         onDoubleClick={(e) => e.stopPropagation()}

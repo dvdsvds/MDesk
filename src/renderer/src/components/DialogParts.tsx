@@ -3,7 +3,6 @@ import { createPortal } from 'react-dom'
 
 interface DialogProps {
   width?: number
-  /** 높이를 정해 두는 큰 창(스냅샷, 복구)에서 쓴다 */
   height?: number
   onClose?: () => void
   children: React.ReactNode
@@ -69,9 +68,7 @@ interface DialogHeaderProps {
   subtitle?: string
   danger?: boolean
   tone?: DialogTone
-  /** 제목 오른쪽에 붙는 것(버전 표시 등) */
   after?: React.ReactNode
-  /** icon을 칸 없이 그대로 그린다(앱 아이콘) */
   rawIcon?: boolean
 }
 

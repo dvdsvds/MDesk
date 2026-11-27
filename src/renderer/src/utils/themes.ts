@@ -1,4 +1,3 @@
-/** assets/theme.css의 data-theme 값과 같다 */
 export type ThemeId =
   | 'paper-light'
   | 'paper-dark'
@@ -24,9 +23,7 @@ export interface ThemeOption {
   id: ThemeId
   name: string
   mode: 'light' | 'dark'
-  /** 앱 기본 테마(Paper)인지. 처음 실행 때 고르는 창에는 이것만 보인다 */
   builtin?: boolean
-  /** 목록에서 쓰는 색 견본: 배경, 글자, 강조 (assets/theme.css의 값과 같게 유지) */
   swatch: [bg: string, text: string, accent: string]
 }
 

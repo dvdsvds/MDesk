@@ -14,7 +14,6 @@ interface View {
   ty: number
 }
 
-// 앱을 끄기 전까지만 파일별 확대 상태를 기억
 const viewMemory = new Map<string, View>()
 
 function ImageViewer({ filePath }: { filePath: string }): React.JSX.Element {

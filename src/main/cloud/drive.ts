@@ -10,7 +10,6 @@ const UPLOAD_API = 'https://www.googleapis.com/upload/drive/v3'
 const FOLDER_MIME = 'application/vnd.google-apps.folder'
 const GOOGLE_APPS_PREFIX = 'application/vnd.google-apps.'
 const ROOT_FOLDER_NAME = 'Mdesk'
-/** 작업 공간 안의 숨김 폴더. 트리, 검색, 링크, 감시가 모두 `.`으로 시작하는 항목을 건너뛴다 */
 const CACHE_DIR = '.drive'
 const UPLOAD_DEBOUNCE_MS = 800
 
@@ -63,9 +62,7 @@ async function driveFetch(url: string, init: RequestInit = {}, retry = true): Pr
     try {
       const body = (await res.json()) as { error?: { message?: string } }
       detail = body.error?.message ?? ''
-    } catch {
-      // 본문이 JSON이 아니어도 상태 코드로 안내한다
-    }
+    } catch {}
     throw new DriveError(detail || `Drive 요청에 실패했습니다 (${res.status})`, res.status)
   }
   return res
@@ -82,8 +79,6 @@ function failure(e: unknown): { ok: false; error: string; notConnected?: boolean
   }
   return { ok: false, error: e instanceof Error ? e.message : 'Drive 작업에 실패했습니다.' }
 }
-
-// ---- Mdesk 루트 폴더 ----
 
 function configFile(): string {
   return join(app.getPath('userData'), 'cloud', 'drive.json')
@@ -147,8 +142,6 @@ async function parentOrRoot(parentId: string | null): Promise<string> {
   return parentId ? assertId(parentId) : ensureRootFolder()
 }
 
-// ---- 탐색기 동작 ----
-
 export async function listDrive(folderId: string | null): Promise<DriveResult<{ items: DriveItem[] }>> {
   try {
     const parent = await parentOrRoot(folderId)
@@ -167,7 +160,6 @@ export async function listDrive(folderId: string | null): Promise<DriveResult<{ 
       }>(`${API}/files?${params}`)
       for (const f of page.files) {
         const folder = f.mimeType === FOLDER_MIME
-        // 구글 문서 같은 Drive 전용 형식은 내려받을 수 없어 목록에서 뺀다
         if (!folder && f.mimeType.startsWith(GOOGLE_APPS_PREFIX)) continue
         items.push({ id: f.id, name: f.name, folder })
       }
@@ -207,7 +199,6 @@ function multipartBody(
   return { body: Buffer.concat([head, content, tail]), boundary }
 }
 
-/** multipart 업로드는 5MB까지라, 그보다 큰 파일은 resumable 업로드로 올린다 */
 const MULTIPART_LIMIT = 4 * 1024 * 1024
 
 async function createFileRaw(
@@ -301,8 +292,6 @@ export async function trashDriveItem(id: string): Promise<DriveResult<object>> {
   }
 }
 
-// ---- 로컬 탐색기에서 끌어 온 항목 올리기 ----
-
 const MIME_BY_EXT: Record<string, string> = {
   '.png': 'image/png',
   '.jpg': 'image/jpeg',
@@ -354,11 +343,7 @@ export interface MovedFile {
   to: string
 }
 
-/**
- * 작업 공간의 파일이나 폴더를 Drive 폴더로 올린다. 폴더는 안의 구조 그대로 올린다(`.`으로 시작하는 항목은 뺀다).
- * 올린 파일마다 열어 볼 임시 복사본도 바로 만들어, 열려 있던 탭을 그 복사본으로 옮길 수 있게 한다.
- * 로컬 원본은 지우지 않는다. 다 올라간 뒤 화면 쪽에서 휴지통으로 보낸다
- */
+/** 작업 공간의 파일이나 폴더를 Drive 폴더로 올린다. 폴더는 안의 구조 그대로 올린다(`.`으로 시작하는 항목은 뺀다). */
 export async function uploadLocalEntry(
   sourcePath: string,
   parentId: string | null
@@ -404,8 +389,6 @@ export async function uploadLocalEntry(
     return failure(e)
   }
 }
-
-// ---- 임시 복사본 ----
 
 interface CacheMeta {
   md5: string
@@ -466,9 +449,7 @@ export async function downloadDriveFile(
   }
 }
 
-// ---- 저장하면 Drive에 올리기 ----
-
-/** `<작업 공간>/.drive/<id>/<이름>` 경로이면 그 Drive 파일의 id */
+/** Drive 임시 사본 경로면 그 파일의 Drive ID를 돌려준다 */
 export function driveIdOfPath(filePath: string): string | null {
   const parts = relative(getRootDir(), filePath).split(sep)
   return parts.length === 3 && parts[0] === CACHE_DIR && ID_RE.test(parts[1]) ? parts[1] : null
@@ -498,7 +479,6 @@ export function onNoteSaved(filePath: string): void {
 }
 
 async function upload(id: string, filePath: string): Promise<void> {
-  // 올리는 중에 또 저장되면 끝난 뒤 한 번 더 올린다
   if (uploading.has(id)) {
     onNoteSaved(filePath)
     return
@@ -518,7 +498,6 @@ async function upload(id: string, filePath: string): Promise<void> {
     }
     const known = readMeta(id)
     if (known && (remote.md5Checksum ?? '') !== known.md5) {
-      // 다른 기기에서 먼저 고쳤다. 어느 쪽도 잃지 않게 이 내용은 사본으로 올린다
       const ext = extname(filePath)
       const stem = basename(filePath, ext)
       const stamp = new Date().toISOString().slice(0, 16).replace('T', ' ').replace(':', '.')

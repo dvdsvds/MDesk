@@ -32,7 +32,7 @@ function escapeRegExp(text: string): string {
   return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
 
-// `[[노트]]`, `[[노트#제목]]`, `[[노트|별칭]]`을 모두 잡는다. 1번 그룹은 `#제목|별칭` 부분
+/** `[[노트]]`, `[[노트#제목]]`, `[[노트|별칭]]`을 모두 잡는다. 1번 그룹은 `#제목|별칭` 부분 */
 function wikilinkPattern(title: string): RegExp {
   return new RegExp(
     `\\[\\[\\s*${escapeRegExp(title)}\\s*((?:#[^\\]|\\n]*)?(?:\\|[^\\]\\n]*)?)\\]\\]`,

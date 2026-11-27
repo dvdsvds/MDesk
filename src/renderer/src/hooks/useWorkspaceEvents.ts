@@ -88,7 +88,6 @@ export function useWorkspaceEvents(): void {
           timerRef.current = setTimeout(flushBuffer, EXTERNAL_CHANGE_BATCH_WINDOW_MS)
         })
         .catch(() => {
-          // 텍스트로 읽을 수 없게 바뀐 파일은 탭 내용을 덮어쓰지 않는다
         })
     })
   }, [syncExternalChange, flushBuffer])

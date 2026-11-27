@@ -367,9 +367,7 @@ function lock() {
     } catch (_) {
       try {
         self[k] = undefined
-      } catch (_2) {
-        /* 무시 */
-      }
+      } catch (_2) {}
     }
   }
 }
@@ -382,9 +380,7 @@ async function init(indexURL) {
     pyodide.setStderr({ batched: (s) => pushLog(s) })
     try {
       pyodide.setStdin({ error: true })
-    } catch (_) {
-      /* 무시 */
-    }
+    } catch (_) {}
     self._snote_block = snoteBlock
     self._snote_value = snoteValue
     lock()
@@ -423,9 +419,7 @@ function run(d) {
   } finally {
     try {
       if (ns) ns.destroy()
-    } catch (_) {
-      /* 무시 */
-    }
+    } catch (_) {}
   }
 }
 

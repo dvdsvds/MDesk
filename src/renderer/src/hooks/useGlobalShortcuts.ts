@@ -14,9 +14,7 @@ export interface GlobalShortcutActions {
   closeSettings: () => void
   openOrFocusToc: () => void
   toggleSidebar: () => void
-  /** 보기 모드를 바꾼다. 마크다운 노트가 아니면 아무 일도 하지 않는다 */
   setViewMode: (mode: ViewMode) => void
-  /** 사이드바에서 선택된 항목에 실행하는 동작(이름 바꾸기 등) */
   sidebarCommand: (command: SidebarCommand) => void
 }
 
@@ -90,7 +88,6 @@ export function useGlobalShortcuts(actions: GlobalShortcutActions): void {
         a.toggleSidebar()
         return
       }
-      // Alt+> / Alt+< 는 Shift를 함께 누른 입력이라 따로 받는다 (Alt+. / Alt+, 도 같은 동작)
       const altOnly = e.altKey && !e.ctrlKey && !e.metaKey
       if (matchesShortcut(e, shortcuts.nextTab) || (altOnly && e.key === '>')) {
         e.preventDefault()
@@ -102,14 +99,12 @@ export function useGlobalShortcuts(actions: GlobalShortcutActions): void {
         moveTab(-1)
         return
       }
-      // Alt+숫자: n번째 탭으로 이동. 한글 입력 상태에서도 되도록 글자가 아니라 키 위치로 판별한다
       const digit = altOnly && !e.shiftKey ? /^(?:Digit|Numpad)([1-9])$/.exec(e.code) : null
       if (digit) {
         e.preventDefault()
         goToTab(Number(digit[1]))
         return
       }
-      // 사이드바 동작: 이름 입력칸 같은 곳에서 글을 칠 때는 건드리지 않는다
       const typing = (e.target as HTMLElement | null)?.tagName
       if (typing !== 'INPUT' && typing !== 'TEXTAREA') {
         const sidebarKeys: [string, SidebarCommand][] = [

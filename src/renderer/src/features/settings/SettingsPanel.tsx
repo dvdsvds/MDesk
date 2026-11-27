@@ -33,7 +33,6 @@ export function SettingsPanel({ onClose }: SettingsPanelProps): React.JSX.Elemen
 
   const showSearchResults = viewMode === 'search' && query.trim().length > 0
 
-  // 같은 그룹끼리 이어진 항목을 한 카드로 묶는다.
   const sections: Section[] = []
   for (const item of items.filter((i) => i.category === activeCategory)) {
     const last = sections[sections.length - 1]

@@ -17,7 +17,6 @@ const MAX_DEPTH = 3
 const REFRESH_DELAY_MS = 300
 
 interface FillContext {
-  /** 미리보기 자체의 첨부 기준 폴더. 파일 칩 링크를 여기 기준 상대 경로로 만든다 */
   rootDir: string
   files: string[]
   notes: { title: string; path: string }[]
@@ -59,7 +58,6 @@ function fillFile(span: HTMLElement, noteDir: string, ctx: FillContext): void {
     span.append(img)
     return
   }
-  // 이미지가 아닌 파일은 칩으로 보여 주고, 누르면 기존 링크 처리로 그 파일을 연다
   const a = document.createElement('a')
   a.className = 'embed-chip'
   a.href = encodeURI(relativePath(ctx.rootDir, path))
@@ -103,7 +101,6 @@ async function fillNote(
     section = sliceHeadingSection(content, line)
   }
   body.innerHTML = markdownRenderer.render(section, dirOf(path))
-  // 원본 노트의 체크박스라 여기서 눌러도 지금 노트의 줄을 바꾸지 않게 막는다
   for (const input of Array.from(body.querySelectorAll('input'))) input.disabled = true
   await fillContainer(body, dirOf(path), [...chain, path], depth + 1, ctx)
 }
@@ -125,10 +122,7 @@ async function fillContainer(
   }
 }
 
-/**
- * `![[노트]]`, `![[img/그림.png]]` 자리를 채운다.
- * 원본 노트가 바뀌면(탭에서 편집하거나 밖에서 저장) 잠시 뒤 다시 채운다.
- */
+/** `![[노트]]`, `![[img/그림.png]]` 자리를 채운다. */
 export function useEmbeds(
   containerRef: RefObject<HTMLDivElement | null>,
   html: string,

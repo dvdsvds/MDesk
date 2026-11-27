@@ -9,7 +9,6 @@ export interface ChangelogItem {
   text: string
 }
 
-/** changelog.json의 한 버전: 항목 배열, 또는 예전 형식인 "- " 줄로 된 마크다운 문자열 */
 type ChangelogEntry = ChangelogItem[] | string
 
 function changelogPath(): string {

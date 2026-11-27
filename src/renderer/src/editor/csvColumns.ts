@@ -12,7 +12,6 @@ import { refreshDecorations } from './markdownStyle'
 
 export const COLUMN_COLORS = 8
 
-// 두 글자 후보가 한 글자 후보보다 앞에 있어야 한 줄을 나눌 때 먼저 잡힌다
 export const DELIMITER_CANDIDATES = [', ', '||', ',', ';', '\t', '|', '^', '~', ':']
 
 const EXT_HINT: Record<string, string> = {
@@ -106,7 +105,6 @@ export function detectDelimiter(text: string, hint: string | null): string | nul
     const c = counts.get(d) as number[]
     return c[0] > 0 && c.every((n) => n === c[0])
   })
-  // 두 글자 구분자가 한 글자 구분자를 전부 품고 있으면(예: 모든 쉼표 뒤에 공백) 두 글자 쪽만 남긴다
   const dominated = new Set<string>()
   for (const long of consistent.filter((d) => d.length > 1)) {
     for (const short of consistent.filter((d) => d.length === 1 && long.includes(d))) {
@@ -127,7 +125,6 @@ export function detectDelimiter(text: string, hint: string | null): string | nul
       return 0
     })[0]
   }
-  // 줄마다 조금씩 다르면 횟수가 가장 고른 후보
   let best: string | null = null
   let bestSpread = Infinity
   for (const d of DELIMITER_CANDIDATES) {
@@ -160,7 +157,6 @@ const headMarks = Array.from({ length: COLUMN_COLORS }, (_, i) =>
 )
 const delimiterMark = Decoration.mark({ class: 'cm-csv-delim' })
 
-/** 열 너비를 구할 때 훑는 줄 수. 큰 파일에서 입력이 느려지지 않게 앞쪽만 본다 */
 const ALIGN_SCAN_LINES = 5000
 
 /** 글자 폭(칸 수): 한글·한자 같은 넓은 글자는 2칸, 나머지는 1칸 */
@@ -191,7 +187,6 @@ function columnWidths(view: EditorView, delimiter: string): number[] {
     const text = doc.line(n).text
     const { cells, delimiters } = splitLine(text, delimiter)
     if (delimiters.length === 0) continue
-    // 마지막 칸은 뒤에 구분자가 없어 맞출 필요가 없다
     for (let i = 0; i < cells.length - 1; i++) {
       widths[i] = Math.max(widths[i] ?? 0, cellWidth(text.slice(cells[i].from, cells[i].to)))
     }
@@ -199,7 +194,6 @@ function columnWidths(view: EditorView, delimiter: string): number[] {
   return widths
 }
 
-/** 문서에는 들어가지 않는 빈 간격. 칸 뒤에 놓아 열을 화면에서만 맞춘다 */
 class PadWidget extends WidgetType {
   constructor(readonly px: number) {
     super()
@@ -232,7 +226,6 @@ function buildDecorations(view: EditorView, widths: number[]): DecorationSet {
       if (line.length > 0) {
         const marks = header && line.number === 1 ? headMarks : cellMarks
         const { cells, delimiters } = splitLine(line.text, delimiter)
-        // 구분자가 없는 줄은 칸이 하나뿐이라 색칠도 굵게도 하지 않는다
         if (delimiters.length > 0) {
           for (let i = 0; i < cells.length; i++) {
             const cell = cells[i]

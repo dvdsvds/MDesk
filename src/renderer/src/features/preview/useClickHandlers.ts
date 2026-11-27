@@ -43,12 +43,10 @@ export function useClickHandlers(
     if (!el) return
     const handleClick = (e: MouseEvent): void => {
       const input = (e.target as HTMLElement | null)?.closest('input.task-list-item-checkbox')
-      // 임베드 안의 체크박스는 원본 노트의 줄이라 지금 노트를 바꾸면 안 된다
       if (!input || input.closest('.embed-body')) return
       const li = input.closest('li[data-line]')
       const line = li ? Number(li.getAttribute('data-line')) : NaN
       if (Number.isNaN(line)) return
-      // 체크하면 미리보기 HTML이 통째로 다시 그려져 스크롤이 맨 위로 튀므로 위치를 기억했다가 복원한다
       const top = el.scrollTop
       toggleTaskRef.current?.(line)
       const restore = (): void => {

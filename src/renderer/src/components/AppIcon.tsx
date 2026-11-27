@@ -1,4 +1,3 @@
-/** 앱 아이콘(build/icon.svg와 같은 그림). 업데이트 창, 테마 선택 창 제목 옆에 쓴다 */
 export function AppIcon({ size = 40 }: { size?: number }): React.JSX.Element {
   return (
     <svg

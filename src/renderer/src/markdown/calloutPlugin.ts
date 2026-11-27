@@ -9,7 +9,6 @@ interface CalloutMeta {
   color: string
   titleHtml: string
   iconHtml: string
-  /** '' 접기 없음, '+' 펼친 채 시작, '-' 접힌 채 시작 */
   fold: '' | '+' | '-'
 }
 
@@ -22,10 +21,7 @@ function findClose(tokens: Token[], openIndex: number): number {
   return -1
 }
 
-/**
- * `> [!warning] 제목` 으로 시작하는 인용문을 콜아웃 상자로 바꾼다.
- * 인용문 파싱은 markdown-it에 맡기고, 첫 줄만 떼어 내 제목으로 쓴다.
- */
+/** `> [!warning] 제목` 으로 시작하는 인용문을 콜아웃 상자로 바꾼다. */
 export function calloutPlugin(md: MD): void {
   md.core.ruler.after('inline', 'callout', (state) => {
     const tokens = state.tokens
@@ -53,7 +49,6 @@ export function calloutPlugin(md: MD): void {
       tokens[i].meta = { callout: meta }
       tokens[close].meta = { callout: meta }
 
-      // 첫 줄(머리)을 본문에서 뗀다. 머리만 있던 문단이면 문단째 지운다.
       const children = inline.children ?? []
       const brk = children.findIndex((c) => c.type === 'softbreak' || c.type === 'hardbreak')
       if (brk === -1) {

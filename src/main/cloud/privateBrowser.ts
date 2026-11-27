@@ -2,17 +2,11 @@ import { execFile, spawn } from 'child_process'
 import { shell } from 'electron'
 
 interface BrowserSpec {
-  /** 설치 이름 후보. 앞에서부터 시도한다 */
   bins: string[]
-  /** 시크릿(비공개) 창으로 여는 옵션 */
   flag: string
 }
 
-/**
- * 기본 브라우저의 .desktop 이름에서 시크릿 창으로 여는 방법을 고른다.
- * 일반 프로필에 로그인된 계정이 여러 개이거나 확장 프로그램이 있으면 Google 동의 화면이
- * 500 오류를 내는 일이 있어서, 로그인은 아무것도 저장되지 않은 시크릿 창에서 연다
- */
+/** 기본 브라우저의 .desktop 이름에서 시크릿 창으로 여는 방법을 고른다. */
 function specFor(desktopId: string): BrowserSpec | null {
   const id = desktopId.toLowerCase()
   if (id.includes('firefox')) return { bins: ['firefox'], flag: '--private-window' }
@@ -36,7 +30,6 @@ function defaultBrowserDesktopId(): Promise<string | null> {
 
 function launch(bin: string, args: string[]): Promise<boolean> {
   return new Promise((resolve) => {
-    // 셸을 거치지 않고 인자로 넘기므로 주소가 명령으로 해석되지 않는다
     const child = spawn(bin, args, { detached: true, stdio: 'ignore' })
     child.once('error', () => resolve(false))
     child.once('spawn', () => {

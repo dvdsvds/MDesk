@@ -12,7 +12,6 @@ import {
 import RenameIcon from '../../icons/ctx-rename.svg?react'
 import type { NoteTemplate } from '../../utils/noteTemplate'
 
-
 /** 템플릿 이름과 내용을 고치는 창. 새 템플릿이면 template.id가 아직 목록에 없다. */
 export function TemplateEditDialog({
   template,
@@ -49,7 +48,6 @@ export function TemplateEditDialog({
           <textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            // 창 바깥 단축키(Ctrl+S 등)가 먹지 않게 막는다
             onKeyDown={(e) => e.stopPropagation()}
             spellCheck={false}
             aria-label="템플릿 내용"

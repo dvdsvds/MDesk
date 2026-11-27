@@ -28,9 +28,7 @@ export interface RowContext {
   onCommitNewFile: (dirPath: string, name: string) => void
   onCancelNewFile: () => void
   onContextMenu: (e: React.MouseEvent, node: TreeNode) => void
-  /** … 버튼으로 그 자리에 메뉴를 띄운다 */
   onMenuAt: (node: TreeNode, x: number, y: number) => void
-  /** 폴더를 펼치고 그 안에 새 파일 입력 줄을 띄운다 */
   onNewFileIn: (dirPath: string) => void
   onDragStart: (e: React.DragEvent, node: TreeNode) => void
   onDragEnd: () => void
@@ -40,7 +38,6 @@ export interface RowContext {
 const ROW_BASE =
   'flex h-[30px] w-full items-center gap-1.5 rounded-md pr-2 text-left text-[13px] text-text transition-colors group-hover/row:bg-bg-mute/60 focus:outline-none'
 
-/** 마우스를 올린 줄에만 보이는 오른쪽 버튼 */
 const ROW_ACTION =
   'flex h-[22px] w-[22px] items-center justify-center rounded-[5px] text-text-tertiary outline-none hover:bg-bg-mute hover:text-text'
 
@@ -278,7 +275,6 @@ export function TreeRow({
         <FileTypeIcon name={node.name} kind="file" />
         <span className="truncate">
           {base}
-          {/* 마크다운 파일은 확장자 없이 제목만 보인다 */}
           {ext && ext.toLowerCase() !== '.md' && <FileExt name={node.name} ext={ext} />}
         </span>
         {isDirty && (

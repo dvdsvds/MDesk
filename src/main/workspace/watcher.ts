@@ -131,9 +131,7 @@ function scan(root: string, dir: string, added?: string[]): void {
       added?.push(p)
       try {
         fileStats.set(p, statOf(statSync(p)))
-      } catch {
-
-      }
+      } catch {}
     }
   }
 }
@@ -230,7 +228,6 @@ export function startWatcher(callbacks: WatcherCallbacks): void {
     if (dirs.delete(p)) {
       const prefix = p + sep
       for (const f of [...files]) {
-        // 삭제된 폴더 안의 파일만 처리한다. 폴더 밖 파일까지 지워진 것으로 알리면 열려 있는 탭에 취소선이 붙는다
         if (!f.startsWith(prefix)) continue
         files.delete(f)
         if (wasSavedByApp(f)) {

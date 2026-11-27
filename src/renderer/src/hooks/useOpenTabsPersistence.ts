@@ -22,13 +22,11 @@ export async function restoreOpenTabs(knownPaths: Set<string>): Promise<void> {
     const paths = (saved?.paths ?? []).filter(
       (path) => knownPaths.has(path) && fileKindOf(path) !== 'external'
     )
-    // 전부 읽은 다음 한 번에 넣어야 탭을 하나씩 훑으며 그리지 않는다
     const files = await Promise.all(
       paths.map(async (filePath) => {
         try {
           return { filePath, content: await readFileContent(filePath) }
         } catch {
-          // 그사이 바이너리로 바뀌었거나 너무 커진 파일은 복원하지 않는다
           return null
         }
       })

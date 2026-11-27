@@ -12,15 +12,11 @@ function digitCenter(style: CSSStyleDeclaration, lineHeight: number): number | n
   const m = ctx.measureText('0')
   const ascent = m.fontBoundingBoxAscent
   const descent = m.fontBoundingBoxDescent
-  // 줄 칸 안에서 글꼴 상자(윗선~아랫선)는 가운데에 놓이고, 숫자는 기준선 위에 선다
   const baseline = (lineHeight - (ascent + descent)) / 2 + ascent
   return baseline - m.actualBoundingBoxAscent / 2
 }
 
-/**
- * 줄 번호는 UI 글꼴, 본문은 에디터 글꼴이라 같은 줄 칸 안에서 숫자가 놓이는 높이가 다르다.
- * 두 글꼴의 치수로 숫자 가운데 높이를 계산해서, 그 차이(정수 px)만큼 줄 번호를 옮긴다
- */
+/** 줄 번호는 UI 글꼴, 본문은 에디터 글꼴이라 같은 줄 칸 안에서 숫자가 놓이는 높이가 다르다. */
 export function gutterAlign(): Extension {
   return ViewPlugin.fromClass(
     class {

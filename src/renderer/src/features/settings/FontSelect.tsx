@@ -23,7 +23,6 @@ export function FontSelect({
   const listRef = useRef<HTMLDivElement>(null)
 
   const current = findEditorFont(value)
-  // 예전에 직접 적어 둔 글꼴 값이면 목록 맨 위에 "사용자 지정"으로 남겨 둔다
   const options: EditorFontOption[] = current
     ? EDITOR_FONTS
     : [{ id: 'custom', name: '사용자 지정', family: value }, ...EDITOR_FONTS]
@@ -31,7 +30,6 @@ export function FontSelect({
   const openList = useCallback((): void => {
     const rect = buttonRef.current?.getBoundingClientRect()
     if (!rect) return
-    // 목록은 드롭다운 바와 같은 폭·같은 왼쪽 위치에 붙인다
     setPos({ top: rect.bottom + 4, left: rect.left, width: rect.width })
     setOpen(true)
   }, [])
@@ -50,7 +48,7 @@ export function FontSelect({
       }
     }
     const close = (): void => setOpen(false)
-    // 설정을 스크롤하면 목록도 드롭다운 바를 따라간다
+    /** 설정을 스크롤하면 목록도 드롭다운 바를 따라간다 */
     const follow = (): void => {
       const rect = buttonRef.current?.getBoundingClientRect()
       if (rect) setPos({ top: rect.bottom + 4, left: rect.left, width: rect.width })
