@@ -10,6 +10,7 @@ import { readChangelogFor } from './updateInfo'
 import { registerCodeRunner } from './codeRunner'
 import { registerPdfExport } from './pdfExport'
 import { registerCloudIpc } from './cloud/ipc'
+import { fetchRemoteImage } from './remoteImage'
 import { pathToFileURL } from 'url'
 
 protocol.registerSchemesAsPrivileged([
@@ -150,6 +151,9 @@ app.whenReady().then(() => {
   registerCodeRunner()
   registerPdfExport(() => mainWindowRef)
   registerCloudIpc(() => mainWindowRef)
+  ipcMain.handle('remoteImage:fetch', (_e, url: unknown) =>
+    typeof url === 'string' ? fetchRemoteImage(url) : { ok: false, error: 'invalid-url' }
+  )
 
   ipcMain.handle('window:minimize', () => mainWindowRef?.minimize())
   ipcMain.handle('window:toggleMaximize', () => {

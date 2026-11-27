@@ -9,6 +9,7 @@
   "homepage": "https://github.com/dvdsvds/MDesk",
   "scripts": {
     "format": "prettier --write .",
+    "test": "vitest run",
     "lint": "eslint --cache .",
     "typecheck:node": "tsc --noEmit -p tsconfig.node.json --composite false",
     "typecheck:web": "tsc --noEmit -p tsconfig.web.json --composite false",
@@ -77,6 +78,7 @@
     "typescript": "^5.9.3",
     "vite": "^7.2.6",
     "vite-plugin-svgr": "^5.2.0",
+    "vitest": "^5.1.2",
     "zustand": "^5.0.15"
   },
   "allowScripts": {

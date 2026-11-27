@@ -151,6 +151,13 @@ export interface GithubLinkView {
 
 export type CloudConnectResult = { ok: true; email: string | null } | { ok: false; error: string }
 
+export type RemoteImageError =
+  'invalid-url' | 'blocked' | 'not-image' | 'too-large' | 'timeout' | 'failed'
+
+export type RemoteImageFetchResult =
+  | { ok: true; data: Uint8Array; mime: string; name: string }
+  | { ok: false; error: RemoteImageError }
+
 export interface MdeskApi {
   drive: {
     list: (folderId: string | null) => Promise<DriveResult<{ items: DriveItem[] }>>
@@ -226,6 +233,9 @@ export interface MdeskApi {
   props: {
     getAll: () => Promise<Record<string, Record<string, string>>>
     set: (filePath: string, props: Record<string, string> | null) => Promise<void>
+  }
+  remoteImage: {
+    fetch: (url: string) => Promise<RemoteImageFetchResult>
   }
   code: {
     readFiles: (

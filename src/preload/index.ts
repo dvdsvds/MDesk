@@ -1,6 +1,11 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
 import type { TreeNode } from '../main/workspace/tree'
+import type { RemoteImageError } from '../main/remoteImage'
+
+type RemoteImageFetchResult =
+  | { ok: true; data: Uint8Array; mime: string; name: string }
+  | { ok: false; error: RemoteImageError }
 
 interface SaveNoteArgs {
   filePath: string | null
@@ -265,6 +270,10 @@ const api = {
       ipcRenderer.invoke('props:getAll'),
     set: (filePath: string, props: Record<string, string> | null): Promise<void> =>
       ipcRenderer.invoke('props:set', filePath, props)
+  },
+  remoteImage: {
+    fetch: (url: string): Promise<RemoteImageFetchResult> =>
+      ipcRenderer.invoke('remoteImage:fetch', url)
   },
   code: {
     readFiles: (
