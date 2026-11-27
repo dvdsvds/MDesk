@@ -156,6 +156,9 @@ function App(): React.JSX.Element {
   const [lastEditorW, setLastEditorW] = useState(0)
   if (editorW > 0 && editorW !== lastEditorW) setLastEditorW(editorW)
   const editorContentW = editorW > 0 ? editorW : lastEditorW
+  const [restPreviewW, setRestPreviewW] = useState(0)
+  if (!animating && previewW !== restPreviewW) setRestPreviewW(previewW)
+  const previewContentW = animating ? Math.max(previewW, restPreviewW) : previewW
 
   const [searchOpen, setSearchOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
@@ -718,7 +721,7 @@ function App(): React.JSX.Element {
           onError={(message) => pushToast({ kind: 'info', message })}
         />
       </div>
-      {tagBarPath && !previewOnly && (
+      {tagBarPath && (
         <div className="flex h-10 shrink-0 items-center border-b border-border px-4">
           <TagBar filePath={tagBarPath} />
         </div>
@@ -782,25 +785,18 @@ function App(): React.JSX.Element {
             </div>
           ) : activeTab ? (
             <div className="flex min-h-0 flex-1 flex-col">
-              <div ref={setSplitBox} className="flex min-h-0 flex-1">
+              <div ref={setSplitBox} className="relative flex min-h-0 flex-1">
                 <motion.div
                   initial={false}
                   animate={{
-                    width: editorW,
-                    minWidth: splitMode ? EDITOR_MIN_WIDTH : 0,
-                    opacity: previewOnly ? 0 : 1
+                    width: previewOnly ? editorContentW || boxW : editorW,
+                    minWidth: splitMode ? EDITOR_MIN_WIDTH : 0
                   }}
                   transition={widthTransition}
                   inert={previewOnly}
                   className="relative flex min-w-0 shrink-0 flex-col overflow-clip"
                 >
-                  <div
-                    className="flex min-h-0 flex-1 flex-col"
-                    style={{
-                      width: editorContentW || undefined,
-                      minWidth: editorContentW || undefined
-                    }}
-                  >
+                  <div className="flex min-h-0 w-full flex-1 flex-col">
                     {noteHeader}
                     <MarkdownEditor
                       ref={editorRef}
@@ -820,27 +816,22 @@ function App(): React.JSX.Element {
                     />
                   </div>
                 </motion.div>
-                {showPreview && (
-                  <motion.div
-                    initial={false}
-                    animate={{ width: gapW }}
-                    transition={widthTransition}
-                    className="shrink-0"
-                  />
-                )}
                 <AnimatePresence initial={false}>
                   {showPreviewPane && (
                     <motion.div
                       key="preview-card"
-                      initial={{ width: 0, opacity: 0 }}
-                      animate={{ width: previewW, opacity: 1 }}
-                      exit={{ width: 0, opacity: 0, transition: VIEW_TRANSITION }}
+                      initial={{ width: 0 }}
+                      animate={{ width: previewW }}
+                      exit={{ width: 0, transition: VIEW_TRANSITION }}
                       transition={widthTransition}
-                      className={`flex min-w-0 shrink-0 flex-col overflow-clip ${previewOnly ? '' : 'border-l border-border'}`}
+                      className={`absolute inset-y-0 right-0 flex min-w-0 flex-col overflow-clip bg-bg ${previewOnly && !animating ? '' : 'border-l border-border'}`}
                     >
                       <div
                         className="flex min-h-0 flex-1 flex-col"
-                        style={{ width: previewW || undefined, minWidth: previewW || undefined }}
+                        style={{
+                          width: previewContentW || undefined,
+                          minWidth: previewContentW || undefined
+                        }}
                       >
                         <MarkdownPreview
                           ref={previewRef}
