@@ -45,6 +45,7 @@ import { vimImeGuard } from './vimIme'
 import { vimPointer } from './vimPointer'
 import { vimModeTracker } from './vimMode'
 import { pasteDrop } from './pasteDrop'
+import { remoteImageDetect } from './remoteImageDetect'
 import { cursorReport, type CursorPosition } from './cursorReport'
 import { markdownColors } from './markdownColors'
 import { editorTheme } from './editorTheme'
@@ -157,6 +158,7 @@ function buildExtensions(
     listRenumber(),
     vimPointer(),
     pasteDrop(getAttachmentDir),
+    remoteImageDetect(getAttachmentDir),
     EditorView.lineWrapping,
     vimModeTracker(reportVimMode),
     cursorReport(reportCursor),

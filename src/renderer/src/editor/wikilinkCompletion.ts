@@ -40,6 +40,7 @@ export function wikilinkCompletionSource(getNotes: () => NoteRef[]) {
     const start = match.from + (isEmbed ? 3 : 2)
 
     const inner = match.text.slice(isEmbed ? 3 : 2)
+    if (/^https?:/i.test(inner)) return null
     if (inner.includes('|')) return null
 
     const hash = inner.indexOf('#')
