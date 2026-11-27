@@ -52,6 +52,8 @@ export interface SettingItem {
 export function useSettingItems(): SettingItem[] {
   const showToolbar = useSettingsStore((s) => s.showToolbar)
   const setShowToolbar = useSettingsStore((s) => s.setShowToolbar)
+  const showEditorImages = useSettingsStore((s) => s.showEditorImages)
+  const setShowEditorImages = useSettingsStore((s) => s.setShowEditorImages)
   const autoSave = useSettingsStore((s) => s.autoSave)
   const setAutoSave = useSettingsStore((s) => s.setAutoSave)
   const editorFontFamily = useSettingsStore((s) => s.editorFontFamily)
@@ -159,6 +161,20 @@ export function useSettingItems(): SettingItem[] {
         )
       },
       {
+        id: 'show-editor-images',
+        category: '에디터',
+        group: '일반',
+        label: '에디터 이미지 표시',
+        render: () => (
+          <Row label="에디터 이미지 표시">
+            <Toggle
+              checked={showEditorImages}
+              onChange={() => setShowEditorImages(!showEditorImages)}
+            />
+          </Row>
+        )
+      },
+      {
         id: 'vim-mode',
         category: '에디터',
         group: '일반',
@@ -248,6 +264,8 @@ export function useSettingItems(): SettingItem[] {
       setAutoSave,
       showToolbar,
       setShowToolbar,
+      showEditorImages,
+      setShowEditorImages,
       editorFontFamily,
       editorFontSize,
       editorLineHeight,

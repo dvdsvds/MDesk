@@ -6,7 +6,7 @@ import {
   urlReplacements,
   type ExternalImage
 } from '../features/remoteImage/remoteImageSyntax'
-import { openRemoteImageDialog } from '../features/remoteImage/openRemoteImageDialog'
+import { promptRemoteImageDownload } from '../features/remoteImage/openRemoteImageDialog'
 
 const dismissed = new Set<string>()
 const GITHUB_COPY_RE = /[\\/]\.ghmd[\\/]/
@@ -19,17 +19,11 @@ function imageAt(state: EditorState, pos: number): ExternalImage | null {
 
 /** 외부 이미지 창을 열고 내려받으면 원문 주소를 로컬 경로로 교체 */
 export function promptRemoteImage(view: EditorView, image: ExternalImage, noteDir: string): void {
-  openRemoteImageDialog(
+  promptRemoteImageDownload(
     image.url,
     image.width,
-    async (data, fileName) => {
-      const buffer = data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength)
-      const relPath = await window.api.workspace.saveAttachment(
-        noteDir,
-        'img',
-        fileName,
-        buffer as ArrayBuffer
-      )
+    noteDir,
+    (relPath) => {
       const changes = urlReplacements(view.state.doc.toString(), image.url, relPath)
       if (changes.length) view.dispatch({ changes, userEvent: 'input.remote-image' })
     },

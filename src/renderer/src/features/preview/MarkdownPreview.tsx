@@ -11,6 +11,7 @@ import { useTemplateRender } from '../template/preview/useTemplateRender'
 import { useTemplateEdit } from '../template/preview/useTemplateEdit'
 import { getLiveEdit, subscribeLiveEdit } from '../template/preview/liveEdit'
 import { useEmbeds } from './useEmbeds'
+import { useRemoteImages } from './useRemoteImages'
 import { toggleTaskAtLine } from '../../utils/tasks'
 
 const TASK_LINE_RE = /^\s*(?:[-*+]|\d+[.)])\s+\[([ xX])\]/
@@ -116,6 +117,7 @@ export const MarkdownPreview = forwardRef<MarkdownPreviewHandle, MarkdownPreview
     }, [docKey])
     useTemplateRender(containerRef, html, editIdxRef, editModeRef)
     useCodeRun(containerRef, html, baseDir, sourceRef, onReplaceSourceRef)
+    useRemoteImages(containerRef, html, baseDir, sourceRef, onReplaceSourceRef)
     useTemplateEdit(containerRef, editIdxRef, editModeRef)
 
     return (

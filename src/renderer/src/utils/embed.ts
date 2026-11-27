@@ -39,7 +39,8 @@ function normalize(p: string): string {
   return p.replace(/\\/g, '/').toLowerCase()
 }
 
-function joinPath(dir: string, rel: string): string {
+/** 폴더와 상대 경로를 합친 경로 */
+export function joinPath(dir: string, rel: string): string {
   const sep = sepOf(dir)
   const out: string[] = []
   for (const part of `${dir}${sep}${rel}`.split(/[\\/]/)) {

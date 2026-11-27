@@ -29,7 +29,8 @@ export function collectCss(): string {
 }
 
 function clean(node: HTMLElement): void {
-  for (const x of Array.from(node.querySelectorAll('.tp-edit-btn, .code-run-bar'))) x.remove()
+  for (const x of Array.from(node.querySelectorAll('.tp-edit-btn, .code-run-bar, .remote-image')))
+    x.remove()
   for (const cls of ['tq-selected', 'tq-editing', 'tq-editmode', 'tq-hot-col', 'tq-hot-row']) {
     node.classList.remove(cls)
     for (const x of Array.from(node.querySelectorAll('.' + cls))) x.classList.remove(cls)

@@ -14,6 +14,7 @@ import { blockPlugin } from './blockPlugin'
 import { colorSpanPlugin } from './colorSpanPlugin'
 import { templatePlugin } from '../features/template/parse/templatePlugin'
 import { mathPlugin } from './mathPlugin'
+import { remoteImagePlugin } from './remoteImagePlugin'
 import { snoteUrl } from '@renderer/utils/snoteUrl'
 
 function createMarkdownIt(): InstanceType<typeof MarkdownIt> {
@@ -47,6 +48,7 @@ function createMarkdownIt(): InstanceType<typeof MarkdownIt> {
   md.use(templatePlugin)
   md.use(mathPlugin)
   md.use(colorSpanPlugin)
+  md.use(remoteImagePlugin)
   md.core.ruler.push('fence-lines', (state) => {
     for (const token of state.tokens) {
       if (token.type === 'fence' && token.level === 0 && token.map) {
@@ -63,6 +65,11 @@ function createMarkdownIt(): InstanceType<typeof MarkdownIt> {
 }
 
 const md = createMarkdownIt()
+
+/** 마크다운이 링크 주소를 정규화한 결과 */
+export function normalizeMarkdownLink(url: string): string {
+  return md.normalizeLink(url)
+}
 
 function resolveAttachmentSrcs(html: string, baseDir: string): string {
   return html.replace(/(<img\b[^>]*\bsrc=")([^"]+)(")/g, (match, prefix, src, suffix) => {

@@ -27,6 +27,8 @@ interface SettingsState {
   setH1Warning: (value: boolean) => void
   showToolbar: boolean
   setShowToolbar: (value: boolean) => void
+  showEditorImages: boolean
+  setShowEditorImages: (value: boolean) => void
   editorFontFamily: string
   editorFontSize: number
   editorLineHeight: number
@@ -77,6 +79,8 @@ export const useSettingsStore = create<SettingsState>()(
       setH1Warning: (value) => set({ h1Warning: value }),
       showToolbar: false,
       setShowToolbar: (value) => set({ showToolbar: value }),
+      showEditorImages: true,
+      setShowEditorImages: (value) => set({ showEditorImages: value }),
       editorFontFamily: DEFAULT_EDITOR_FONT_FAMILY,
       editorFontSize: DEFAULT_EDITOR_FONT_SIZE,
       editorLineHeight: DEFAULT_EDITOR_LINE_HEIGHT,

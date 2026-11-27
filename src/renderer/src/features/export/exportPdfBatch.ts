@@ -3,6 +3,7 @@ import { flushSync } from 'react-dom'
 import { createRoot } from 'react-dom/client'
 import { MarkdownPreview } from '../preview/MarkdownPreview'
 import { collectCss, extractHtml } from './exportPdf'
+import { useToastStore } from '../../stores/toastStore'
 
 type PdfNote = Awaited<ReturnType<typeof window.api.workspace.listPdfNotes>>[number]
 
@@ -51,6 +52,8 @@ function transformLinks(host: HTMLElement, note: PdfNote): void {
   }
 }
 
+let skippedRemoteImages = 0
+
 async function renderNote(note: PdfNote, css: string, pdfDir: string): Promise<string | null> {
   const host = document.createElement('div')
   host.style.cssText =
@@ -65,6 +68,7 @@ async function renderNote(note: PdfNote, css: string, pdfDir: string): Promise<s
     transformLinks(host, note)
     const preview = host.querySelector<HTMLElement>('.prose-preview')
     if (!preview) return '미리보기를 만들지 못했습니다'
+    skippedRemoteImages += preview.querySelectorAll('.remote-image').length
     const res = await window.api.export.pdfFile({
       html: extractHtml(preview),
       css,
@@ -87,10 +91,16 @@ export async function exportPdfBatch(
 ): Promise<string[]> {
   const css = collectCss()
   const failed: string[] = []
+  skippedRemoteImages = 0
   for (const [i, note] of notes.entries()) {
     const err = await renderNote(note, css, pdfDir)
     if (err) failed.push(`${note.relPath}: ${err}`)
     onProgress(i + 1, notes.length)
   }
+  if (skippedRemoteImages > 0)
+    useToastStore.getState().push({
+      kind: 'info',
+      message: `내려받지 않은 외부 이미지 ${skippedRemoteImages}개는 PDF에 넣지 않았습니다.`
+    })
   return failed
 }

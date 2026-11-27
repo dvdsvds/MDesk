@@ -2,6 +2,7 @@ import type MarkdownIt from 'markdown-it'
 import type { StateBlock, StateInline } from 'markdown-it'
 import { isNoteTarget, parseEmbed } from '../utils/embed'
 import { wikilinkLabel } from '../utils/wikilink'
+import { REMOTE_URL_RE, remoteImageBox } from './remoteImagePlugin'
 
 type MD = InstanceType<typeof MarkdownIt>
 
@@ -12,6 +13,13 @@ export function embedPlugin(md: MD): void {
   const esc = md.utils.escapeHtml
 
   const placeholder = (inner: string, block: boolean): string => {
+    if (REMOTE_URL_RE.test(inner)) {
+      const bar = inner.indexOf('|')
+      const url = (bar === -1 ? inner : inner.slice(0, bar)).trim()
+      const w = /^\|\s*(\d+)/.exec(bar === -1 ? '' : inner.slice(bar))
+      const box = remoteImageBox(url, w ? Number(w[1]) : null, esc)
+      return block ? `<p>${box}</p>\n` : box
+    }
     const p = parseEmbed(inner)
     if (isNoteTarget(p.target)) {
       if (!block) {

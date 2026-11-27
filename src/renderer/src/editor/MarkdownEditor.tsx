@@ -46,6 +46,7 @@ import { vimPointer } from './vimPointer'
 import { vimModeTracker } from './vimMode'
 import { pasteDrop } from './pasteDrop'
 import { remoteImageDetect } from './remoteImageDetect'
+import { imagePreview } from './imagePreview'
 import { cursorReport, type CursorPosition } from './cursorReport'
 import { markdownColors } from './markdownColors'
 import { editorTheme } from './editorTheme'
@@ -81,6 +82,7 @@ interface MarkdownEditorProps {
 const vimCompartment = new Compartment()
 const toolbarCompartment = new Compartment()
 const languageCompartment = new Compartment()
+const imageCompartment = new Compartment()
 
 export function undoEditor(): void {
   const view = getCurrentView()
@@ -159,6 +161,9 @@ function buildExtensions(
     vimPointer(),
     pasteDrop(getAttachmentDir),
     remoteImageDetect(getAttachmentDir),
+    imageCompartment.of(
+      useSettingsStore.getState().showEditorImages ? imagePreview(getAttachmentDir) : []
+    ),
     EditorView.lineWrapping,
     vimModeTracker(reportVimMode),
     cursorReport(reportCursor),
@@ -363,6 +368,18 @@ export const MarkdownEditor = forwardRef<MarkdownEditorHandle, MarkdownEditorPro
       }
       viewRef.current?.dispatch({ effects: effect })
     }, [showToolbar])
+
+    const showEditorImages = useSettingsStore((s) => s.showEditorImages)
+    useEffect(() => {
+      const effect = imageCompartment.reconfigure(
+        showEditorImages ? imagePreview(() => getAttachmentDirRef.current()) : []
+      )
+      for (const [id, state] of statesRef.current) {
+        if (id === currentTabIdRef.current) continue
+        statesRef.current.set(id, state.update({ effects: effect }).state)
+      }
+      viewRef.current?.dispatch({ effects: effect })
+    }, [showEditorImages])
 
     useEffect(() => {
       vimModeRef.current = vimMode
