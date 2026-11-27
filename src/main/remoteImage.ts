@@ -252,3 +252,56 @@ export async function fetchRemoteImage(
     clearTimeout(timer)
   }
 }
+
+const SHOW_HOST_RE = /^[\w-]+\.githubusercontent\.com$/i
+const CACHE_LIMIT = 50 * 1024 * 1024
+const shownCache = new Map<string, { data: Buffer; mime: string }>()
+const pendingShows = new Map<string, Promise<RemoteImageResult>>()
+let cacheBytes = 0
+
+/** 화면에 바로 표시해도 되는 GitHub 이미지 주소인지 판정 */
+export function isShowableImageUrl(raw: string): boolean {
+  const url = parseImageUrl(raw)
+  return !!url && url.protocol === 'https:' && SHOW_HOST_RE.test(url.hostname)
+}
+
+/** 캐시에 넣고 한도를 넘으면 오래된 것부터 지우기 */
+function remember(url: string, data: Buffer, mime: string): void {
+  if (data.length > CACHE_LIMIT) return
+  shownCache.set(url, { data, mime })
+  cacheBytes += data.length
+  for (const [key, value] of shownCache) {
+    if (cacheBytes <= CACHE_LIMIT) break
+    shownCache.delete(key)
+    cacheBytes -= value.data.length
+  }
+}
+
+/** snote://remote/?u= 요청에 GitHub 이미지 응답 */
+export async function serveRemoteImage(requestUrl: string): Promise<Response> {
+  const target = new URL(requestUrl).searchParams.get('u') ?? ''
+  if (!isShowableImageUrl(target)) return new Response(null, { status: 403 })
+  let hit = shownCache.get(target)
+  if (hit) {
+    shownCache.delete(target)
+    shownCache.set(target, hit)
+  } else {
+    let pending = pendingShows.get(target)
+    if (!pending) {
+      pending = fetchRemoteImage(target).finally(() => pendingShows.delete(target))
+      pendingShows.set(target, pending)
+    }
+    const result = await pending
+    if (!result.ok) return new Response(null, { status: 404 })
+    hit = { data: result.data, mime: result.mime }
+    if (!shownCache.has(target)) remember(target, result.data, result.mime)
+  }
+  const headers: Record<string, string> = {
+    'Content-Type': hit.mime,
+    'X-Content-Type-Options': 'nosniff',
+    'Access-Control-Allow-Origin': '*'
+  }
+  if (hit.mime === 'image/svg+xml')
+    headers['Content-Security-Policy'] = "default-src 'none'; style-src 'unsafe-inline'"
+  return new Response(new Uint8Array(hit.data), { status: 200, headers })
+}

@@ -3,7 +3,7 @@ import { useEffect, type RefObject } from 'react'
 export function useMermaid(containerRef: RefObject<HTMLDivElement | null>, html: string): void {
   useEffect(() => {
     const el = containerRef.current
-    if (!el) return
+    if (!el || el.hasAttribute('data-github')) return
     const blocks = Array.from(el.querySelectorAll<HTMLElement>('pre > code.language-mermaid'))
     if (blocks.length === 0) return
     let cancelled = false

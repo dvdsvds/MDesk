@@ -1,5 +1,5 @@
 import { mdToolbarKeys, mdToolbarPanel } from './editorToolbar'
-import { slashMenu } from './slashMenu'
+import { githubSlashMode, slashMenu } from './slashMenu'
 import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react'
 import { Annotation, Compartment, EditorState, Prec, type Extension } from '@codemirror/state'
 import { EditorView, keymap, drawSelection, tooltips, } from '@codemirror/view'
@@ -46,7 +46,7 @@ import { vimPointer } from './vimPointer'
 import { vimModeTracker } from './vimMode'
 import { pasteDrop } from './pasteDrop'
 import { remoteImageDetect } from './remoteImageDetect'
-import { imagePreview } from './imagePreview'
+import { githubFileFacet, imagePreview } from './imagePreview'
 import { cursorReport, type CursorPosition } from './cursorReport'
 import { markdownColors } from './markdownColors'
 import { editorTheme } from './editorTheme'
@@ -83,6 +83,7 @@ const vimCompartment = new Compartment()
 const toolbarCompartment = new Compartment()
 const languageCompartment = new Compartment()
 const imageCompartment = new Compartment()
+const GITHUB_COPY_RE = /[\\/]\.ghmd[\\/]/
 
 export function undoEditor(): void {
   const view = getCurrentView()
@@ -113,8 +114,10 @@ function buildExtensions(
   reportCursor: (pos: CursorPosition) => void,
   reportVimMode: (mode: string) => void,
   baseContent: string,
-  onChangeClick: () => void
+  onChangeClick: () => void,
+  githubFile: string | null
 ): Extension[] {
+  const github = !!githubFile
   const markdownLang = markdown({ base: markdownLanguage, codeLanguages: languages, addKeymap: false })
   const markdownKeys = Prec.high(
     keymap.of([
@@ -135,10 +138,10 @@ function buildExtensions(
     fullLineSelection,
     history(),
     blockIndent,
-    colorSwatch,
+    github ? [] : colorSwatch,
     mathPreview,
     tooltips({ position: 'fixed', parent: document.body }),
-    templateCompletion,
+    github ? [] : templateCompletion,
     codeBlocks,
     selectionPerLine,
     listTabSpace,
@@ -152,9 +155,11 @@ function buildExtensions(
     mdToolbarKeys,
     toolbarCompartment.of(useSettingsStore.getState().showToolbar ? mdToolbarPanel : []),
     slashMenu,
+    githubSlashMode.of(github),
+    githubFileFacet.of(githubFile),
     vimImeGuard(),
-    markdownLang.language.data.of({ autocomplete: wikilinkCompletionSource(getNoteIndex) }),
-    markdownLang.language.data.of({ autocomplete: templateCompletionSource }),
+    github ? [] : markdownLang.language.data.of({ autocomplete: wikilinkCompletionSource(getNoteIndex) }),
+    github ? [] : markdownLang.language.data.of({ autocomplete: templateCompletionSource }),
     markdownLang.language.data.of({ autocomplete: calloutCompletionSource }),
     editingAssist(),
     listRenumber(),
@@ -337,7 +342,8 @@ export const MarkdownEditor = forwardRef<MarkdownEditorHandle, MarkdownEditorPro
             (pos) => onCursorChangeRef.current?.(pos),
             (mode) => onVimModeChangeRef.current?.(mode),
             baseContentRef.current,
-            () => onOpenBaseDiffRef.current?.()
+            () => onOpenBaseDiffRef.current?.(),
+            path && GITHUB_COPY_RE.test(path) ? path : null
           ),
           updateListener
         ]

@@ -18,6 +18,8 @@ import {
   commitGithubLink,
   disconnectGithub,
   finishGithubLogin,
+  githubImageProxyUrls,
+  githubRawInfo,
   githubStatus,
   listGithubLinks,
   listGithubRepos,
@@ -66,5 +68,9 @@ export function registerCloudIpc(getWindow: () => BrowserWindow | null): void {
   ipcMain.handle('github:removeLink', (_e, id: string) => removeGithubLink(id))
   ipcMain.handle('github:commit', (_e, id: string, message: string) =>
     commitGithubLink(id, message)
+  )
+  ipcMain.handle('github:rawInfo', (_e, localPath: string) => githubRawInfo(localPath))
+  ipcMain.handle('github:imageProxyUrls', (_e, urls: unknown) =>
+    githubImageProxyUrls(Array.isArray(urls) ? urls.filter((u) => typeof u === 'string') : [])
   )
 }

@@ -15,7 +15,7 @@ export function useCodeRun(
 ): void {
   useEffect(() => {
     const el = containerRef.current
-    if (!el) return
+    if (!el || el.hasAttribute('data-github')) return
     const blocks = Array.from(
       el.querySelectorAll<HTMLElement>(
         'pre > code.language-js, pre > code.language-javascript, pre > code.language-python, pre > code.language-py'

@@ -207,6 +207,12 @@ const api = {
     removeLink: (id: string): Promise<void> => ipcRenderer.invoke('github:removeLink', id),
     commit: (id: string, message: string): Promise<GithubResult<{ count: number }>> =>
       ipcRenderer.invoke('github:commit', id, message),
+    rawInfo: (localPath: string): Promise<{ rawBase: string; path: string } | null> =>
+      ipcRenderer.invoke('github:rawInfo', localPath),
+    imageProxyUrls: (
+      urls: string[]
+    ): Promise<GithubResult<{ urls: Record<string, string | null> }>> =>
+      ipcRenderer.invoke('github:imageProxyUrls', urls),
     onSaved: (callback: () => void): (() => void) => {
       const listener = (): void => callback()
       ipcRenderer.on('github:saved', listener)

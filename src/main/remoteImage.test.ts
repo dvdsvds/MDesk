@@ -6,6 +6,7 @@ import {
   fetchRemoteImage,
   imageFileName,
   isBlockedAddress,
+  isShowableImageUrl,
   parseImageUrl,
   sniffImageType
 } from './remoteImage'
@@ -65,6 +66,22 @@ describe('parseImageUrl', () => {
     '%s 허용',
     (raw) => expect(parseImageUrl(raw)).not.toBeNull()
   )
+})
+
+describe('isShowableImageUrl', () => {
+  it.each([
+    'https://camo.githubusercontent.com/abc/def',
+    'https://raw.githubusercontent.com/o/r/main/a.png'
+  ])('%s 허용', (u) => expect(isShowableImageUrl(u)).toBe(true))
+
+  it.each([
+    'http://camo.githubusercontent.com/abc',
+    'https://example.com/a.png',
+    'https://githubusercontent.com.evil.com/a.png',
+    'https://evil.com/.githubusercontent.com/a.png',
+    'https://a.b.githubusercontent.com/a.png',
+    'https://camo.githubusercontent.com:8443/a'
+  ])('%s 거부', (u) => expect(isShowableImageUrl(u)).toBe(false))
 })
 
 describe('sniffImageType', () => {

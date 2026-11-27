@@ -1,5 +1,5 @@
 import { EditorView, ViewPlugin, keymap, type ViewUpdate } from '@codemirror/view'
-import { Prec, type EditorState } from '@codemirror/state'
+import { Facet, Prec, type EditorState } from '@codemirror/state'
 import { syntaxTree } from '@codemirror/language'
 import type { SyntaxNode } from '@lezer/common'
 import headingIcon from '../icons/ctx-heading.svg?raw'
@@ -75,10 +75,17 @@ const CMDS: SlashCmd[] = [
 
 const TRIGGER = /(?:^|\s)\/([A-Za-z0-9가-힣]*)$/
 
-function filterCmds(query: string): SlashCmd[] {
+/** GitHub 파일이면 Mdesk 전용 명령을 뺀다 */
+export const githubSlashMode = Facet.define<boolean, boolean>({
+  combine: (values) => values.some(Boolean)
+})
+const MDESK_ONLY = new Set(['wiki', 'color', 'bg'])
+
+function filterCmds(query: string, github: boolean): SlashCmd[] {
   const q = query.toLowerCase()
-  if (!q) return CMDS
-  return CMDS.filter((c) => c.cmd.startsWith(q) || c.label.replace(/\s/g, '').includes(q))
+  const cmds = github ? CMDS.filter((c) => !MDESK_ONLY.has(c.cmd)) : CMDS
+  if (!q) return cmds
+  return cmds.filter((c) => c.cmd.startsWith(q) || c.label.replace(/\s/g, '').includes(q))
 }
 
 /** 커서 바로 앞이 "/글자" 모양이고 코드 안이 아니면 슬래시 위치와 입력한 글자를 돌려준다. */
@@ -137,7 +144,7 @@ class SlashPlugin {
   }
 
   show(from: number, query: string): void {
-    const items = filterCmds(query)
+    const items = filterCmds(query, this.view.state.facet(githubSlashMode))
     if (items.length === 0) {
       this.close()
       return

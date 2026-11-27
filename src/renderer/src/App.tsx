@@ -839,6 +839,11 @@ function App(): React.JSX.Element {
                           onMinWidthChange={setPreviewMinWidth}
                           className="min-h-0 flex-1 overflow-auto px-[var(--preview-pad)] pb-6 pt-7"
                           docKey={activeTab.id}
+                          githubFile={
+                            activeTab.filePath && GITHUB_COPY_RE.test(activeTab.filePath)
+                              ? activeTab.filePath
+                              : null
+                          }
                         />
                       </div>
                     </motion.div>

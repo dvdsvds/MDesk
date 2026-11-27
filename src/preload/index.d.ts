@@ -191,6 +191,10 @@ export interface MdeskApi {
     addLink: (args: GithubAddArgs) => Promise<GithubResult<{ link: GithubLinkView }>>
     removeLink: (id: string) => Promise<void>
     commit: (id: string, message: string) => Promise<GithubResult<{ count: number }>>
+    rawInfo: (localPath: string) => Promise<{ rawBase: string; path: string } | null>
+    imageProxyUrls: (
+      urls: string[]
+    ) => Promise<GithubResult<{ urls: Record<string, string | null> }>>
     onSaved: (callback: () => void) => () => void
   }
   cloud: {

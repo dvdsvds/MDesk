@@ -12,6 +12,8 @@ import { useTemplateEdit } from '../template/preview/useTemplateEdit'
 import { getLiveEdit, subscribeLiveEdit } from '../template/preview/liveEdit'
 import { useEmbeds } from './useEmbeds'
 import { useRemoteImages } from './useRemoteImages'
+import { useGithubImages } from './useGithubImages'
+import { renderGithubMarkdown } from '../../markdown/githubMarkdown'
 import { toggleTaskAtLine } from '../../utils/tasks'
 
 const TASK_LINE_RE = /^\s*(?:[-*+]|\d+[.)])\s+\[([ xX])\]/
@@ -33,6 +35,7 @@ interface MarkdownPreviewProps {
   className?: string
   docKey?: string
   onLinkClick?: (href: string) => void
+  githubFile?: string | null
 }
 
 export const MarkdownPreview = forwardRef<MarkdownPreviewHandle, MarkdownPreviewProps>(
@@ -47,7 +50,8 @@ export const MarkdownPreview = forwardRef<MarkdownPreviewHandle, MarkdownPreview
       onReplaceSource,
       onHasTemplateChange,
       className,
-      docKey
+      docKey,
+      githubFile
     },
     ref
   ) {
@@ -67,7 +71,10 @@ export const MarkdownPreview = forwardRef<MarkdownPreviewHandle, MarkdownPreview
     const taskSourceRef = useRef<string | null>(null)
     if (!live && source !== taskSourceRef.current) shownRef.current = source
     const shown = shownRef.current
-    const html = useMemo(() => markdownRenderer.render(shown, baseDir), [shown, baseDir])
+    const html = useMemo(
+      () => (githubFile ? renderGithubMarkdown(shown) : markdownRenderer.render(shown, baseDir)),
+      [shown, baseDir, githubFile]
+    )
     useScrollSync(containerRef, ref, onScrollRatio)
     const handleToggleTask = useMemo(() => {
       if (!onToggleTask) return undefined
@@ -118,11 +125,13 @@ export const MarkdownPreview = forwardRef<MarkdownPreviewHandle, MarkdownPreview
     useTemplateRender(containerRef, html, editIdxRef, editModeRef)
     useCodeRun(containerRef, html, baseDir, sourceRef, onReplaceSourceRef)
     useRemoteImages(containerRef, html, baseDir, sourceRef, onReplaceSourceRef)
+    useGithubImages(containerRef, html, githubFile)
     useTemplateEdit(containerRef, editIdxRef, editModeRef)
 
     return (
       <div
         ref={containerRef}
+        data-github={githubFile ? '' : undefined}
         className={`prose-preview ${className ?? ''}`}
         style={{
           fontFamily: 'var(--font-preview)',

@@ -10,7 +10,7 @@ import { readChangelogFor } from './updateInfo'
 import { registerCodeRunner } from './codeRunner'
 import { registerPdfExport } from './pdfExport'
 import { registerCloudIpc } from './cloud/ipc'
-import { fetchRemoteImage } from './remoteImage'
+import { fetchRemoteImage, serveRemoteImage } from './remoteImage'
 import { pathToFileURL } from 'url'
 
 protocol.registerSchemesAsPrivileged([
@@ -244,6 +244,7 @@ app.whenReady().then(() => {
 
   protocol.handle('snote', async (request) => {
     try {
+      if (new URL(request.url).host === 'remote') return await serveRemoteImage(request.url)
       let p = decodeURIComponent(new URL(request.url).pathname)
       if (/^\/[a-zA-Z]:/.test(p)) p = p.slice(1)
       const safePath = assertInsideRoot(p)

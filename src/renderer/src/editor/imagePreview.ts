@@ -1,4 +1,4 @@
-import type { Extension, Range as CmRange } from '@codemirror/state'
+import { Facet, StateEffect, type Extension, type Range as CmRange } from '@codemirror/state'
 import { syntaxTree } from '@codemirror/language'
 import {
   Decoration,
@@ -14,11 +14,20 @@ import { flattenFilePaths } from '../utils/noteIndex'
 import { snoteUrl } from '../utils/snoteUrl'
 import { useWorkspaceStore } from '../stores/workspaceStore'
 import { promptRemoteImage } from './remoteImageDetect'
+import { githubRawInfo, remoteImageSrc, resolveRepoImage } from '../features/github/githubImages'
 
 const EMBED_RE = /!\[\[([^[\]\n]+)\]\]/g
 const MD_RE = /!\[([^\]\n]*)\]\(\s*(<[^>\n]+>|[^)\s]+)(?:\s+"[^"\n]*")?\s*\)/g
 const GITHUB_COPY_RE = /[\\/]\.ghmd[\\/]/
 const MAX_HEIGHT = 320
+const refreshImages = StateEffect.define<null>()
+
+/** 에디터가 연 파일이 GitHub 사본이면 그 경로 */
+export const githubFileFacet = Facet.define<string | null, string | null>({
+  combine: (values) => values.find((v) => !!v) ?? null
+})
+
+type GithubInfo = { rawBase: string; path: string }
 
 class LocalImageWidget extends WidgetType {
   constructor(
@@ -120,8 +129,35 @@ function widgetFor(
   return new LocalImageWidget(snoteUrl(resolved), target, width)
 }
 
+/** GitHub 파일의 상대 경로 이미지를 저장소 원본으로 보여 줄 위젯 */
+function githubWidgetFor(target: string, info: GithubInfo): WidgetType | null {
+  const url = resolveRepoImage(info.rawBase, info.path, target)
+  return url ? new LocalImageWidget(remoteImageSrc(url), target, null) : null
+}
+
 /** 커서가 없는 이미지 문법을 이미지로 바꿔 보여 준다 */
-function build(view: EditorView, getAttachmentDir: () => string): DecorationSet {
+function build(
+  view: EditorView,
+  getAttachmentDir: () => string,
+  github: GithubInfo | null | undefined
+): DecorationSet {
+  if (github === undefined) return Decoration.none
+  if (github) {
+    const ranges: CmRange<Decoration>[] = []
+    const sel = view.state.selection
+    for (const { from, to } of view.visibleRanges) {
+      const text = view.state.doc.sliceString(from, to)
+      for (const m of text.matchAll(MD_RE)) {
+        const start = from + m.index
+        const end = start + m[0].length
+        const widget = githubWidgetFor(m[2].replace(/^<|>$/g, ''), github)
+        if (!widget || sel.ranges.some((r) => r.from <= end && r.to >= start)) continue
+        if (inCode(view, start)) continue
+        ranges.push(Decoration.replace({ widget }).range(start, end))
+      }
+    }
+    return Decoration.set(ranges, true)
+  }
   const noteDir = getAttachmentDir()
   if (!noteDir) return Decoration.none
   let fileList: string[] | null = null
@@ -206,12 +242,25 @@ export function imagePreview(getAttachmentDir: () => string): Extension[] {
     ViewPlugin.fromClass(
       class {
         decorations: DecorationSet
+        github: GithubInfo | null | undefined
         constructor(view: EditorView) {
-          this.decorations = build(view, getAttachmentDir)
+          const githubFile = view.state.facet(githubFileFacet)
+          this.github = githubFile ? undefined : null
+          this.decorations = build(view, getAttachmentDir, this.github)
+          if (!githubFile) return
+          void githubRawInfo(githubFile).then((info) => {
+            this.github = info
+            if (!this.destroyed) view.dispatch({ effects: refreshImages.of(null) })
+          })
+        }
+        destroyed = false
+        destroy(): void {
+          this.destroyed = true
         }
         update(u: ViewUpdate): void {
-          if (u.docChanged || u.viewportChanged || u.selectionSet)
-            this.decorations = build(u.view, getAttachmentDir)
+          const refresh = u.transactions.some((tr) => tr.effects.some((e) => e.is(refreshImages)))
+          if (refresh || u.docChanged || u.viewportChanged || u.selectionSet)
+            this.decorations = build(u.view, getAttachmentDir, this.github)
         }
       },
       { decorations: (v) => v.decorations }

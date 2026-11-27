@@ -96,6 +96,11 @@ function failure(e: unknown): { ok: false; error: string; notConnected?: boolean
 
 /** 로그인 토큰을 붙여 GitHub API를 호출한다 */
 async function gh<T>(path: string, init: RequestInit = {}): Promise<T> {
+  return (await ghResponse(path, init)).json() as Promise<T>
+}
+
+/** 로그인 토큰을 붙여 GitHub API 응답 받기 */
+async function ghResponse(path: string, init: RequestInit = {}): Promise<Response> {
   const login = await readLogin()
   if (!login) throw new GithubError('GitHub에 연결되어 있지 않습니다.', true)
   const res = await fetch(`${API}${path}`, {
@@ -116,7 +121,7 @@ async function gh<T>(path: string, init: RequestInit = {}): Promise<T> {
   if (res.status === 403) throw new GithubError('이 저장소에 접근할 권한이 없습니다.')
   if (res.status === 409) throw new GithubError('저장소가 비어 있거나 브랜치가 바뀌었습니다.')
   if (!res.ok) throw new GithubError(`GitHub 요청이 실패했습니다. (${res.status})`)
-  return (await res.json()) as T
+  return res
 }
 
 function clearLogin(): void {
@@ -302,6 +307,65 @@ function viewOf(link: GithubLink): GithubLinkView {
     files: Object.keys(link.files)
       .sort((a, b) => a.localeCompare(b))
       .map((path) => ({ path, localPath: localPathOf(link, path), changed: isChanged(link, path) }))
+  }
+}
+
+/** 로컬 사본 경로에 해당하는 저장소 원본 주소 기준과 저장소 안 경로 */
+export function githubRawInfo(localPath: string): { rawBase: string; path: string } | null {
+  const parts = relative(cacheRoot(), localPath).split(sep)
+  if (parts.length < 2 || parts[0] === '..') return null
+  const link = readLinks().find((l) => l.id === parts[0])
+  if (!link) return null
+  const enc = (s: string): string => s.split('/').map(encodeURIComponent).join('/')
+  return {
+    rawBase: `https://raw.githubusercontent.com/${enc(link.owner)}/${enc(link.repo)}/${enc(link.branch)}/`,
+    path: parts.slice(1).join('/')
+  }
+}
+
+const proxyCache = new Map<string, string | null>()
+const PROXY_HOST_RE = /^https:\/\/[\w.-]+\.githubusercontent\.com\//
+
+/** HTML 속성 값의 엔티티 풀기 */
+function decodeAttr(s: string): string {
+  return s
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&')
+}
+
+/** 외부 이미지 주소를 GitHub 이미지 프록시(camo) 주소로 바꾸기 */
+export async function githubImageProxyUrls(
+  urls: string[]
+): Promise<GithubResult<{ urls: Record<string, string | null> }>> {
+  const wanted = [...new Set(urls.filter((u) => /^https?:\/\/[^\s<>]+$/i.test(u)))]
+    .filter((u) => !proxyCache.has(u))
+    .slice(0, 100)
+  try {
+    if (wanted.length) {
+      const res = await ghResponse('/markdown', {
+        method: 'POST',
+        body: JSON.stringify({
+          text: wanted.map((u) => `![](<${u}>)`).join('\n\n'),
+          mode: 'markdown'
+        })
+      })
+      const html = await res.text()
+      const srcs = [...html.matchAll(/<img\s[^>]*>/g)].map((m) =>
+        decodeAttr(/\ssrc="([^"]*)"/.exec(m[0])?.[1] ?? '')
+      )
+      wanted.forEach((u, i) => {
+        const src = srcs.length === wanted.length ? srcs[i] : ''
+        proxyCache.set(u, PROXY_HOST_RE.test(src) ? src : null)
+      })
+    }
+    const out: Record<string, string | null> = {}
+    for (const u of urls) out[u] = proxyCache.get(u) ?? null
+    return { ok: true, urls: out }
+  } catch (e) {
+    return failure(e)
   }
 }
 
