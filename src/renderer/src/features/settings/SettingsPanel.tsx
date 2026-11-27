@@ -43,7 +43,7 @@ export function SettingsPanel({ onClose }: SettingsPanelProps): React.JSX.Elemen
 
   return (
     <motion.div
-      className="fixed inset-0 z-40 flex items-center justify-center bg-black/40"
+      className="fixed inset-0 z-40 flex items-center justify-center bg-[rgba(8,9,12,0.45)] backdrop-blur-[10px]"
       style={{ willChange: 'opacity' }}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -58,7 +58,7 @@ export function SettingsPanel({ onClose }: SettingsPanelProps): React.JSX.Elemen
         exit={{ opacity: 0, scale: 0.98 }}
         transition={{ duration: 0.14, ease: [0.4, 0, 0.2, 1] }}
         onClick={(e) => e.stopPropagation()}
-        className="flex h-[620px] max-h-[calc(100vh-48px)] w-[880px] max-w-[calc(100vw-32px)] overflow-hidden rounded-[18px] border border-border bg-bg-elevated shadow-[0_40px_100px_rgba(0,0,0,0.55)]"
+        className="flex h-[620px] max-h-[calc(100vh-48px)] w-[880px] max-w-[calc(100vw-32px)] overflow-hidden rounded-[18px] border border-white/[0.07] bg-bg-elevated"
       >
         <SettingsNav
           query={query}

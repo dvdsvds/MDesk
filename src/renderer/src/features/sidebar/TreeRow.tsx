@@ -28,13 +28,92 @@ export interface RowContext {
   onCommitNewFile: (dirPath: string, name: string) => void
   onCancelNewFile: () => void
   onContextMenu: (e: React.MouseEvent, node: TreeNode) => void
+  /** … 버튼으로 그 자리에 메뉴를 띄운다 */
+  onMenuAt: (node: TreeNode, x: number, y: number) => void
+  /** 폴더를 펼치고 그 안에 새 파일 입력 줄을 띄운다 */
+  onNewFileIn: (dirPath: string) => void
   onDragStart: (e: React.DragEvent, node: TreeNode) => void
   onDragEnd: () => void
   onDrop: (e: React.DragEvent, targetDirPath: string) => void
 }
 
 const ROW_BASE =
-  'flex h-7 w-full items-center gap-2 rounded-md pr-2 text-left text-[13px] text-text transition-colors hover:bg-bg-mute/60 focus:outline-none'
+  'flex h-[30px] w-full items-center gap-1.5 rounded-md pr-2 text-left text-[13px] text-text transition-colors group-hover/row:bg-bg-mute/60 focus:outline-none'
+
+/** 마우스를 올린 줄에만 보이는 오른쪽 버튼 */
+const ROW_ACTION =
+  'flex h-[22px] w-[22px] items-center justify-center rounded-[5px] text-text-tertiary outline-none hover:bg-bg-mute hover:text-text'
+
+function Chevron({ open }: { open: boolean }): React.JSX.Element {
+  return (
+    <svg
+      aria-hidden="true"
+      width="14"
+      height="14"
+      viewBox="0 0 16 16"
+      fill="none"
+      className={`shrink-0 text-text-tertiary transition-transform duration-150 ${open ? 'rotate-90' : ''}`}
+    >
+      <path
+        d="M6 3.5L10.5 8L6 12.5"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
+/** 마우스를 올리면 나타나는 … (메뉴)와 + (이 폴더에 새 파일) */
+function RowActions({ node, ctx }: { node: TreeNode; ctx: RowContext }): React.JSX.Element {
+  return (
+    <span className="pointer-events-none absolute right-1 top-1/2 flex -translate-y-1/2 gap-0.5 opacity-0 group-hover/row:pointer-events-auto group-hover/row:opacity-100">
+      <button
+        type="button"
+        aria-label={`${node.name} 메뉴`}
+        title="메뉴"
+        onClick={(e) => {
+          e.stopPropagation()
+          const r = e.currentTarget.getBoundingClientRect()
+          ctx.onMenuAt(node, r.left, r.bottom + 4)
+        }}
+        className={ROW_ACTION}
+      >
+        <svg aria-hidden="true" width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+          <circle cx="3.5" cy="8" r="1.3" />
+          <circle cx="8" cy="8" r="1.3" />
+          <circle cx="12.5" cy="8" r="1.3" />
+        </svg>
+      </button>
+      {node.type === 'folder' && (
+        <button
+          type="button"
+          aria-label={`${node.name} 안에 새 파일`}
+          title="새 파일"
+          onClick={(e) => {
+            e.stopPropagation()
+            ctx.onNewFileIn(node.path)
+          }}
+          className={ROW_ACTION}
+        >
+          <svg
+            aria-hidden="true"
+            width="14"
+            height="14"
+            viewBox="0 0 16 16"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.6"
+            strokeLinecap="round"
+          >
+            <path d="M8 3.5v9M3.5 8h9" />
+          </svg>
+        </button>
+      )}
+    </span>
+  )
+}
 
 const SYSTEM_FOLDERS = new Set(['img', 'files'])
 
@@ -63,12 +142,11 @@ export function TreeRow({
   ctx: RowContext
 }): React.JSX.Element {
   const expanded = ctx.isExpanded(node.path)
-  const paddingLeft = 8 + depth * 16
-  const childPadding = 8 + (depth + 1) * 16
+  const paddingLeft = 6 + depth * 16
+  const childPadding = 6 + (depth + 1) * 16
 
   if (node.type === 'folder') {
     const isSystem = SYSTEM_FOLDERS.has(node.name)
-    const isSelected = ctx.selectedFolderPath === node.path
     return (
       <div>
         <div
@@ -78,11 +156,12 @@ export function TreeRow({
           onDragOver={(e) => e.preventDefault()}
           onDrop={(e) => ctx.onDrop(e, node.path)}
           onContextMenu={(e) => ctx.onContextMenu(e, node)}
-          className={`flex items-center ${ctx.draggingPath === node.path ? 'opacity-40' : ''}`}
+          className={`group/row relative flex items-center ${ctx.draggingPath === node.path ? 'opacity-40' : ''}`}
         >
           {ctx.editingPath === node.path ? (
-            <div className="flex h-7 w-full items-center gap-2 pr-2" style={{ paddingLeft }}>
-              <FileTypeIcon name={node.name} kind="folder" open={expanded} />
+            <div className="flex h-[30px] w-full items-center gap-1.5 pr-2" style={{ paddingLeft }}>
+              <Chevron open={expanded} />
+              <FileTypeIcon name={node.name} kind="folder" />
               <InlineNameInput
                 initialValue={node.name}
                 onCommit={(value) => ctx.onCommitRename(node, value)}
@@ -104,15 +183,17 @@ export function TreeRow({
                 ctx.showRing && ctx.focusedPath === node.path
                   ? 'ring-1 ring-inset ring-accent/60'
                   : ''
-              } ${isSelected ? 'bg-bg-mute' : ''} text-text`}
+              } text-text`}
               style={{ paddingLeft }}
             >
-              <FileTypeIcon name={node.name} kind="folder" open={expanded} />
-              <span className={`truncate ${isSystem ? 'font-normal' : 'font-medium'}`}>
+              <Chevron open={expanded} />
+              <FileTypeIcon name={node.name} kind="folder" />
+              <span className={`truncate ${isSystem ? 'text-text-secondary' : ''}`}>
                 {node.name}
               </span>
             </button>
           )}
+          {ctx.editingPath !== node.path && <RowActions node={node} ctx={ctx} />}
         </div>
         <AnimatePresence initial={false}>
           {expanded && (
@@ -126,9 +207,10 @@ export function TreeRow({
             >
               {ctx.newFolderIn === node.path && (
                 <div
-                  className="flex h-7 w-full items-center gap-2 pr-2"
+                  className="flex h-[30px] w-full items-center gap-1.5 pr-2"
                   style={{ paddingLeft: childPadding }}
                 >
+                  <span className="w-3.5 shrink-0" />
                   <FileTypeIcon name="" kind="folder" />
                   <InlineNameInput
                     initialValue=""
@@ -142,7 +224,7 @@ export function TreeRow({
               )}
               {ctx.newFileIn === node.path && (
                 <NewFileRow
-                  paddingLeft={childPadding}
+                  paddingLeft={childPadding + 20}
                   onCommit={(value) => ctx.onCommitNewFile(node.path, value)}
                   onCancel={ctx.onCancelNewFile}
                 />
@@ -159,7 +241,8 @@ export function TreeRow({
 
   if (ctx.editingPath === node.path) {
     return (
-      <div className="flex h-7 w-full items-center gap-2 pr-2" style={{ paddingLeft }}>
+      <div className="flex h-[30px] w-full items-center gap-1.5 pr-2" style={{ paddingLeft }}>
+        <span className="w-3.5 shrink-0" />
         <FileTypeIcon name={node.name} kind="file" />
         <InlineNameInput
           initialValue={nameWithoutExt(node)}
@@ -172,29 +255,37 @@ export function TreeRow({
     )
   }
 
-  const isActive = node.path === ctx.activeFilePath && !ctx.selectedFolderPath && !ctx.highlightOff
+  const isActive = node.path === ctx.activeFilePath && !ctx.highlightOff
   const isDirty = ctx.dirtyFilePaths.includes(node.path)
   const { base, ext } = splitName(node.name)
   return (
-    <button
-      ref={(el) => ctx.registerRowRef(node.path, el)}
-      type="button"
-      draggable
-      onDragStart={(e) => ctx.onDragStart(e, node)}
-      onDragEnd={ctx.onDragEnd}
-      onContextMenu={(e) => ctx.onContextMenu(e, node)}
-      onClick={() => ctx.onOpenFile(node.path)}
-      className={`${ROW_BASE} ${
-        ctx.showRing && ctx.focusedPath === node.path ? 'ring-1 ring-inset ring-accent/60' : ''
-      } ${isActive ? 'bg-bg-mute' : ''} ${ctx.draggingPath === node.path ? 'opacity-40' : ''}`}
-      style={{ paddingLeft }}
-    >
-      <FileTypeIcon name={node.name} kind="file" />
-      <span className="truncate">
-        {base}
-        {ext && <FileExt name={node.name} ext={ext} />}
-      </span>
-      {isDirty && <span className="ml-auto h-1.5 w-1.5 shrink-0 rounded-full bg-accent" />}
-    </button>
+    <div className="group/row relative">
+      <button
+        ref={(el) => ctx.registerRowRef(node.path, el)}
+        type="button"
+        draggable
+        onDragStart={(e) => ctx.onDragStart(e, node)}
+        onDragEnd={ctx.onDragEnd}
+        onContextMenu={(e) => ctx.onContextMenu(e, node)}
+        onClick={() => ctx.onOpenFile(node.path)}
+        aria-current={isActive ? 'page' : undefined}
+        className={`${ROW_BASE} ${
+          ctx.showRing && ctx.focusedPath === node.path ? 'ring-1 ring-inset ring-accent/60' : ''
+        } ${isActive ? '!bg-bg-mute font-medium' : ''} ${ctx.draggingPath === node.path ? 'opacity-40' : ''}`}
+        style={{ paddingLeft }}
+      >
+        <span className="w-3.5 shrink-0" />
+        <FileTypeIcon name={node.name} kind="file" />
+        <span className="truncate">
+          {base}
+          {/* 마크다운 파일은 확장자 없이 제목만 보인다 */}
+          {ext && ext.toLowerCase() !== '.md' && <FileExt name={node.name} ext={ext} />}
+        </span>
+        {isDirty && (
+          <span className="ml-auto h-1.5 w-1.5 shrink-0 rounded-full bg-accent group-hover/row:opacity-0" />
+        )}
+      </button>
+      {!ctx.draggingPath && <RowActions node={node} ctx={ctx} />}
+    </div>
   )
 }

@@ -60,7 +60,7 @@ export function NewFileRow({
 }): React.JSX.Element {
   const [typed, setTyped] = useState('')
   return (
-    <div className="flex h-7 w-full items-center gap-2 pr-2" style={{ paddingLeft }}>
+    <div className="flex h-[30px] w-full items-center gap-1.5 pr-2" style={{ paddingLeft }}>
       <FileTypeIcon name={newFileNameFor(typed)} kind="file" />
       <InlineNameInput
         initialValue=""

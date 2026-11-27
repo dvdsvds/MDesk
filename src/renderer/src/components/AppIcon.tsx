@@ -27,3 +27,31 @@ export function AppIcon({ size = 40 }: { size?: number }): React.JSX.Element {
     </svg>
   )
 }
+
+/** 사이드바 로고: 앱 아이콘에서 바탕 상자를 빼고 M을 더 굵게 그린 그림 */
+export function AppLogoMark({ size = 20 }: { size?: number }): React.JSX.Element {
+  return (
+    <svg
+      aria-hidden="true"
+      width={size}
+      height={size}
+      viewBox="296 256 480 512"
+      className="shrink-0"
+    >
+      <g transform="translate(92 -8)">
+        <path
+          d="M240 740V300L420 480L600 300V540"
+          fill="none"
+          stroke="#8ec9ea"
+          strokeWidth="84"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <rect x="444" y="584" width="210" height="30" rx="15" fill="#b8bb26" />
+        <rect x="514" y="634" width="140" height="30" rx="15" fill="#fe8019" />
+        <rect x="479" y="684" width="175" height="30" rx="15" fill="#d3869b" />
+        <rect x="554" y="734" width="100" height="30" rx="15" fill="#fabd2f" />
+      </g>
+    </svg>
+  )
+}

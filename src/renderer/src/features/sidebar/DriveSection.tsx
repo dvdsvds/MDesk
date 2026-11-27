@@ -14,7 +14,32 @@ import { InlineNameInput, NewFileRow } from './InlineInputs'
 import { SectionHeader } from './SectionHeader'
 
 const ROW_BASE =
-  'flex h-7 w-full items-center gap-2 rounded-md pr-2 text-left text-[13px] text-text transition-colors hover:bg-bg-mute/60 focus:outline-none'
+  'flex h-[30px] w-full items-center gap-1.5 rounded-md pr-2 text-left text-[13px] text-text transition-colors group-hover/row:bg-bg-mute/60 focus:outline-none'
+
+/** 마우스를 올린 줄에만 보이는 오른쪽 버튼 */
+const ROW_ACTION =
+  'flex h-[22px] w-[22px] items-center justify-center rounded-[5px] text-text-tertiary outline-none hover:bg-bg-mute hover:text-text'
+
+function Chevron({ open }: { open: boolean }): React.JSX.Element {
+  return (
+    <svg
+      aria-hidden="true"
+      width="14"
+      height="14"
+      viewBox="0 0 16 16"
+      fill="none"
+      className={`shrink-0 text-text-tertiary transition-transform duration-150 ${open ? 'rotate-90' : ''}`}
+    >
+      <path
+        d="M6 3.5L10.5 8L6 12.5"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
 const ICON_BTN =
   'flex h-[26px] w-[26px] items-center justify-center rounded-md text-text-secondary transition-colors hover:bg-bg-mute hover:text-text disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-text-secondary'
 const ROOT = 'root'
@@ -38,12 +63,7 @@ interface Props {
   dirtyFilePaths: string[]
   /** Drive에 다 올라간 뒤 로컬 쪽 뒷정리(탭 옮기기, 원본 지우기) */
   onLocalMoved: (sourcePath: string, moved: { from: string; to: string }[]) => Promise<void>
-  /** 파일 목록 칸이 보여 주는 Drive 폴더(최상위는 null). Drive를 보고 있지 않으면 undefined */
-  selectedFolderId: string | null | undefined
-  /** Drive 폴더를 고르면 파일 목록 칸이 그 폴더의 파일을 보여 준다 */
-  onSelectFolder: (id: string | null, name: string) => void
-  /** Drive 쪽 목록이 바뀌었을 때(만들기·이름 변경·삭제·옮기기) */
-  onChanged: () => void
+  activeFilePath: string | null
 }
 
 const keyOf = (id: string | null): string => id ?? ROOT
@@ -56,9 +76,7 @@ export function DriveSection({
   draggingLocalPath,
   dirtyFilePaths,
   onLocalMoved,
-  selectedFolderId,
-  onSelectFolder,
-  onChanged
+  activeFilePath
 }: Props): React.JSX.Element {
   const pushToast = useToastStore((s) => s.push)
   const [connected, setConnected] = useState<boolean | null>(null)
@@ -126,7 +144,11 @@ export function DriveSection({
 
   const sortItems = (items: DriveItem[]): DriveItem[] =>
     [...items].sort((a, b) =>
-      a.folder !== b.folder ? (a.folder ? -1 : 1) : a.name.localeCompare(b.name, 'ko', { numeric: true })
+      a.folder !== b.folder
+        ? a.folder
+          ? -1
+          : 1
+        : a.name.localeCompare(b.name, 'ko', { numeric: true })
     )
 
   // 서버에서 목록을 다시 받지 않고, 방금 한 일을 화면 목록에 바로 반영한다
@@ -135,12 +157,10 @@ export function DriveSection({
       ...prev,
       [keyOf(parent)]: { items: sortItems(fn(prev[keyOf(parent)]?.items ?? [])) }
     }))
-    onChanged()
   }
 
   const toggleFolder = (item: DriveItem): void => {
     setSelectedFolder(item.id)
-    onSelectFolder(item.id, item.name)
     const next = new Set(expanded)
     if (next.has(item.id)) {
       next.delete(item.id)
@@ -179,13 +199,19 @@ export function DriveSection({
     onOpenFile(result.path)
   }
 
-  const commitRename = async (item: DriveItem, parent: string | null, name: string): Promise<void> => {
+  const commitRename = async (
+    item: DriveItem,
+    parent: string | null,
+    name: string
+  ): Promise<void> => {
     setRenaming(null)
     if (name === item.name) return
     const result = await window.api.drive.rename(item.id, item.folder ? name : newFileNameFor(name))
     if (!result.ok) return report(result)
     const newName = item.folder ? name : newFileNameFor(name)
-    patchListing(parent, (items) => items.map((i) => (i.id === item.id ? { ...i, name: newName } : i)))
+    patchListing(parent, (items) =>
+      items.map((i) => (i.id === item.id ? { ...i, name: newName } : i))
+    )
   }
 
   const confirmDelete = async (parent: string | null): Promise<void> => {
@@ -244,9 +270,18 @@ export function DriveSection({
   }
 
   const startCreate = (kind: 'file' | 'folder', parent: string | null = selectedFolder): void => {
-    if (parent) setExpanded((prev) => new Set(prev).add(parent))
+    if (parent) {
+      setExpanded((prev) => new Set(prev).add(parent))
+      if (!listings[parent]) void load(parent)
+    }
     setCreating({ parent, kind })
   }
+
+  const isActive = (item: DriveItem): boolean =>
+    !item.folder &&
+    !!activeFilePath &&
+    /[\\/]\.drive[\\/]/.test(activeFilePath) &&
+    activeFilePath.includes(item.id)
 
   // 어느 폴더의 항목인지 알아야 이름 변경과 삭제 뒤에 그 폴더만 다시 불러온다
   const parentOf = (id: string): string | null => {
@@ -286,13 +321,13 @@ export function DriveSection({
   ]
 
   const renderItems = (parent: string | null, depth: number): React.ReactNode => {
-    // 폴더만 보인다. 파일은 가운데 파일 목록 칸에서 본다
-    const items = (listings[keyOf(parent)]?.items ?? []).filter((i) => i.folder)
-    const paddingLeft = 8 + depth * 14
+    const items = listings[keyOf(parent)]?.items ?? []
+    const paddingLeft = 6 + depth * 16
     return (
       <>
         {creating && creating.parent === parent && creating.kind === 'folder' && (
-          <div className="flex h-7 w-full items-center gap-2 pr-2" style={{ paddingLeft }}>
+          <div className="flex h-[30px] w-full items-center gap-1.5 pr-2" style={{ paddingLeft }}>
+            <span className="w-3.5 shrink-0" />
             <FileTypeIcon name="" kind="folder" />
             <InlineNameInput
               initialValue=""
@@ -305,14 +340,23 @@ export function DriveSection({
         )}
         {creating && creating.parent === parent && creating.kind === 'file' && (
           <NewFileRow
-            paddingLeft={paddingLeft}
+            paddingLeft={paddingLeft + 20}
             onCommit={(v) => void commitCreate(v)}
             onCancel={() => setCreating(null)}
           />
         )}
         {items.map((item) =>
           renaming === item.id ? (
-            <div key={item.id} className="flex h-7 w-full items-center gap-2 pr-2" style={{ paddingLeft }}>
+            <div
+              key={item.id}
+              className="flex h-[30px] w-full items-center gap-1.5 pr-2"
+              style={{ paddingLeft }}
+            >
+              {item.folder ? (
+                <Chevron open={expanded.has(item.id)} />
+              ) : (
+                <span className="w-3.5 shrink-0" />
+              )}
               <FileTypeIcon name={item.name} kind={item.folder ? 'folder' : 'file'} />
               <InlineNameInput
                 initialValue={item.name}
@@ -324,38 +368,90 @@ export function DriveSection({
             </div>
           ) : (
             <div key={item.id}>
-              <button
-                type="button"
-                {...dropHandlers(item.folder ? item.id : parent)}
-                onClick={() => (item.folder ? toggleFolder(item) : void openItem(item))}
-                onContextMenu={(e) => {
-                  e.preventDefault()
-                  setMenu({ x: e.clientX, y: e.clientY, item })
-                }}
-                className={`${ROW_BASE} ${
-                  item.folder && selectedFolderId === item.id ? 'bg-bg-mute' : ''
-                } ${item.folder && dropTarget === item.id ? 'bg-accent-soft ring-1 ring-inset ring-accent' : ''}`}
-                style={{ paddingLeft }}
-              >
-                <FileTypeIcon
-                  name={item.name}
-                  kind={item.folder ? 'folder' : 'file'}
-                  open={item.folder && expanded.has(item.id)}
-                />
-                <span className={`truncate ${item.folder ? 'font-medium' : ''}`}>{item.name}</span>
-              </button>
+              <div className="group/row relative">
+                <button
+                  type="button"
+                  {...dropHandlers(item.folder ? item.id : parent)}
+                  onClick={() => (item.folder ? toggleFolder(item) : void openItem(item))}
+                  onContextMenu={(e) => {
+                    e.preventDefault()
+                    setMenu({ x: e.clientX, y: e.clientY, item })
+                  }}
+                  aria-current={isActive(item) ? 'page' : undefined}
+                  className={`${ROW_BASE} ${isActive(item) ? '!bg-bg-mute font-medium' : ''} ${
+                    item.folder && dropTarget === item.id
+                      ? 'bg-accent-soft ring-1 ring-inset ring-accent'
+                      : ''
+                  }`}
+                  style={{ paddingLeft }}
+                >
+                  {item.folder ? (
+                    <Chevron open={expanded.has(item.id)} />
+                  ) : (
+                    <span className="w-3.5 shrink-0" />
+                  )}
+                  <FileTypeIcon name={item.name} kind={item.folder ? 'folder' : 'file'} />
+                  <span className="truncate">{item.name}</span>
+                </button>
+                <span className="pointer-events-none absolute right-1 top-1/2 flex -translate-y-1/2 gap-0.5 opacity-0 group-hover/row:pointer-events-auto group-hover/row:opacity-100">
+                  <button
+                    type="button"
+                    aria-label={`${item.name} 메뉴`}
+                    title="메뉴"
+                    onClick={(e) => {
+                      const r = e.currentTarget.getBoundingClientRect()
+                      setMenu({ x: r.left, y: r.bottom + 4, item })
+                    }}
+                    className={ROW_ACTION}
+                  >
+                    <svg
+                      aria-hidden="true"
+                      width="14"
+                      height="14"
+                      viewBox="0 0 16 16"
+                      fill="currentColor"
+                    >
+                      <circle cx="3.5" cy="8" r="1.3" />
+                      <circle cx="8" cy="8" r="1.3" />
+                      <circle cx="12.5" cy="8" r="1.3" />
+                    </svg>
+                  </button>
+                  {item.folder && (
+                    <button
+                      type="button"
+                      aria-label={`${item.name} 안에 새 파일`}
+                      title="새 파일"
+                      onClick={() => startCreate('file', item.id)}
+                      className={ROW_ACTION}
+                    >
+                      <svg
+                        aria-hidden="true"
+                        width="14"
+                        height="14"
+                        viewBox="0 0 16 16"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.6"
+                        strokeLinecap="round"
+                      >
+                        <path d="M8 3.5v9M3.5 8h9" />
+                      </svg>
+                    </button>
+                  )}
+                </span>
+              </div>
               {item.folder && movingIn === item.id && (
                 <div
-                  className="flex h-7 items-center text-[12.5px] text-text-tertiary"
-                  style={{ paddingLeft: paddingLeft + 14 }}
+                  className="flex h-[30px] items-center text-[12.5px] text-text-tertiary"
+                  style={{ paddingLeft: paddingLeft + 20 }}
                 >
                   Drive로 옮기는 중…
                 </div>
               )}
               {item.folder && expanded.has(item.id) && !listings[item.id] && (
                 <div
-                  className="flex h-7 items-center text-[12.5px] text-text-tertiary"
-                  style={{ paddingLeft: paddingLeft + 14 }}
+                  className="flex h-[30px] items-center text-[12.5px] text-text-tertiary"
+                  style={{ paddingLeft: paddingLeft + 20 }}
                 >
                   불러오는 중…
                 </div>
@@ -413,7 +509,6 @@ export function DriveSection({
         onMouseDown={(e) => {
           if (e.target === e.currentTarget) {
             setSelectedFolder(null)
-            onSelectFolder(null, 'Mdesk')
           }
         }}
       >
@@ -453,7 +548,12 @@ export function DriveSection({
         )}
       </div>
       {menu && (
-        <ContextMenu x={menu.x} y={menu.y} items={menuItems(menu.item)} onClose={() => setMenu(null)} />
+        <ContextMenu
+          x={menu.x}
+          y={menu.y}
+          items={menuItems(menu.item)}
+          onClose={() => setMenu(null)}
+        />
       )}
       {deleting && (
         <ConfirmDialog

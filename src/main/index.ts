@@ -12,7 +12,6 @@ import { registerPdfExport } from './pdfExport'
 import { registerCloudIpc } from './cloud/ipc'
 import { pathToFileURL } from 'url'
 
-app.disableHardwareAcceleration()
 
 protocol.registerSchemesAsPrivileged([
   {

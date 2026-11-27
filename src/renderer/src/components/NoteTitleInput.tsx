@@ -74,7 +74,7 @@ export function NoteTitleInput({
           inputRef.current?.blur()
         }
       }}
-      className="w-full min-w-0 border-0 bg-transparent p-0 text-[28px] font-bold tracking-[-0.02em] text-text outline-none"
+      className="w-full min-w-0 border-0 bg-transparent p-0 text-[28px] font-bold leading-[34px] tracking-[-0.02em] text-text outline-none"
     />
   )
 }

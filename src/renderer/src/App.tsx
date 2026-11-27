@@ -39,11 +39,11 @@ import { useCursorStore } from './stores/cursorStore'
 import { TEMPLATE_DATE_FORMAT, applyTemplate, type NoteTemplate } from './utils/noteTemplate'
 import { getCurrentView } from './editor/currentView'
 import { extractToc } from './utils/toc'
-import SidebarIcon  from './icons/sidebar.svg?react'
+import SidebarIcon from './icons/sidebar.svg?react'
 import { readTextFile, fileKindOf, isMarkdownPath } from './utils/fileKind'
 import { FileViewer } from './components/FileViewer'
 import { EmptyState } from './components/EmptyState'
-import { FileList, type FileListItem } from './features/fileList/FileList'
+import { findNodeByPath } from './features/sidebar/TreeRow'
 import { useWorkspaceEvents } from './hooks/useWorkspaceEvents'
 import { useGlobalShortcuts } from './hooks/useGlobalShortcuts'
 import { dirOf, fileNameOf, splitName, sepOf } from './utils/path'
@@ -60,7 +60,6 @@ const DRIVE_COPY_RE = /[\\/]\.drive[\\/]/
 const VIEW_TRANSITION = { duration: 0.22, ease: [0.4, 0, 0.2, 1] as const }
 
 /** 가운데 파일 목록 칸 폭 */
-const FILE_LIST_WIDTH = 300
 
 /** 자동 저장: 마지막으로 고친 뒤 이만큼(ms) 지나면 저장한다 */
 const AUTO_SAVE_DELAY = 1000
@@ -115,7 +114,12 @@ function App(): React.JSX.Element {
   const renamePath = useTabsStore((s) => s.renamePath)
   const rewriteWikilinks = useTabsStore((s) => s.rewriteWikilinks)
   const activeTab = tabs.find((t) => t.id === activeTabId) ?? null
-  const tagBarPath = activeTab?.kind === 'text' && !activeTab.missing && activeTab.filePath?.toLowerCase().endsWith('.md') ? activeTab.filePath : null
+  const tagBarPath =
+    activeTab?.kind === 'text' &&
+    !activeTab.missing &&
+    activeTab.filePath?.toLowerCase().endsWith('.md')
+      ? activeTab.filePath
+      : null
   const isViewer = activeTab !== null && activeTab.kind !== 'text'
   const showPreview = !activeTab?.filePath || isMarkdownPath(activeTab.filePath)
   const viewMode = useSettingsStore((s) => s.viewMode)
@@ -156,10 +160,7 @@ function App(): React.JSX.Element {
   const editorW = previewOnly
     ? 0
     : splitMode
-      ? Math.max(
-          EDITOR_MIN_WIDTH,
-          Math.min(SPLIT_RATIO * boxW, boxW - previewMinWidth - SPLIT_GAP)
-        )
+      ? Math.max(EDITOR_MIN_WIDTH, Math.min(SPLIT_RATIO * boxW, boxW - previewMinWidth - SPLIT_GAP))
       : boxW
   const previewW = previewOnly ? boxW : Math.max(0, boxW - editorW - gapW)
   const widthTransition = animating ? VIEW_TRANSITION : { duration: 0 }
@@ -180,13 +181,6 @@ function App(): React.JSX.Element {
   const [tocOpen, setTocOpen] = useState(false)
   const [tocFocusToken, setTocFocusToken] = useState(0)
   const [selectedFolderPath, setSelectedFolderPath] = useState<string | null>(null)
-  /** 파일 목록 칸이 Drive 폴더를 보여 주고 있으면 그 폴더(최상위는 id null) */
-  const [driveFolder, setDriveFolder] = useState<{ id: string | null; name: string } | null>(null)
-  const [driveVersion, setDriveVersion] = useState(0)
-  const selectLocalFolder = useCallback((path: string | null): void => {
-    setDriveFolder(null)
-    setSelectedFolderPath(path)
-  }, [])
   const pushToast = useToastStore((s) => s.push)
   // Drive 파일을 저장하면 백그라운드로 올린다. 실패하거나 충돌했을 때만 알린다
   useEffect(
@@ -339,15 +333,14 @@ function App(): React.JSX.Element {
         if (wasOpen) setTocFocusToken((n) => n + 1)
         return true
       }),
-    toggleSidebar: () => setSidebarCollapsed(!useSettingsStore.getState().sidebarCollapsed),
+    toggleSidebar: () => setSidebarCollapsed(!useSettingsStore.getState().sidebarCollapsed)
   })
 
   const handleOpenFile = useCallback(
     (filePath: string): void => {
-      // 작업 공간 안의 파일을 열면 파일 목록도 그 파일이 있는 폴더를 보여 준다 (Drive 임시 복사본은 제외)
+      // 작업 공간 안의 파일을 열면 그 파일이 있는 폴더를 새 파일을 만들 곳으로 삼는다 (Drive 임시 복사본은 제외)
       const root = useWorkspaceStore.getState().rootDir
       if (root && filePath.startsWith(root) && !DRIVE_COPY_RE.test(filePath)) {
-        setDriveFolder(null)
         setSelectedFolderPath(dirOf(filePath))
       }
       const openExternally = (): void => {
@@ -477,7 +470,9 @@ function App(): React.JSX.Element {
   const handleEntryDeleted = useCallback(
     (path: string): void => {
       const prefix = path + sepOf(path)
-      const doomed = useTabsStore.getState().tabs.filter((t) => t.filePath === path || t.filePath?.startsWith(prefix))
+      const doomed = useTabsStore
+        .getState()
+        .tabs.filter((t) => t.filePath === path || t.filePath?.startsWith(prefix))
       for (const tab of doomed) closeTab(tab.id)
       void useNotePropsStore.getState().load()
     },
@@ -573,8 +568,7 @@ function App(): React.JSX.Element {
       let rel = href.split('#')[0].split('?')[0]
       try {
         rel = decodeURIComponent(rel)
-      } catch {
-      }
+      } catch {}
       if (!rel) return
       const base = getAttachmentDir()
       const sep = base.includes('\\') ? '\\' : '/'
@@ -687,75 +681,15 @@ function App(): React.JSX.Element {
 
   // 가운데 파일 목록: 사이드바에서 고른 폴더(없으면 작업 공간 맨 위)의 파일. 트리가 바뀌거나 저장하면 다시 읽는다.
   // Drive 폴더를 골랐으면 그 폴더의 Drive 파일을 보여 준다
-  const listDir = selectedFolderPath ?? rootDir
-  const listTitle = driveFolder ? driveFolder.name : listDir ? fileNameOf(listDir) : ''
-  const [listItems, setListItems] = useState<FileListItem[]>([])
-  const [listLoading, setListLoading] = useState(false)
-  const dirtyKey = dirtyFilePaths.join('\n')
+  // 고른 폴더가 지워지거나 옮겨지면 작업 폴더 맨 위로 돌아간다
   useEffect(() => {
-    let alive = true
-    const load = async (): Promise<FileListItem[]> => {
-      if (driveFolder) {
-        const result = await window.api.drive.list(driveFolder.id)
-        if (!result.ok) return []
-        const files = result.items.filter((i) => !i.folder)
-        return Promise.all(
-          files.map(async (f) => ({
-            path: await window.api.drive.localPath(f.id, f.name),
-            name: f.name,
-            mtime: 0,
-            snippet: '',
-            driveId: f.id
-          }))
-        )
-      }
-      if (!listDir) return []
-      return window.api.workspace.listFolderFiles(listDir)
-    }
-    setListLoading(true)
-    void load().then((items) => {
-      if (!alive) return
-      setListItems(items)
-      setListLoading(false)
-    })
-    return () => {
-      alive = false
-    }
-  }, [driveFolder, driveVersion, listDir, tree, dirtyKey])
-
-  const openListItem = useCallback(
-    (item: FileListItem): void => {
-      if (!item.driveId) {
-        handleOpenFile(item.path)
-        return
-      }
-      // Drive 파일: 이미 열린 탭은 저장 안 한 내용이 있을 수 있어 다시 받지 않는다
-      if (useTabsStore.getState().tabs.some((t) => t.filePath === item.path)) {
-        handleOpenFile(item.path)
-        return
-      }
-      void window.api.drive.download(item.driveId, item.name).then((result) => {
-        if (result.ok) handleOpenFile(result.path)
-        else pushToast({ kind: 'info', message: result.error })
-      })
-    },
-    [handleOpenFile, pushToast]
-  )
-
-  const newFileInList = useCallback((): void => {
-    if (driveFolder) {
-      void window.api.drive.createFile(driveFolder.id, '새 파일.md').then((result) => {
-        if (!result.ok) {
-          pushToast({ kind: 'info', message: result.error })
-          return
-        }
-        setDriveVersion((v) => v + 1)
-        handleOpenFile(result.path)
-      })
-      return
-    }
-    if (listDir) sidebarRef.current?.startNewFile(listDir)
-  }, [driveFolder, listDir, handleOpenFile, pushToast])
+    if (
+      selectedFolderPath &&
+      selectedFolderPath !== rootDir &&
+      !findNodeByPath(tree, selectedFolderPath)
+    )
+      setSelectedFolderPath(null)
+  }, [tree, rootDir, selectedFolderPath])
 
   // 에디터 칸 맨 위 줄: 창을 끄는 자리. 가운데에 보기 전환, 오른쪽 끝에 창 버튼, 사이드바를 접었으면 왼쪽에 펼치기 버튼
   const editorTopBar = (
@@ -763,17 +697,17 @@ function App(): React.JSX.Element {
       className="titlebar-drag relative flex h-11 shrink-0 items-center border-b border-border px-2"
       onDoubleClick={() => void window.api.window.toggleMaximize()}
     >
-      {sidebarCollapsed && (
-        <button
-          type="button"
-          onClick={() => setSidebarCollapsed(false)}
-          onDoubleClick={(e) => e.stopPropagation()}
-          title={`사이드바 펼치기 (${shortcuts.toggleSidebar})`}
-          className={`titlebar-no-drag shrink-0 ${TITLE_BTN}`}
-        >
-          <SidebarIcon />
-        </button>
-      )}
+      {/* 사이드바 접기와 펼치기: 열려 있든 닫혀 있든 에디터 칸 맨 위 줄 왼쪽 끝 같은 자리에 둔다 */}
+      <button
+        type="button"
+        onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+        onDoubleClick={(e) => e.stopPropagation()}
+        title={`사이드바 ${sidebarCollapsed ? '펼치기' : '접기'} (${shortcuts.toggleSidebar})`}
+        aria-label={sidebarCollapsed ? '사이드바 펼치기' : '사이드바 접기'}
+        className={`titlebar-no-drag shrink-0 ${TITLE_BTN}`}
+      >
+        <SidebarIcon />
+      </button>
       {activeTab && activeTab.kind === 'text' && showPreview && (
         <div
           className="titlebar-no-drag absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
@@ -800,7 +734,7 @@ function App(): React.JSX.Element {
   const isDriveCopy = !!activeTab?.filePath && DRIVE_COPY_RE.test(activeTab.filePath)
   const noteHeader = activeTab ? (
     <>
-      <div className="shrink-0 border-b border-border px-4 pb-3.5 pt-2.5">
+      <div className="shrink-0 border-b border-border px-4 py-2.5">
         <NoteTitleInput
           filePath={activeTab.filePath}
           label={tabLabel(activeTab)}
@@ -810,8 +744,9 @@ function App(): React.JSX.Element {
         />
       </div>
       {tagBarPath && !previewOnly && (
-        <div className="flex shrink-0 items-center gap-1.5 border-b border-border px-4 py-2">
-          <TagBar filePath={tagBarPath} menuDirection="down" />
+        // 높이를 고정해 태그 입력란이 열리고 닫혀도 줄 높이가 그대로다
+        <div className="flex h-10 shrink-0 items-center border-b border-border px-4">
+          <TagBar filePath={tagBarPath} />
         </div>
       )}
     </>
@@ -822,91 +757,54 @@ function App(): React.JSX.Element {
       <main className="flex min-h-0 flex-1">
         {/* 3단 화면: 사이드바(폴더 트리) | 파일 목록 | 에디터. 접으면 앞의 두 칸이 함께 접힌다 */}
         <div className={`flex shrink-0 ${sidebarCollapsed ? '' : 'border-r border-border'}`}>
-        <motion.div
-          className="relative shrink-0"
-          initial={false}
-          animate={{ width: sidebarCollapsed ? 0 : sidebar.width }}
-          transition={{ duration: sidebar.resizing ? 0 : 0.2, ease: [0.4, 0, 0.2, 1] }}
-        >
-          <div
-            className="h-full overflow-hidden"
-            inert={sidebarCollapsed}
+          <motion.div
+            className="relative shrink-0"
+            initial={false}
+            animate={{ width: sidebarCollapsed ? 0 : sidebar.width }}
+            transition={{ duration: sidebar.resizing ? 0 : 0.2, ease: [0.4, 0, 0.2, 1] }}
           >
-            <div className="h-full" style={{ width: sidebar.width }}>
-              <Sidebar
-                ref={sidebarRef}
-                tree={tree}
-                rootDir={rootDir}
-                activeFilePath={activeTab?.filePath ?? null}
-                onOpenFile={handleOpenFile}
-                onFileCreated={handleOpenFile}
-                onEntryRenamed={handleEntryRenamed}
-                onEntryMoved={handleEntryMoved}
-                onEntryDeleted={handleEntryDeleted}
-                onFocusEditor={() => requestAnimationFrame(() => editorRef.current?.focus())}
-                dirtyFilePaths={dirtyFilePaths}
-                onCompareChanges={handleCompareChanges}
-                onOpenHistory={handleOpenHistory}
-                onOpenAtLine={handleOpenAtLine}
-                onOpenSettings={() => setSettingsOpen(true)}
-                onCollapse={() => setSidebarCollapsed(true)}
-                onRenameFile={(filePath) => {
-                  handleOpenFile(filePath)
-                  // 파일이 열리면 제목 입력란으로 옮겨 이름을 고치게 한다
-                  setTimeout(() => {
-                    const input = document.querySelector<HTMLInputElement>('input[aria-label="파일 제목"]')
-                    input?.focus()
-                    input?.select()
-                  }, 80)
-                }}
-                selectedFolderPath={selectedFolderPath}
-                onSelectFolder={selectLocalFolder}
-                driveFolderId={driveFolder ? driveFolder.id : undefined}
-                onSelectDriveFolder={(id, name) => setDriveFolder({ id, name })}
-                onDriveChanged={() => setDriveVersion((v) => v + 1)}
-                onInsertTemplate={handleInsertTemplate}
-                onCreateFromTemplate={(t) => void handleCreateFromTemplate(t)}
-                className="h-full"
-              />
+            <div className="h-full overflow-hidden" inert={sidebarCollapsed}>
+              <div className="h-full" style={{ width: sidebar.width }}>
+                <Sidebar
+                  ref={sidebarRef}
+                  tree={tree}
+                  rootDir={rootDir}
+                  activeFilePath={activeTab?.filePath ?? null}
+                  onOpenFile={handleOpenFile}
+                  onFileCreated={handleOpenFile}
+                  onEntryRenamed={handleEntryRenamed}
+                  onEntryMoved={handleEntryMoved}
+                  onEntryDeleted={handleEntryDeleted}
+                  onFocusEditor={() => requestAnimationFrame(() => editorRef.current?.focus())}
+                  dirtyFilePaths={dirtyFilePaths}
+                  onCompareChanges={handleCompareChanges}
+                  onOpenHistory={handleOpenHistory}
+                  onOpenAtLine={handleOpenAtLine}
+                  onOpenSettings={() => setSettingsOpen(true)}
+                  onOpenSearch={() => setSearchOpen(true)}
+                  selectedFolderPath={selectedFolderPath}
+                  onSelectFolder={setSelectedFolderPath}
+                  onInsertTemplate={handleInsertTemplate}
+                  onCreateFromTemplate={(t) => void handleCreateFromTemplate(t)}
+                  className="h-full"
+                />
+              </div>
             </div>
+            {!sidebarCollapsed && (
+              <div
+                onMouseDown={sidebar.onResizeStart}
+                className="group absolute -right-1 top-0 z-10 h-full w-2 cursor-col-resize"
+              >
+                <div className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-transparent" />
+              </div>
+            )}
+          </motion.div>
         </div>
-        {!sidebarCollapsed && (
-          <div
-            onMouseDown={sidebar.onResizeStart}
-            className="group absolute -right-1 top-0 z-10 h-full w-2 cursor-col-resize"
-          >
-            <div className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-transparent" />
-          </div>
-        )}
-      </motion.div>
-        </div>
-        <motion.div
-          className="shrink-0 overflow-hidden"
-          initial={false}
-          animate={{ width: sidebarCollapsed ? 0 : FILE_LIST_WIDTH }}
-          transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
-          inert={sidebarCollapsed}
-        >
-          <div className="h-full" style={{ width: FILE_LIST_WIDTH }}>
-            <FileList
-              title={listTitle}
-              items={listItems}
-              loading={listLoading}
-              activeFilePath={activeTab?.filePath ?? null}
-              onOpenFile={openListItem}
-              onNewFile={driveFolder || listDir ? newFileInList : undefined}
-              onItemContextMenu={
-                driveFolder
-                  ? undefined
-                  : (item, x, y) => sidebarRef.current?.openFileMenu(item.path, x, y)
-              }
-            />
-          </div>
-        </motion.div>
         {/* 에디터 칸: 맨 위 줄, 제목, 태그, 본문(에디터 | 미리보기) */}
         <div className="flex min-w-0 flex-1 flex-col bg-bg">
           {editorTopBar}
-          {noteHeader}
+          {/* 제목과 태그는 에디터 칸 위에만 둔다. 텍스트가 아닌 파일은 본문 위에 둔다 */}
+          {activeTab?.kind !== 'text' && noteHeader}
           {activeTab && activeTab.kind !== 'text' && activeTab.filePath ? (
             <div className="flex min-h-0 flex-1 flex-col overflow-clip">
               <FileViewer key={activeTab.id} filePath={activeTab.filePath} kind={activeTab.kind} />
@@ -928,24 +826,28 @@ function App(): React.JSX.Element {
                 >
                   <div
                     className="flex min-h-0 flex-1 flex-col"
-                    style={{ width: editorContentW || undefined, minWidth: editorContentW || undefined }}
+                    style={{
+                      width: editorContentW || undefined,
+                      minWidth: editorContentW || undefined
+                    }}
                   >
-                  <MarkdownEditor
-                    ref={editorRef}
-                    tabId={activeTab.id}
-                    filePath={activeTab.filePath}
-                    value={activeTab.content}
-                    onChange={handleEditorChange}
-                    getNoteIndex={getNoteIndex}
-                    getAttachmentDir={getAttachmentDir}
-                    vimMode={vimMode}
-                    baseContent={activeTab.baseContent}
-                    onOpenBaseDiff={handleOpenBaseDiff}
-                    onSave={saveActiveTab}
-                    onCursorChange={handleCursorChange}
-                    onScrollRatio={handleEditorScrollRatio}
-                    className="min-h-0 min-w-0 flex-1 overflow-auto"
-                  />
+                    {noteHeader}
+                    <MarkdownEditor
+                      ref={editorRef}
+                      tabId={activeTab.id}
+                      filePath={activeTab.filePath}
+                      value={activeTab.content}
+                      onChange={handleEditorChange}
+                      getNoteIndex={getNoteIndex}
+                      getAttachmentDir={getAttachmentDir}
+                      vimMode={vimMode}
+                      baseContent={activeTab.baseContent}
+                      onOpenBaseDiff={handleOpenBaseDiff}
+                      onSave={saveActiveTab}
+                      onCursorChange={handleCursorChange}
+                      onScrollRatio={handleEditorScrollRatio}
+                      className="min-h-0 min-w-0 flex-1 overflow-auto"
+                    />
                   </div>
                 </motion.div>
                 {showPreview && (
@@ -957,35 +859,35 @@ function App(): React.JSX.Element {
                   />
                 )}
                 <AnimatePresence initial={false}>
-                {showPreviewPane && (
-                  <motion.div
-                    key="preview-card"
-                    initial={{ width: 0, opacity: 0 }}
-                    animate={{ width: previewW, opacity: 1 }}
-                    exit={{ width: 0, opacity: 0, transition: VIEW_TRANSITION }}
-                    transition={widthTransition}
-                    className={`flex min-w-0 shrink-0 flex-col overflow-clip ${previewOnly ? '' : 'border-l border-border'}`}
-                  >
-                  <div
-                    className="flex min-h-0 flex-1 flex-col"
-                    style={{ width: previewW || undefined, minWidth: previewW || undefined }}
-                  >
-                  <MarkdownPreview
-                    ref={previewRef}
-                    source={activeTab.content}
-                    baseDir={getAttachmentDir()}
-                    onScrollRatio={handlePreviewScrollRatio}
-                    onWikilinkClick={handleWikilinkClick}
-                    onToggleTask={handleToggleTask}
-                    onLinkClick={handleLinkClick}
-                    onReplaceSource={handleReplaceSource}
-                    onMinWidthChange={setPreviewMinWidth}
-                    className="min-h-0 flex-1 overflow-auto px-[var(--preview-pad)] pb-6 pt-7"
-                    docKey={activeTab.id}
-                  />
-                  </div>
-                  </motion.div>
-                )}
+                  {showPreviewPane && (
+                    <motion.div
+                      key="preview-card"
+                      initial={{ width: 0, opacity: 0 }}
+                      animate={{ width: previewW, opacity: 1 }}
+                      exit={{ width: 0, opacity: 0, transition: VIEW_TRANSITION }}
+                      transition={widthTransition}
+                      className={`flex min-w-0 shrink-0 flex-col overflow-clip ${previewOnly ? '' : 'border-l border-border'}`}
+                    >
+                      <div
+                        className="flex min-h-0 flex-1 flex-col"
+                        style={{ width: previewW || undefined, minWidth: previewW || undefined }}
+                      >
+                        <MarkdownPreview
+                          ref={previewRef}
+                          source={activeTab.content}
+                          baseDir={getAttachmentDir()}
+                          onScrollRatio={handlePreviewScrollRatio}
+                          onWikilinkClick={handleWikilinkClick}
+                          onToggleTask={handleToggleTask}
+                          onLinkClick={handleLinkClick}
+                          onReplaceSource={handleReplaceSource}
+                          onMinWidthChange={setPreviewMinWidth}
+                          className="min-h-0 flex-1 overflow-auto px-[var(--preview-pad)] pb-6 pt-7"
+                          docKey={activeTab.id}
+                        />
+                      </div>
+                    </motion.div>
+                  )}
                 </AnimatePresence>
               </div>
             </div>

@@ -1,5 +1,5 @@
-/** 노트 속성은 상태 하나뿐이다. 값은 대기·진행·보류·완료로 고정이다 */
-export type PropertyKey = 'status'
+/** 노트 속성: 상태(대기·진행·보류·완료 중 하나)와 직접 만든 태그 목록 */
+export type PropertyKey = 'status' | 'tags'
 export type PropertyColor = 'gray' | 'blue' | 'green' | 'orange'
 /** created: 앱이 기록한 생성 날짜(YYYY-MM-DD). 고르는 값은 아니다 */
 export type NoteProps = Partial<Record<PropertyKey | 'created', string>>
@@ -32,4 +32,13 @@ export function statusOf(label: string | undefined): PropertyOption {
     STATUS_OPTIONS.find((o) => o.label === label) ??
     (STATUS_OPTIONS.find((o) => o.label === DEFAULT_STATUS) as PropertyOption)
   )
+}
+
+/** 태그 목록은 줄바꿈으로 이어 한 값으로 저장한다 */
+export function splitTags(value: string | undefined): string[] {
+  return value ? value.split('\n').filter(Boolean) : []
+}
+
+export function joinTags(tags: string[]): string {
+  return tags.join('\n')
 }

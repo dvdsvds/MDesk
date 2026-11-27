@@ -1,12 +1,14 @@
-import { forwardRef, useImperativeHandle, useMemo, useState } from 'react'
+import { forwardRef, useImperativeHandle, useState } from 'react'
 import type { TreeNode } from '../../types/workspace'
 import { ContextMenu } from '../../components/ContextMenu'
 import { ConfirmDialog } from '../../components/ConfirmDialog'
 import { ExportDialog } from '../export/ExportDialog'
 import { FileTypeIcon } from '../../components/FileTypeIcon'
+import { AppLogoMark } from '../../components/AppIcon'
 import { dirOf, fileNameOf, sepOf } from '@renderer/utils/path'
-import SidebarIcon from '../../icons/sidebar.svg?react'
+import SearchIcon from '../../icons/search.svg?react'
 import NewFolderIcon from '../../icons/new-folder.svg?react'
+import NewFileIcon from '../../icons/new-file.svg?react'
 import TrashIcon from '../../icons/ctx-trash.svg?react'
 import SettingsIcon from '../../icons/settings.svg?react'
 import { SectionHeader } from './SectionHeader'
@@ -41,14 +43,8 @@ interface SidebarProps {
   /** 열려 있는 데일리 노트의 날짜. 날짜 섹션을 그날로 맞춘다 */
   onInsertTemplate: (template: NoteTemplate) => void
   onCreateFromTemplate: (template: NoteTemplate) => void
-  /** 사이드바(와 파일 목록)를 접는다 */
-  onCollapse: () => void
-  /** 파일 이름 변경(파일은 트리에 없어서 제목 입력란으로 바꾼다) */
-  onRenameFile: (filePath: string) => void
-  /** 파일 목록 칸이 보여 주는 Drive 폴더(최상위는 null). Drive를 보고 있지 않으면 undefined */
-  driveFolderId: string | null | undefined
-  onSelectDriveFolder: (id: string | null, name: string) => void
-  onDriveChanged: () => void
+  /** 검색 창을 연다 */
+  onOpenSearch: () => void
   className?: string
   style?: React.CSSProperties
 }
@@ -59,8 +55,6 @@ export type SidebarCommand = 'rename' | 'newFolder' | 'reveal' | 'export'
 export interface SidebarHandle {
   startNewFile: (dirPath: string) => void
   runCommand: (command: SidebarCommand) => void
-  /** 파일 목록 칸의 파일에 오른쪽 클릭 메뉴를 띄운다 */
-  openFileMenu: (filePath: string, x: number, y: number) => void
 }
 
 /** 접힌 섹션의 높이: 머리 줄 36px + 위 테두리 1px */
@@ -71,13 +65,6 @@ const FOOTER_BTN =
 
 const ICON_BTN =
   'flex h-[26px] w-[26px] items-center justify-center rounded-md text-text-secondary transition-colors hover:bg-bg-mute hover:text-text disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-text-secondary'
-
-/** 폴더만 남긴 트리 */
-function foldersOnly(nodes: TreeNode[]): TreeNode[] {
-  return nodes
-    .filter((n) => n.type === 'folder')
-    .map((n) => ({ ...n, children: n.children ? foldersOnly(n.children) : n.children }))
-}
 
 function countDirtyUnder(dirtyFilePaths: string[], node: TreeNode): number {
   const prefix = node.path + sepOf(node.path)
@@ -112,18 +99,12 @@ export const Sidebar = forwardRef<SidebarHandle, SidebarProps>(function Sidebar(
     onSelectFolder,
     onInsertTemplate,
     onCreateFromTemplate,
-    onCollapse,
-    onRenameFile,
-    driveFolderId,
-    onSelectDriveFolder,
-    onDriveChanged,
+    onOpenSearch,
     className,
     style
   }: SidebarProps,
   ref
 ) {
-  // 탐색기에는 폴더만 보인다. 파일은 가운데 파일 목록 칸에서 본다
-  const folderTree = useMemo(() => foldersOnly(tree), [tree])
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; node: TreeNode } | null>(
     null
   )
@@ -159,7 +140,7 @@ export const Sidebar = forwardRef<SidebarHandle, SidebarProps>(function Sidebar(
     visibleNodes,
     handleTreeKeyDown
   } = useTreeFocus({
-    tree: folderTree,
+    tree,
     rootDir,
     activeFilePath,
     selectedFolderPath,
@@ -232,9 +213,7 @@ export const Sidebar = forwardRef<SidebarHandle, SidebarProps>(function Sidebar(
 
   useImperativeHandle(ref, () => ({
     startNewFile: (dirPath: string) => setNewFileIn(dirPath),
-    runCommand,
-    openFileMenu: (filePath: string, x: number, y: number) =>
-      setContextMenu({ x, y, node: { type: 'file', path: filePath, name: fileNameOf(filePath) } })
+    runCommand
   }))
 
   const resolveToolbarDir = (): string | null => {
@@ -272,6 +251,11 @@ export const Sidebar = forwardRef<SidebarHandle, SidebarProps>(function Sidebar(
     onCommitNewFile: commitNewFile,
     onCancelNewFile: () => setNewFileIn(null),
     onContextMenu: handleContextMenu,
+    onMenuAt: (node, x, y) => setContextMenu({ x, y, node }),
+    onNewFileIn: (dirPath) => {
+      expandPath(dirPath)
+      setNewFileIn(dirPath)
+    },
     onDragStart: (e, node) => {
       e.dataTransfer.setData('text/plain', node.path)
       e.dataTransfer.effectAllowed = 'move'
@@ -288,8 +272,7 @@ export const Sidebar = forwardRef<SidebarHandle, SidebarProps>(function Sidebar(
         expandPath,
         startNewFile: setNewFileIn,
         startNewFolder: setNewFolderIn,
-        startRename: (path) =>
-          contextMenu.node.type === 'file' ? onRenameFile(path) : setEditingPath(path),
+        startRename: setEditingPath,
         openExport: setExportTarget,
         openDelete: openDeleteConfirm,
         onCompareChanges,
@@ -308,34 +291,57 @@ export const Sidebar = forwardRef<SidebarHandle, SidebarProps>(function Sidebar(
       onKeyDown={(e) => handleTreeKeyDown(e, openDeleteConfirm, () => void undoLast())}
     >
       <div className="titlebar-drag flex h-11 shrink-0 items-center gap-1.5 pl-3.5 pr-2">
-        <span className="text-[13.5px] font-bold text-text">MarkRoom</span>
+        <AppLogoMark size={20} />
+      </div>
+      {/* 검색: 아래 영역 제목과 헷갈리지 않게 입력칸 모양으로 둔다 */}
+      <div className="shrink-0 px-2.5 pb-2">
         <button
           type="button"
-          onClick={onCollapse}
-          title={`사이드바 접기 (${shortcuts.toggleSidebar})`}
-          className="titlebar-no-drag ml-auto flex h-[30px] w-[30px] items-center justify-center rounded-md text-text-secondary outline-none transition-colors hover:bg-bg-mute hover:text-text"
+          onClick={onOpenSearch}
+          className="flex h-8 w-full items-center gap-2 rounded-lg border border-border bg-bg-mute/50 px-2.5 text-left text-[13px] text-text-tertiary outline-none transition-colors hover:border-border-strong hover:text-text-secondary"
         >
-          <SidebarIcon />
+          <SearchIcon width={15} height={15} className="shrink-0" />
+          검색
+          <kbd className="ml-auto font-sans text-[11px] text-text-tertiary">{shortcuts.search}</kbd>
         </button>
       </div>
       <div className={`flex min-h-0 flex-col ${filesOpen ? 'flex-1' : 'shrink-0'}`}>
         <div className="flex h-9 shrink-0 items-center justify-between pl-2 pr-2">
-          <SectionHeader label="탐색기" open={filesOpen} onToggle={() => setFilesOpen(!filesOpen)} />
-          <button
-            type="button"
-            onClick={() => {
-              const dir = resolveToolbarDir()
-              if (dir) {
-                expandPath(dir)
-                setNewFolderIn(dir)
-              }
-            }}
-            title="새 폴더"
-            disabled={!rootDir}
-            className={`${ICON_BTN} !w-[30px]`}
-          >
-            <NewFolderIcon />
-          </button>
+          <SectionHeader label="로컬" open={filesOpen} onToggle={() => setFilesOpen(!filesOpen)} />
+          <div className="flex items-center gap-0.5">
+            <button
+              type="button"
+              onClick={() => {
+                const dir = resolveToolbarDir()
+                if (dir) {
+                  expandPath(dir)
+                  setNewFolderIn(dir)
+                }
+              }}
+              title="새 폴더"
+              aria-label="새 폴더"
+              disabled={!rootDir}
+              className={`${ICON_BTN} !w-[30px]`}
+            >
+              <NewFolderIcon />
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                const dir = resolveToolbarDir()
+                if (dir) {
+                  expandPath(dir)
+                  setNewFileIn(dir)
+                }
+              }}
+              title={`새 파일 (${shortcuts.newNote})`}
+              aria-label="새 파일"
+              disabled={!rootDir}
+              className={ICON_BTN}
+            >
+              <NewFileIcon />
+            </button>
+          </div>
         </div>
         {filesOpen && (
           <div
@@ -351,7 +357,11 @@ export const Sidebar = forwardRef<SidebarHandle, SidebarProps>(function Sidebar(
             }}
           >
             {newFolderIn === rootDir && rootDir && (
-              <div className="flex h-7 w-full items-center gap-2 pr-2" style={{ paddingLeft: 8 }}>
+              <div
+                className="flex h-[30px] w-full items-center gap-1.5 pr-2"
+                style={{ paddingLeft: 6 }}
+              >
+                <span className="w-3.5 shrink-0" />
                 <FileTypeIcon name="" kind="folder" />
                 <InlineNameInput
                   initialValue=""
@@ -364,12 +374,12 @@ export const Sidebar = forwardRef<SidebarHandle, SidebarProps>(function Sidebar(
             )}
             {newFileIn === rootDir && rootDir && (
               <NewFileRow
-                paddingLeft={8}
+                paddingLeft={26}
                 onCommit={(value) => commitNewFile(rootDir, value)}
                 onCancel={() => setNewFileIn(null)}
               />
             )}
-            {folderTree.map((node) => (
+            {tree.map((node) => (
               <TreeRow key={node.path} node={node} depth={0} ctx={ctx} />
             ))}
           </div>
@@ -383,9 +393,7 @@ export const Sidebar = forwardRef<SidebarHandle, SidebarProps>(function Sidebar(
         draggingLocalPath={draggingPath}
         dirtyFilePaths={dirtyFilePaths}
         onLocalMoved={finishMoveToDrive}
-        selectedFolderId={driveFolderId}
-        onSelectFolder={onSelectDriveFolder}
-        onChanged={onDriveChanged}
+        activeFilePath={activeFilePath}
       />
       <div
         className="flex min-h-0 flex-col overflow-hidden border-t border-border transition-[flex-grow] duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]"
@@ -413,8 +421,8 @@ export const Sidebar = forwardRef<SidebarHandle, SidebarProps>(function Sidebar(
           <TemplateSection onInsert={onInsertTemplate} onCreateNote={onCreateFromTemplate} />
         </div>
       </div>
-      {/* 맨 아래 줄: 휴지통 폴더 열기와 설정을 오른쪽 끝에 둔다 */}
-      <div className="flex h-10 shrink-0 items-center justify-end gap-0.5 border-t border-border px-2">
+      {/* 맨 아래 줄: 휴지통 폴더 열기와 설정을 오른쪽 끝에 둔다. 영역을 모두 접어도 맨 아래에 붙어 있게 mt-auto */}
+      <div className="mt-auto flex h-10 shrink-0 items-center justify-end gap-0.5 border-t border-border px-2">
         <button
           type="button"
           onClick={() => void window.api.workspace.openTrash()}

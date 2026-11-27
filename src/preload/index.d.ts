@@ -197,9 +197,6 @@ export interface MdeskApi {
     reveal: (targetPath: string) => Promise<void>
     openInDefaultApp: (targetPath: string) => Promise<string>
     copyPath: (targetPath: string, relative: boolean) => Promise<void>
-    listFolderFiles: (
-      dir: string
-    ) => Promise<{ path: string; name: string; mtime: number; snippet: string }[]>
     findBacklinks: (mdPath: string) => Promise<Backlink[]>
     findBacklinkContexts: (mdPath: string) => Promise<BacklinkWithContext[]>
     saveAttachment: (

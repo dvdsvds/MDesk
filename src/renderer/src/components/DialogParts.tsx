@@ -22,14 +22,14 @@ export function Dialog({ width = 420, height, onClose, children }: DialogProps):
 
   return createPortal(
     <div
-      className="dlg-overlay fixed inset-0 z-[1000] flex items-center justify-center bg-[rgba(8,9,12,0.55)] backdrop-blur-[6px]"
+      className="dlg-overlay fixed inset-0 z-[1000] flex items-center justify-center bg-[rgba(8,9,12,0.45)] backdrop-blur-[10px]"
       onClick={onClose}
     >
       <div
         role="dialog"
         onClick={(e) => e.stopPropagation()}
         style={{ width, height }}
-        className="dlg-card flex max-h-[calc(100vh-48px)] max-w-[calc(100vw-32px)] flex-col overflow-hidden rounded-[18px] border border-white/[0.07] bg-bg-elevated shadow-[0_40px_100px_rgba(0,0,0,0.55)]"
+        className="dlg-card flex max-h-[calc(100vh-48px)] max-w-[calc(100vw-32px)] flex-col overflow-hidden rounded-[18px] border border-white/[0.07] bg-bg-elevated"
       >
         {children}
       </div>

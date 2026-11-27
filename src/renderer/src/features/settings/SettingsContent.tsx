@@ -1,3 +1,4 @@
+import { useLayoutEffect, useRef, useState } from 'react'
 import { Card } from './SettingsParts'
 import type { Category, SettingItem } from './useSettingItems'
 
@@ -37,8 +38,20 @@ export function SettingsContent({
   sections: Section[]
   onGoCategory: (cat: Category) => void
 }): React.JSX.Element {
+  // 스크롤바 자리를 늘 비워 두고 그만큼 오른쪽 여백을 줄여, 스크롤바가 생겨도 안 생겨도 내용 위치가 같게 한다
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const [scrollbarWidth, setScrollbarWidth] = useState(0)
+  useLayoutEffect(() => {
+    const el = scrollRef.current
+    if (el) setScrollbarWidth(el.offsetWidth - el.clientWidth)
+  }, [])
+
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-[18px] overflow-y-auto px-7 pb-7 [scrollbar-color:transparent_transparent] [scrollbar-width:thin] hover:[scrollbar-color:var(--color-border-strong)_transparent]">
+    <div
+      ref={scrollRef}
+      style={{ paddingRight: Math.max(0, 28 - scrollbarWidth) }}
+      className="flex min-h-0 flex-1 flex-col gap-[18px] overflow-y-auto px-7 pb-7 [scrollbar-gutter:stable] [scrollbar-color:transparent_transparent] [scrollbar-width:thin] hover:[scrollbar-color:var(--color-border-strong)_transparent]"
+    >
       {showSearchResults ? (
         filtered.length === 0 ? (
           <p className="py-6 text-center text-[13px] text-text-tertiary">검색 결과가 없습니다</p>

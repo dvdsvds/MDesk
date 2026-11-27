@@ -238,10 +238,6 @@ const api = {
       ipcRenderer.invoke('workspace:openInDefaultApp', targetPath),
     copyPath: (targetPath: string, relative: boolean): Promise<void> =>
       ipcRenderer.invoke('workspace:copyPath', targetPath, relative),
-    listFolderFiles: (
-      dir: string
-    ): Promise<{ path: string; name: string; mtime: number; snippet: string }[]> =>
-      ipcRenderer.invoke('workspace:listFolderFiles', dir),
     findBacklinks: (mdPath: string): Promise<Backlink[]> =>
       ipcRenderer.invoke('workspace:findBacklinks', mdPath),
     findBacklinkContexts: (mdPath: string): Promise<BacklinkWithContext[]> =>

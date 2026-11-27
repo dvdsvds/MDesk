@@ -90,7 +90,7 @@ export function SearchPanel({ rootDir, onOpenFile, onClose }: SearchPanelProps):
 
   return (
     <motion.div
-      className="fixed inset-0 z-50 flex items-start justify-center bg-[rgba(8,9,12,0.55)] pt-[104px] backdrop-blur-[6px]"
+      className="fixed inset-0 z-50 flex items-start justify-center pt-[104px] bg-[rgba(8,9,12,0.45)] backdrop-blur-[10px]"
       style={{ willChange: 'opacity' }}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -107,7 +107,7 @@ export function SearchPanel({ rootDir, onOpenFile, onClose }: SearchPanelProps):
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, y: -8, scale: 0.98 }}
         transition={{ duration: 0.14, ease: [0.4, 0, 0.2, 1] }}
-        className="flex w-[660px] max-w-[calc(100vw-32px)] flex-col overflow-hidden rounded-[18px] border border-white/[0.07] bg-bg-elevated shadow-[0_40px_100px_rgba(0,0,0,0.55)]"
+        className="flex w-[660px] max-w-[calc(100vw-32px)] flex-col overflow-hidden rounded-[18px] border border-white/[0.07] bg-bg-elevated"
       >
         <label className="flex h-16 items-center gap-3.5 px-[22px]">
           <svg

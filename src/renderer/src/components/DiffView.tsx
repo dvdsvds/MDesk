@@ -50,12 +50,12 @@ export function DiffView({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(8,9,12,0.45)] backdrop-blur-[10px]"
       onClick={onClose}
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="flex h-[80vh] w-[860px] max-w-[95vw] flex-col overflow-hidden rounded-xl border border-border bg-bg-elevated shadow-2xl"
+        className="flex h-[80vh] w-[860px] max-w-[95vw] flex-col overflow-hidden rounded-xl border border-border bg-bg-elevated"
       >
         <div className="flex shrink-0 items-center justify-between border-b border-border px-5 py-3.5">
           <span className="text-[15px] font-semibold text-text">변경 내용 비교</span>

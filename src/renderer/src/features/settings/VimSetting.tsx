@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { AnimatePresence, motion } from 'motion/react'
 import { useSettingsStore } from '../../stores/settingsStore'
 import { Toggle } from './SettingsParts'
 
@@ -71,9 +72,14 @@ export function VimSetting(): React.JSX.Element {
             height="14"
             viewBox="0 0 16 16"
             fill="none"
-            className={`transition-transform ${expanded ? 'rotate-90' : ''}`}
+            className={`transition-transform duration-200 ${expanded ? 'rotate-90' : ''}`}
           >
-            <path d="M6 3.5L10.5 8L6 12.5" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" />
+            <path
+              d="M6 3.5L10.5 8L6 12.5"
+              stroke="currentColor"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
           </svg>
         </button>
         Vim
@@ -81,25 +87,38 @@ export function VimSetting(): React.JSX.Element {
           <Toggle checked={vimMode} onChange={() => setVimMode(!vimMode)} />
         </span>
       </div>
-      {expanded && (
-        <div className="grid grid-cols-2 gap-x-6 gap-y-3 border-t border-border px-[18px] pb-4 pl-11 pt-1.5">
-          {VIM_KEYS.map(({ group, keys }) => (
-            <div key={group} className="flex flex-col">
-              <span className="mb-1 text-[11.5px] font-semibold text-text-tertiary">{group}</span>
-              {keys.map(([k, desc]) => (
-                <div key={k} className="flex h-7 items-center gap-2.5">
-                  <span className="flex w-[92px] shrink-0 gap-[3px]">
-                    {k.split(' ').map((part) => (
-                      <Keycap key={part}>{part}</Keycap>
-                    ))}
+      <AnimatePresence initial={false}>
+        {expanded && (
+          <motion.div
+            key="vim-keys"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+            className="overflow-hidden"
+          >
+            <div className="grid grid-cols-2 gap-x-6 gap-y-3 border-t border-border px-[18px] pb-4 pl-11 pt-1.5">
+              {VIM_KEYS.map(({ group, keys }) => (
+                <div key={group} className="flex flex-col">
+                  <span className="mb-1 text-[11.5px] font-semibold text-text-tertiary">
+                    {group}
                   </span>
-                  <span className="text-[12.5px] text-text-secondary">{desc}</span>
+                  {keys.map(([k, desc]) => (
+                    <div key={k} className="flex h-7 items-center gap-2.5">
+                      <span className="flex w-[92px] shrink-0 gap-[3px]">
+                        {k.split(' ').map((part) => (
+                          <Keycap key={part}>{part}</Keycap>
+                        ))}
+                      </span>
+                      <span className="text-[12.5px] text-text-secondary">{desc}</span>
+                    </div>
+                  ))}
                 </div>
               ))}
             </div>
-          ))}
-        </div>
-      )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
