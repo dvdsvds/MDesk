@@ -213,8 +213,6 @@ Mdesk는 Windows, macOS(13 이상), Linux를 지원합니다.
 1. `mdesk-x.y.z-setup.exe`를 다운로드하여 실행합니다.
 2. `Windows SmartScreen` 경고가 표시되면 **추가 정보 → 실행**을 선택합니다.
 
-Windows 설치 파일은 SignPath Foundation의 승인 후 [SignPath Foundation](https://signpath.org)의 인증서로 서명합니다. Free code signing provided by [SignPath.io](https://about.signpath.io), certificate by [SignPath Foundation](https://signpath.org). 자세한 내용은 [코드 서명 정책](CODE_SIGNING_POLICY.md)을 참고하십시오.
-
 #### macOS
 
 1. `mdesk-x.y.z.dmg`를 다운로드합니다.
